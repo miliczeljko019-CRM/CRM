@@ -231,7 +231,10 @@ select{cursor:pointer}
 .mes-cell{width:36px;height:30px;display:flex;align-items:center;justify-content:center;margin:0 auto}
 .mes-cb{width:16px;height:16px;cursor:pointer;accent-color:#1E8C50}
 .mes-done{background:#E8F8E8;border-radius:3px}
+.mes-done-blue{background:#DCEEFF;border-radius:3px}
 .mes-done .mes-cb{accent-color:#1E8C50}
+.mes-done-blue .mes-cb{accent-color:#0C447C}
+.cb-blue{accent-color:#0C447C}
 .mes-future{opacity:.35}
 .mes-current{background:#FFF8EC;border-radius:3px;outline:1.5px solid #E07B00;outline-offset:-1px}
 .obaveze-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
@@ -392,6 +395,7 @@ select{cursor:pointer}
   <div class="obaveze-subtabs">
     <button class="obaveze-subtab active" id="stab-zakup" onclick="showObavezeTab('zakup')"><i class="ti ti-building-store"></i> Zakup</button>
     <button class="obaveze-subtab" id="stab-fiskalna" onclick="showObavezeTab('fiskalna')"><i class="ti ti-device-desktop-analytics"></i> Periodični izveštaj (fiskalna)</button>
+    <button class="obaveze-subtab" id="stab-porez" onclick="showObavezeTab('porez')"><i class="ti ti-percentage"></i> Porez na dobit</button>
   </div>
   <div id="obavezeContent"></div>
 </div>
@@ -1226,6 +1230,26 @@ function updateObavezeSummary(godina) {
         <div class="obs-val">${uradjenoGod} / ${ukupnoGod}</div>
         <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
+  } else if(obavezeAktivniTab === 'porez') {
+    const klijenti = clients.filter(c=>c.porez==='Porez na dobit');
+    let poslatoTek=0, placanoTek=0, uk=klijenti.length;
+    if(godina===tekGod){
+      klijenti.forEach(c=>{
+        if(ob['pd_'+c.id+'_'+godina+'_'+tekMes+'_poslat']) poslatoTek++;
+        if(ob['pd_'+c.id+'_'+godina+'_'+tekMes+'_placen']) placanoTek++;
+      });
+    }
+    const el=document.getElementById('obavezeSummary');
+    if(el) el.innerHTML=`
+      <div class="obs-card"><div class="obs-label">Klijenata — porez na dobit</div><div class="obs-val">${klijenti.length}</div></div>
+      <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+        <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%"></div></div>
+      </div>
+      <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+        <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
+      </div>`;
   } else {
     const klijenti = clients.filter(c=>c.fiskalna);
     let uradjenoTek=0, ukupnoTek=klijenti.length;
@@ -1334,6 +1358,8 @@ function renderObaveze() {
         }).join(' ');
       }
     );
+  } else if(obavezeAktivniTab === 'porez') {
+    renderPorezNaDobit();
   } else {
     const klijenti = clients.filter(c => c.fiskalna);
     buildObavezeTable(
@@ -1344,6 +1370,116 @@ function renderObaveze() {
       c => `<span class="badge b-fisk" style="font-size:10px;margin-top:2px"><i class="ti ti-device-desktop-analytics" style="font-size:9px;margin-right:3px"></i>Fiskalna kasa</span>`
     );
   }
+}
+
+function renderPorezNaDobit() {
+  const ob = getObaveze();
+  const danas = new Date();
+  const tekGod = danas.getFullYear();
+  const tekMes = danas.getMonth();
+  const klijenti = clients.filter(c => c.porez === 'Porez na dobit');
+
+  let html = `
+    <div class="obaveze-header">
+      <div>
+        <h2><i class="ti ti-percentage" style="margin-right:6px"></i>Porez na dobit</h2>
+        <div style="font-size:12px;color:var(--txt2);margin-top:3px">Štiklirajte poslato i plaćeno po mesecu</div>
+      </div>
+      <div class="godina-nav">
+        <button onclick="obavezeGodina--;renderObaveze()"><i class="ti ti-chevron-left"></i></button>
+        <span class="godina-val">${obavezeGodina}</span>
+        <button onclick="obavezeGodina++;renderObaveze()"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div class="obaveze-summary" id="obavezeSummary"></div>
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--txt2);flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <span><span class="legenda-dot" style="background:#B5D4F4;border:1px solid #0C447C"></span>Poslato</span>
+      <span><span class="legenda-dot" style="background:#C0DD97;border:1px solid #27500A"></span>Plaćeno</span>
+      <span><span class="legenda-dot" style="background:#FFF8EC;outline:1.5px solid #E07B00;outline-offset:-1px"></span>Tekući mesec</span>
+    </div>`;
+
+  if(!klijenti.length) {
+    html += '<div class="empty-state"><i class="ti ti-percentage"></i>Nema klijenata sa porezom na dobit.</div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    return;
+  }
+
+  html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
+  MESECI.forEach((m,i) => {
+    const isTek = obavezeGodina===tekGod && i===tekMes;
+    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${m}</th>`;
+  });
+  html += '<th>Ukupno</th></tr>';
+
+  // Sub-header red
+  html += '<tr><th class="col-naziv"></th>';
+  for(let m=0;m<12;m++) {
+    html += `<th style="font-size:9px;color:#0C447C;padding:2px 2px;font-weight:500">Posl.</th>
+             <th style="font-size:9px;color:#27500A;padding:2px 2px;font-weight:500">Plać.</th>`;
+  }
+  html += '<th></th></tr></thead><tbody>';
+
+  klijenti.forEach(c => {
+    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    let poslatoUkupno=0, placenoUkupno=0;
+    html += `<tr><td class="col-naziv">
+      <div style="font-weight:500;font-size:13px">${c.naziv}</div>
+      <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${c.pravnaForma}</span>
+    </td>`;
+
+    for(let m=0; m<12; m++) {
+      const kPoslat = 'pd_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat';
+      const kPlacen = 'pd_'+c.id+'_'+obavezeGodina+'_'+m+'_placen';
+      const poslat = !!ob[kPoslat];
+      const placen = !!ob[kPlacen];
+      if(poslat) poslatoUkupno++;
+      if(placen) placenoUkupno++;
+      const isTek = obavezeGodina===tekGod && m===tekMes;
+      const isPast = obavezeGodina<tekGod || (obavezeGodina===tekGod && m<tekMes);
+
+      const cellBase = isTek ? ' mes-current' : (!isPast ? ' mes-future' : '');
+
+      html += `
+        <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
+          <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
+            onchange="togglePorez('${kPoslat}')">
+        </div></td>
+        <td><div class="mes-cell${placen?' mes-done':cellBase}" id="cell_${kPlacen}">
+          <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
+            onchange="togglePorez('${kPlacen}')">
+        </div></td>`;
+    }
+
+    html += `<td style="min-width:80px;font-size:11px">
+      <div style="color:#0C447C;font-weight:500">P: ${poslatoUkupno}/12</div>
+      <div style="color:#27500A;font-weight:500">Pl: ${placenoUkupno}/12</div>
+    </td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('obavezeContent').innerHTML = html;
+  updateObavezeSummary(obavezeGodina);
+}
+
+function togglePorez(key) {
+  const ob = getObaveze();
+  ob[key] = !ob[key];
+  saveObaveze(ob);
+  const cb = document.getElementById('ob_'+key);
+  const cell = document.getElementById('cell_'+key);
+  if(cb) cb.checked = !!ob[key];
+  if(cell) {
+    const isPlacen = key.endsWith('_placen');
+    if(ob[key]) cell.className = 'mes-cell ' + (isPlacen ? 'mes-done' : 'mes-done-blue');
+    else {
+      // figure out original class
+      const parts = key.replace('pd_','').split('_');
+      const god = parseInt(parts[parts.length-3]);
+      const mes = parseInt(parts[parts.length-2]);
+      cell.className = 'mes-cell' + getCellClass(god, mes);
+    }
+  }
+  updateObavezeSummary(obavezeGodina);
 }
 
 // ── Dashboard ──
