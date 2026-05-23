@@ -995,11 +995,13 @@ function saveEdit() {
   document.querySelectorAll('#e_workersList [id^="eworker-"]').forEach(wc=>{
     const id=wc.id.split('-')[1];
     const name=document.getElementById('ewname-'+id)?.value.trim();
+    const neodredjeno=document.getElementById('ewneodredjeno-'+id)?.checked||false;
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById('ewjmbg-'+id)?.value.trim()||'',
       od:document.getElementById('ewod-'+id)?.value||'',
-      do_:document.getElementById('ewdo-'+id)?.value||''
+      do_:neodredjeno?'':document.getElementById('ewdo-'+id)?.value||'',
+      neodredjeno
     });
   });
   const idx=clients.findIndex(x=>x.id===editingId);
