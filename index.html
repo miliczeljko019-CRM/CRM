@@ -777,13 +777,20 @@ function toggleWorkers() {
 function addWorker(data) {
   workerCount++;
   const wc = workerCount;
+  const neodredjeno = data?.neodredjeno || false;
   const div = document.createElement('div');
   div.className='worker-card'; div.id='worker-'+wc;
   div.innerHTML=`
     <div class="form-group"><label>Ime i prezime</label><input type="text" id="wname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
     <div class="form-group"><label>JMBG</label><input type="text" id="wjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
     <div class="form-group"><label>Prijavljen od</label><input type="date" id="wod-${wc}" value="${data?.od||''}"></div>
-    <div class="form-group"><label>Ugovor do</label><input type="date" id="wdo-${wc}" value="${data?.do_||''}"></div>`;
+    <div class="form-group">
+      <label>Ugovor do</label>
+      <input type="date" id="wdo-${wc}" value="${data?.do_||''}" ${neodredjeno?'disabled':''}>
+      <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="wneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('wdo-${wc}',this)"> Neodređeno
+      </label>
+    </div>`;
   const row2=document.createElement('div');
   row2.style.cssText='display:flex;justify-content:flex-end;margin:-2px 0 6px';
   const rb=document.createElement('button'); rb.className='remove-small';
@@ -798,6 +805,13 @@ function addWorker(data) {
 document.addEventListener('click',e=>{
   if(e.target.closest('#pravnaForma,.check-btn,.add-worker-btn,.remove-small')) setTimeout(updateCenaPreview,50);
 });
+
+function toggleNeodredjeno(dateId, cb) {
+  const inp = document.getElementById(dateId);
+  if(!inp) return;
+  if(cb.checked) { inp.value=''; inp.disabled=true; }
+  else { inp.disabled=false; }
+}
 
 function getRadio(g) { const s=document.querySelector('#'+g+' .selected'); return s?s.dataset.val:''; }
 
@@ -836,11 +850,13 @@ function collectWorkers(prefix, listId) {
   document.querySelectorAll('#'+listId+' [id^="'+prefix+'worker-"]').forEach(wc=>{
     const id=wc.id.split('-')[1];
     const name=document.getElementById(prefix+'wname-'+id)?.value.trim();
+    const neodredjeno=document.getElementById(prefix+'wneodredjeno-'+id)?.checked||false;
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById(prefix+'wjmbg-'+id)?.value.trim()||'',
       od:document.getElementById(prefix+'wod-'+id)?.value||'',
-      do_:document.getElementById(prefix+'wdo-'+id)?.value||''
+      do_:neodredjeno?'':document.getElementById(prefix+'wdo-'+id)?.value||'',
+      neodredjeno
     });
   });
   return workers;
@@ -947,13 +963,20 @@ function toggleEditWorkers() {
 function addEditWorker(data) {
   editWorkerCount++;
   const wc=editWorkerCount;
+  const neodredjeno = data?.neodredjeno || false;
   const div=document.createElement('div');
   div.className='worker-card'; div.id='eworker-'+wc;
   div.innerHTML=`
     <div class="form-group"><label>Ime i prezime</label><input type="text" id="ewname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
     <div class="form-group"><label>JMBG</label><input type="text" id="ewjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
     <div class="form-group"><label>Prijavljen od</label><input type="date" id="ewod-${wc}" value="${data?.od||''}"></div>
-    <div class="form-group"><label>Ugovor do</label><input type="date" id="ewdo-${wc}" value="${data?.do_||''}"></div>`;
+    <div class="form-group">
+      <label>Ugovor do</label>
+      <input type="date" id="ewdo-${wc}" value="${data?.do_||''}" ${neodredjeno?'disabled':''}>
+      <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="ewneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('ewdo-${wc}',this)"> Neodređeno
+      </label>
+    </div>`;
   const row2=document.createElement('div');
   row2.style.cssText='display:flex;justify-content:flex-end;margin:-2px 0 6px';
   const rb=document.createElement('button'); rb.className='remove-small';
@@ -1043,6 +1066,7 @@ function renderPodsetnici() {
   let sviU=[];
   clients.forEach(c=>{
     if(c.radnici&&c.workers.length>0) c.workers.forEach(w=>{
+      if(w.neodredjeno) return; // preskoči neodređene — ne idu u podsetnik
       const st=ugovorStatus(w.do_);
       sviU.push({ime:w.ime,firma:c.naziv,pravnaForma:c.pravnaForma,do_:w.do_,status:st});
     });
@@ -1356,7 +1380,7 @@ function renderDash() {
     const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
     const pb=c.porez==='Porez na dobit'?'b-dobit':'b-ppausl';
     const wh=c.radnici&&c.workers.length>0
-      ?c.workers.map(w=>`<span class="worker-tag">${w.ime}${w.do_?' · do '+fmt(w.do_):''}</span>`).join('')
+      ?c.workers.map(w=>`<span class="worker-tag">${w.ime}${w.neodredjeno?' · <span style="color:#888;font-style:italic">neodređeno</span>':w.do_?' · do '+fmt(w.do_):''}</span>`).join('')
       :(c.radnici?'<span class="badge b-yes">Da</span>':'<span class="badge b-no">Ne</span>');
     const ch=c.cenaMesecna?`<span class="price-tag">${eur(c.cenaMesecna)}</span>`:'<span style="color:var(--txt2);font-size:12px">—</span>';
     const fisk=c.fiskalna?'<span class="badge b-fisk"><i class="ti ti-device-desktop-analytics" style="font-size:10px;margin-right:3px"></i>Da</span>':'<span class="badge b-nofisk">Ne</span>';
