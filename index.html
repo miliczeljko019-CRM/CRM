@@ -338,6 +338,7 @@ select{cursor:pointer}
     <div class="check-btn" id="nijePdvBtn" onclick="this.classList.toggle('checked');syncPdv('nijePdvBtn','pdvBtn')"><i class="ti ti-receipt-off"></i> Nije PDV obveznik</div>
     <div class="check-btn" id="radniciBtn" onclick="this.classList.toggle('checked');toggleWorkers()"><i class="ti ti-users"></i> Ima radnike</div>
     <div class="check-btn" id="fiskalnaBtn" onclick="this.classList.toggle('checked')"><i class="ti ti-device-desktop-analytics"></i> Fiskalna kasa</div>
+    <div class="check-btn" id="recenzijaBtn" onclick="this.classList.toggle('checked')" style="border-color:#fbbc05"><i class="ti ti-star" style="color:#fbbc05"></i> Google recenzija</div>
   </div>
 
   <div id="workersSection" style="display:none;margin-top:1rem">
@@ -386,6 +387,7 @@ select{cursor:pointer}
     <button class="filter-chip" onclick="setFilter('PDV',this)">PDV obveznici</button>
     <button class="filter-chip" onclick="setFilter('radnici',this)">Sa radnicima</button>
     <button class="filter-chip" onclick="setFilter('fiskalna',this)"><i class="ti ti-device-desktop-analytics" style="font-size:12px"></i> Fiskalna</button>
+    <button class="filter-chip" onclick="setFilter('recenzija',this)"><i class="ti ti-star" style="font-size:12px;color:#fbbc05"></i> Recenzija</button>
     <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
@@ -460,6 +462,7 @@ select{cursor:pointer}
       <div class="check-btn" id="e_nijePdvBtn" onclick="this.classList.toggle('checked');syncPdv('e_nijePdvBtn','e_pdvBtn')"><i class="ti ti-receipt-off"></i> Nije PDV obveznik</div>
       <div class="check-btn" id="e_radniciBtn" onclick="this.classList.toggle('checked');toggleEditWorkers()"><i class="ti ti-users"></i> Ima radnike</div>
       <div class="check-btn" id="e_fiskalnaBtn" onclick="this.classList.toggle('checked')"><i class="ti ti-device-desktop-analytics"></i> Fiskalna kasa</div>
+      <div class="check-btn" id="e_recenzijaBtn" onclick="this.classList.toggle('checked')" style="border-color:#fbbc05"><i class="ti ti-star" style="color:#fbbc05"></i> Google recenzija</div>
     </div>
 
     <div id="e_workersSection" style="display:none;margin-top:1rem">
@@ -936,6 +939,7 @@ function saveClient() {
     pdv:document.getElementById('pdvBtn').classList.contains('checked'),
     radnici:hasW, workers,
     fiskalna:document.getElementById('fiskalnaBtn').classList.contains('checked'),
+    recenzija:document.getElementById('recenzijaBtn').classList.contains('checked'),
     zakup:getZakup(''),
     cenaMesecna:cenaVal,
     datum:new Date().toLocaleDateString('en-GB')
@@ -953,6 +957,7 @@ function resetForm() {
   document.getElementById('pdvBtn').classList.add('checked');
   document.getElementById('radniciBtn').classList.remove('checked');
   document.getElementById('fiskalnaBtn').classList.remove('checked');
+  document.getElementById('recenzijaBtn').classList.remove('checked');
   document.getElementById('zakupLokalBtn').classList.remove('checked');
   document.getElementById('zakupVoziloBtn').classList.remove('checked');
   document.getElementById('zakupVlasnistvBtn').classList.remove('checked');
@@ -984,6 +989,7 @@ function openEdit(id) {
   document.getElementById('e_pdvBtn').classList.toggle('checked',!!c.pdv);
   document.getElementById('e_nijePdvBtn').classList.toggle('checked',!c.pdv);
   document.getElementById('e_fiskalnaBtn').classList.toggle('checked',!!c.fiskalna);
+  document.getElementById('e_recenzijaBtn').classList.toggle('checked',!!c.recenzija);
   document.getElementById('e_radniciBtn').classList.toggle('checked',!!c.radnici);
   const zArr=Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
   document.getElementById('e_zakupLokalBtn').classList.toggle('checked',zArr.includes('Zakup lokala'));
@@ -1075,6 +1081,7 @@ function saveEdit() {
     porez:getRadio('e_porez'),
     pdv:document.getElementById('e_pdvBtn').classList.contains('checked'),
     fiskalna:document.getElementById('e_fiskalnaBtn').classList.contains('checked'),
+    recenzija:document.getElementById('e_recenzijaBtn').classList.contains('checked'),
     zakup:getZakup('e_'),
     radnici:hasW, workers,
     cenaMesecna:parseFloat(document.getElementById('e_cenaMesecna').value)||0
@@ -1624,6 +1631,7 @@ function filtered() {
   if(currentFilter==='PDV') return clients.filter(c=>c.pdv);
   if(currentFilter==='radnici') return clients.filter(c=>c.radnici);
   if(currentFilter==='fiskalna') return clients.filter(c=>c.fiskalna);
+  if(currentFilter==='recenzija') return clients.filter(c=>c.recenzija);
   return clients.filter(c=>c.pravnaForma===currentFilter);
 }
 
@@ -1635,6 +1643,7 @@ function renderDash() {
     <div class="stat-card"><div class="stat-label">Sa radnicima</div><div class="stat-val">${clients.filter(c=>c.radnici).length}</div></div>
     <div class="stat-card"><div class="stat-label">DOO / PR / Paušal</div><div class="stat-val">${clients.filter(c=>c.pravnaForma==='DOO').length} / ${clients.filter(c=>c.pravnaForma==='PR').length} / ${clients.filter(c=>c.pravnaForma==='Paušal').length}</div></div>
     <div class="stat-card"><div class="stat-label">Fiskalna kasa</div><div class="stat-val">${clients.filter(c=>c.fiskalna).length}</div></div>
+    <div class="stat-card"><div class="stat-label">Google recenzije</div><div class="stat-val" style="color:#fbbc05">${clients.filter(c=>c.recenzija).length} <span style="font-size:13px">★</span></div></div>
     <div class="stat-card"><div class="stat-label">Mesečni prihod</div><div class="stat-val">${eur(ukupno)}</div></div>`;
 
   const list=filtered();
@@ -1644,7 +1653,7 @@ function renderDash() {
   }
 
   let html=`<table class="client-table"><thead><tr>
-    <th>Naziv</th><th>Forma</th><th>Oporezivanje</th><th>PDV</th><th>Fiskalna</th><th>Zakup</th><th>Radnici</th><th>Cena/mes.</th><th style="min-width:140px">Akcije</th>
+    <th>Naziv</th><th>Forma</th><th>Oporezivanje</th><th>PDV</th><th>Fiskalna</th><th>Recenzija</th><th>Zakup</th><th>Radnici</th><th>Cena/mes.</th><th style="min-width:140px">Akcije</th>
   </tr></thead><tbody>`;
 
   list.forEach(c=>{
@@ -1669,6 +1678,7 @@ function renderDash() {
       <td><span class="badge ${pb}" style="font-size:10px">${porezLabel}</span></td>
       <td><span class="badge ${c.pdv?'b-yes':'b-no'}">${c.pdv?'Da':'Ne'}</span></td>
       <td>${fisk}</td>
+      <td>${c.recenzija?'<span class="badge" style="background:#FEF9C3;color:#854D0E;font-size:11px"><i class="ti ti-star-filled" style="font-size:10px;margin-right:3px;color:#fbbc05"></i>Da</span>':'<span class="badge b-no">Ne</span>'}</td>
       <td>${zakupHtml}</td>
       <td>${wh}</td>
       <td>${ch}</td>
