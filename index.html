@@ -993,7 +993,7 @@ function saveEdit() {
   const hasW=document.getElementById('e_radniciBtn').classList.contains('checked');
   const workers=[];
   document.querySelectorAll('#e_workersList [id^="eworker-"]').forEach(wc=>{
-    const id=wc.id.split('-')[1];
+    const id=wc.id.replace('eworker-','');
     const name=document.getElementById('ewname-'+id)?.value.trim();
     const neodredjeno=document.getElementById('ewneodredjeno-'+id)?.checked||false;
     if(name) workers.push({
@@ -1021,7 +1021,9 @@ function saveEdit() {
     radnici:hasW, workers,
     cenaMesecna:parseFloat(document.getElementById('e_cenaMesecna').value)||0
   };
-  save(); closeModal(); renderDash(); renderPodsetnici();
+  save(); closeModal();
+  // Sačekaj da se podaci ažuriraju pa osvježi
+  setTimeout(()=>{ renderDash(); renderPodsetnici(); }, 100);
   showToast('Podaci klijenta "'+naziv+'" su ažurirani!');
 }
 
