@@ -252,7 +252,14 @@ select{cursor:pointer}
 .obaveze-subtab{padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--brd);border-radius:var(--rad);background:none;color:var(--txt2);display:inline-flex;align-items:center;gap:6px;transition:all .15s}
 .obaveze-subtab.active{background:var(--txt);color:var(--bg);border-color:var(--txt)}
 .obaveze-subtab:hover:not(.active){background:var(--bg2)}
-.mes-filter-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.rashod-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 12px;background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);margin-bottom:6px}
+.rashod-iznos{font-size:13px;font-weight:500;color:var(--txt);white-space:nowrap}
+.rashod-total{background:var(--bg2);border-radius:var(--rad);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border:0.5px solid var(--brd2)}
+.rashod-total-label{font-size:13px;color:var(--txt2)}
+.rashod-total-val{font-size:20px;font-weight:600;color:#D32F2F}
+.profit-val{font-size:20px;font-weight:600}
+.profit-pos{color:#1E8C50}
+.profit-neg{color:#D32F2F}
 .mes-filter-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border:0.5px solid var(--brd);border-radius:100px;font-size:12px;cursor:pointer;background:none;color:var(--txt2);transition:all .15s;user-select:none}
 .mes-filter-chip.active{border-color:var(--txt);color:var(--txt);font-weight:500;background:var(--bg2)}
 .mes-filter-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}</style>
@@ -413,9 +420,17 @@ select{cursor:pointer}
     <div><div class="ukupno-label">Godišnji prihod</div><div class="ukupno-val" id="godisnjiVal">€0</div></div>
     <div style="text-align:right"><div class="ukupno-label">Klijenata sa ugovorenom cenom</div><div class="ukupno-val" id="klijSaCenom">0</div></div>
   </div>
-  <div class="section-title">Cenovnik po tipu klijenta</div>
-  <div class="cene-grid" id="ceneGrid"></div>
-  <div class="section-title">Pregled cena po klijentima</div>
+
+  <div class="section-title">Mesečni rashodi</div>
+  <div id="rashodiWrap">
+    <div id="rashodiList"></div>
+    <button class="add-worker-btn" id="addRashodBtn" onclick="addRashod()" style="margin-top:4px">
+      <i class="ti ti-plus"></i> Dodaj stavku rashoda
+    </button>
+  </div>
+  <div id="rashodiSummary" style="margin-top:12px"></div>
+
+  <div class="section-title" style="margin-top:1.5rem">Pregled cena po klijentima</div>
   <div class="table-wrap"><div id="ceneKlijenti"></div></div>
 </div>
 
@@ -669,6 +684,7 @@ async function loadFromDrive() {
     };
     // Store obaveze back to localStorage for speed (checkboxes)
     if(data.obaveze) localStorage.setItem('knjg_crm_obaveze', JSON.stringify(data.obaveze));
+    if(data.rashodi) localStorage.setItem('knjg_crm_rashodi', JSON.stringify(data.rashodi));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
@@ -683,7 +699,8 @@ function save() {
     try {
       if(!driveFileId) return;
       const obaveze = JSON.parse(localStorage.getItem('knjg_crm_obaveze') || '{}');
-      await writeFile(driveFileId, { clients, cenovnik, obaveze });
+      const rashodiData = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
+      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData });
       setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
     } catch(e) {
       setSyncStatus('error', 'Nije sačuvano: ' + e.message);
@@ -1701,35 +1718,100 @@ function deleteClient(id) {
 }
 
 // ── Cene ──
+// ── Rashodi ──
+let rashodi = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
+// {id, naziv, iznos}
+let rashodCount = 0;
+
+function saveRashodi() {
+  localStorage.setItem('knjg_crm_rashodi', JSON.stringify(rashodi));
+  // sync to Drive
+  save();
+}
+
+function addRashod(data) {
+  rashodCount++;
+  const rc = rashodCount;
+  const list = document.getElementById('rashodiList');
+  if(!list) return;
+  const div = document.createElement('div');
+  div.className = 'rashod-row'; div.id = 'rashod-'+rc;
+  div.innerHTML = `
+    <input type="text" id="rname-${rc}" placeholder="Naziv rashoda (npr. Kirija, Telefon...)" value="${data?.naziv||''}"
+      style="font-size:13px" oninput="autoSaveRashod(${rc})">
+    <div style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:13px;color:var(--txt2)">€</span>
+      <input type="number" id="riznos-${rc}" placeholder="0" value="${data?.iznos||''}" min="0" step="0.01"
+        style="width:90px;font-size:13px;font-weight:500" oninput="autoSaveRashod(${rc})">
+    </div>
+    <button onclick="deleteRashod(${rc})" style="background:none;border:none;cursor:pointer;color:var(--danger);padding:4px 8px;border-radius:var(--rad);font-size:13px" title="Ukloni"><i class="ti ti-trash"></i></button>`;
+  list.appendChild(div);
+  // Focus name field
+  setTimeout(()=>document.getElementById('rname-'+rc)?.focus(), 50);
+  renderRashodiSummary();
+}
+
+function autoSaveRashod(rc) {
+  // Save all current rashodi to localStorage
+  const allRashodi = [];
+  document.querySelectorAll('[id^="rashod-"]').forEach(row=>{
+    const id = row.id.replace('rashod-','');
+    const naziv = document.getElementById('rname-'+id)?.value.trim()||'';
+    const iznos = parseFloat(document.getElementById('riznos-'+id)?.value)||0;
+    if(naziv||iznos) allRashodi.push({id, naziv, iznos});
+  });
+  rashodi = allRashodi;
+  saveRashodi();
+  renderRashodiSummary();
+}
+
+function deleteRashod(rc) {
+  document.getElementById('rashod-'+rc)?.remove();
+  autoSaveRashod(rc);
+}
+
+function renderRashodi() {
+  const list = document.getElementById('rashodiList');
+  if(!list) return;
+  list.innerHTML = '';
+  rashodCount = 0;
+  // Reload from saved
+  rashodi = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
+  rashodi.forEach(r => addRashod(r));
+  if(rashodi.length === 0) addRashod(); // start with one empty
+  renderRashodiSummary();
+}
+
+function renderRashodiSummary() {
+  const el = document.getElementById('rashodiSummary');
+  if(!el) return;
+  const ukupnoRashodi = rashodi.reduce((s,r)=>s+(parseFloat(r.iznos)||0),0);
+  const ukupnoPrihod = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
+  const profit = ukupnoPrihod - ukupnoRashodi;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+    <div class="rashod-total">
+      <div><div class="rashod-total-label">Ukupni rashodi / mes.</div></div>
+      <div class="rashod-total-val">${eur(ukupnoRashodi)}</div>
+    </div>
+    <div class="rashod-total">
+      <div><div class="rashod-total-label">Ukupni prihodi / mes.</div></div>
+      <div style="font-size:20px;font-weight:600;color:#1E8C50">${eur(ukupnoPrihod)}</div>
+    </div>
+    <div class="rashod-total">
+      <div><div class="rashod-total-label">Profit / mes.</div></div>
+      <div class="profit-val ${profit>=0?'profit-pos':'profit-neg'}">${profit>=0?'+':''}${eur(profit)}</div>
+    </div>
+  </div>`;
+}
+
 function renderCene() {
   const ukupno=clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
   document.getElementById('ukupnoVal').textContent=eur(ukupno);
   document.getElementById('godisnjiVal').textContent=eur(ukupno*12);
   document.getElementById('klijSaCenom').textContent=clients.filter(c=>c.cenaMesecna>0).length;
 
-  const tipovi=[
-    {key:'DOO_bez_pdv_bez_radnika',label:'DOO',opis:'Bez PDV-a, bez radnika',items:['Finansijsko knjig.','Poreske prijave','Godišnji izveštaj'],featured:false},
-    {key:'DOO_pdv_radnici',label:'DOO + PDV + radnici',opis:'PDV obveznik, sa radnicima',items:['Finansijsko knjig.','PDV evidencija','Obračun zarada','Poreske prijave'],featured:true},
-    {key:'PR_pdv_bez_radnika',label:'PR s PDV-om',opis:'Preduzetnik, PDV obveznik',items:['Poslovne knjige','PDV evidencija','Poreske prijave'],featured:false},
-    {key:'Pausal_bez_radnika',label:'Paušalac',opis:'Paušalno oporezivanje',items:['Paušalne knjige','Prijava poreza','Godišnji izveštaj'],featured:false},
-  ];
-  let html='';
-  tipovi.forEach(t=>{
-    html+=`<div class="cena-card${t.featured?' featured':''}">
-      ${t.featured?'<div class="cena-badge-top">Najčešće</div>':''}
-      <div class="cena-tip">${t.label}</div><div class="cena-opis">${t.opis}</div>
-      <div class="cena-iznos">${eur(cenovnik[t.key]||0)} <span>/ mes.</span></div>
-      <ul class="cena-stavke">${t.items.map(i=>'<li><i class="ti ti-check"></i>'+i+'</li>').join('')}</ul>
-      <div class="cena-edit-row"><label>Izmeni (€):</label><input type="number" value="${cenovnik[t.key]||0}" id="inp-${t.key}" min="0" step="0.01"><button onclick="updateCena('${t.key}')">Sačuvaj</button></div>
-    </div>`;
-  });
-  html+=`<div class="cena-card">
-    <div class="cena-tip">Dodatak po radniku</div><div class="cena-opis">Za svakog radnika pored prvog</div>
-    <div class="cena-iznos">${eur(cenovnik.radnik_dodatak)} <span>/ mes.</span></div>
-    <ul class="cena-stavke"><li><i class="ti ti-check"></i>Obračun zarade</li><li><i class="ti ti-check"></i>M4 prijave</li></ul>
-    <div class="cena-edit-row"><label>Izmeni (€):</label><input type="number" value="${cenovnik.radnik_dodatak}" id="inp-radnik_dodatak" min="0" step="0.01"><button onclick="updateCena('radnik_dodatak')">Sačuvaj</button></div>
-  </div>`;
-  document.getElementById('ceneGrid').innerHTML=html;
+  // Rashodi
+  renderRashodi();
 
   if(!clients.length){document.getElementById('ceneKlijenti').innerHTML='<div class="empty-state"><i class="ti ti-users"></i>Nema unetih klijenata.</div>';return;}
   let tbl='<table class="client-table"><thead><tr><th>Naziv</th><th>Tip</th><th>PDV</th><th>Radnici</th><th>Mesečna cena</th><th>Godišnje</th></tr></thead><tbody>';
