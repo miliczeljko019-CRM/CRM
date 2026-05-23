@@ -1521,10 +1521,10 @@ function showNeuradjeno() {
 
   let sekcije = [];
 
-  // 1. Zakup
+  // 1. Zakup — samo Zakup lokala i Zakup vozila, ne Lokal u vlasništvu
   const zakupKlijenti = clients.filter(c => {
     const zArr = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
-    return zArr.length > 0;
+    return zArr.some(z => z === 'Zakup lokala' || z === 'Zakup vozila');
   });
   const zakupNeuradj = zakupKlijenti.filter(c => !ob[c.id+'_'+tekGod+'_'+tekMes]);
   if(zakupNeuradj.length > 0) {
@@ -1610,7 +1610,8 @@ function renderObaveze() {
   if(obavezeAktivniTab === 'zakup') {
     const klijenti = clients.filter(c => {
       const zArr = Array.isArray(c.zakup) ? c.zakup : (c.zakup && c.zakup !== 'Nije odabrano' ? [c.zakup] : []);
-      return zArr.length > 0;
+      // Prikazati samo one koji imaju Zakup lokala ili Zakup vozila — Lokal u vlasništvu nema mesečnu obavezu
+      return zArr.some(z => z === 'Zakup lokala' || z === 'Zakup vozila');
     });
     buildObavezeTable(
       klijenti, '',
