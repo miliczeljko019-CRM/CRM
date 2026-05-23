@@ -251,7 +251,11 @@ select{cursor:pointer}
 .obaveze-subtabs{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
 .obaveze-subtab{padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--brd);border-radius:var(--rad);background:none;color:var(--txt2);display:inline-flex;align-items:center;gap:6px;transition:all .15s}
 .obaveze-subtab.active{background:var(--txt);color:var(--bg);border-color:var(--txt)}
-.obaveze-subtab:hover:not(.active){background:var(--bg2)}</style>
+.obaveze-subtab:hover:not(.active){background:var(--bg2)}
+.mes-filter-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.mes-filter-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border:0.5px solid var(--brd);border-radius:100px;font-size:12px;cursor:pointer;background:none;color:var(--txt2);transition:all .15s;user-select:none}
+.mes-filter-chip.active{border-color:var(--txt);color:var(--txt);font-weight:500;background:var(--bg2)}
+.mes-filter-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}</style>
 </head>
 <body>
 <!-- ═══ LOGIN EKRAN ═══ -->
@@ -324,7 +328,7 @@ select{cursor:pointer}
 
   <div class="section-title">Vrsta oporezivanja</div>
   <div class="radio-group" id="porez">
-    <div class="radio-btn selected" data-val="Porez na dobit" onclick="pickRadio('porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
+    <div class="radio-btn selected" data-val="Porez na dobit" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
     <div class="radio-btn" data-val="Paušalno oporezivanje" onclick="pickRadio('porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
   </div>
 
@@ -446,7 +450,7 @@ select{cursor:pointer}
 
     <div class="section-title">Vrsta oporezivanja</div>
     <div class="radio-group" id="e_porez">
-      <div class="radio-btn selected" data-val="Porez na dobit" onclick="pickRadio('e_porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
+      <div class="radio-btn selected" data-val="Porez na dobit" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
       <div class="radio-btn" data-val="Paušalno oporezivanje" onclick="pickRadio('e_porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
     </div>
 
@@ -760,7 +764,18 @@ function pickRadio(g, el) {
   if(g==='pravnaForma') setTimeout(updateCenaPreview,50);
 }
 
-// PDV / Nije PDV sinhronizacija — međusobno se isključuju
+// Porez na dobit može da se toggle — klik bira, drugi klik odabira
+function togglePorezNaDobit(groupId, el) {
+  if(el.classList.contains('selected')) {
+    // već izabran — odaberi
+    el.classList.remove('selected');
+  } else {
+    // nije izabran — izaberi i odaberi ostale
+    document.querySelectorAll('#'+groupId+' .radio-btn').forEach(b=>b.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+  if(groupId==='pravnaForma') setTimeout(updateCenaPreview,50);
+}
 function syncNijePdv(pdvId, nijePdvId) {
   const pdv = document.getElementById(pdvId);
   const nije = document.getElementById(nijePdvId);
@@ -934,7 +949,7 @@ function resetForm() {
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
   document.querySelectorAll('#pravnaForma .radio-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
-  document.querySelectorAll('#porez .radio-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
+  document.querySelectorAll('#porez .radio-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('pdvBtn').classList.add('checked');
   document.getElementById('radniciBtn').classList.remove('checked');
   document.getElementById('fiskalnaBtn').classList.remove('checked');
@@ -1201,6 +1216,7 @@ function toggleGrupa(tip) {
 // ── Mesečne obaveze ──
 let obavezeGodina = new Date().getFullYear();
 let obavezeAktivniTab = 'zakup';
+let obavezeFilter = 'sve'; // 'sve' | 'poslato' | 'placeno' | 'tekuci'
 const MESECI = ['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Avg','Sep','Okt','Nov','Dec'];
 const MESECI_PUNI = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
 
@@ -1213,8 +1229,14 @@ function saveObaveze(ob) {
 
 function showObavezeTab(tab) {
   obavezeAktivniTab = tab;
+  obavezeFilter = 'sve';
   document.querySelectorAll('.obaveze-subtab').forEach(b => b.classList.remove('active'));
   document.getElementById('stab-'+tab).classList.add('active');
+  renderObaveze();
+}
+
+function toggleMesFilter(f) {
+  obavezeFilter = (obavezeFilter === f) ? 'sve' : f;
   renderObaveze();
 }
 
@@ -1309,11 +1331,72 @@ function updateObavezeSummary(godina) {
   }
 }
 
+function getMesFilterBarHtml(showPoslatPlacen) {
+  const danas = new Date();
+  const tekMes = danas.getMonth();
+  const tekGod = danas.getFullYear();
+  const mesIme = MESECI_PUNI[tekMes];
+
+  let html = '<div class="mes-filter-bar">';
+  html += `<button class="mes-filter-chip${obavezeFilter==='sve'?' active':''}" onclick="toggleMesFilter('sve')">
+    Svi meseci</button>`;
+  html += `<button class="mes-filter-chip${obavezeFilter==='tekuci'?' active':''}" onclick="toggleMesFilter('tekuci')">
+    <span class="mes-filter-dot" style="background:#FFF8EC;outline:1.5px solid #E07B00;outline-offset:-1px"></span>
+    Tekući (${mesIme})</button>`;
+  if(showPoslatPlacen) {
+    html += `<button class="mes-filter-chip${obavezeFilter==='poslato'?' active':''}" onclick="toggleMesFilter('poslato')">
+      <span class="mes-filter-dot" style="background:#DCEEFF;border:1px solid #0C447C"></span>
+      Poslato</button>`;
+    html += `<button class="mes-filter-chip${obavezeFilter==='placeno'?' active':''}" onclick="toggleMesFilter('placeno')">
+      <span class="mes-filter-dot" style="background:#E8F8E8;border:1px solid #27500A"></span>
+      Plaćeno</button>`;
+  } else {
+    html += `<button class="mes-filter-chip${obavezeFilter==='uradjeno'?' active':''}" onclick="toggleMesFilter('uradjeno')">
+      <span class="mes-filter-dot" style="background:#E8F8E8;border:1px solid #27500A"></span>
+      Uradjeno</button>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function shouldShowMonth(m, godina, ob, clientId, prefix, isPoslatPlacen) {
+  const danas = new Date();
+  const tekGod = danas.getFullYear();
+  const tekMes = danas.getMonth();
+  if(obavezeFilter === 'sve') return true;
+  if(obavezeFilter === 'tekuci') return godina === tekGod && m === tekMes;
+  if(!isPoslatPlacen) {
+    const key = (prefix||'') + clientId + '_' + godina + '_' + m;
+    if(obavezeFilter === 'uradjeno') return !!ob[key];
+  } else {
+    const kPoslat = 'pd_'+clientId+'_'+godina+'_'+m+'_poslat';
+    const kPlacen = 'pd_'+clientId+'_'+godina+'_'+m+'_placen';
+    if(obavezeFilter === 'poslato') return !!ob[kPoslat];
+    if(obavezeFilter === 'placeno') return !!ob[kPlacen];
+  }
+  return true;
+}
+
+function getVisibleMonths(godina, ob, clientId, prefix, isPoslatPlacen) {
+  // Returns array of month indices that should be shown given current filter
+  if(obavezeFilter === 'sve') return Array.from({length:12},(_,i)=>i);
+  const result = [];
+  for(let m=0;m<12;m++) {
+    if(shouldShowMonth(m, godina, ob, clientId, prefix, isPoslatPlacen)) result.push(m);
+  }
+  return result;
+}
+
 function buildObavezeTable(klijenti, prefix, naslov, ikona, prazanTekst, tagFn) {
   const ob = getObaveze();
   const danas = new Date();
   const tekGod = danas.getFullYear();
   const tekMes = danas.getMonth();
+
+  const visibleMonths = obavezeFilter==='sve' ? Array.from({length:12},(_,i)=>i)
+    : obavezeFilter==='tekuci' ? (obavezeGodina===tekGod?[tekMes]:[])
+    : obavezeFilter==='uradjeno' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob[(prefix||'')+c.id+'_'+obavezeGodina+'_'+m]))
+    : Array.from({length:12},(_,i)=>i);
 
   let html = `
     <div class="obaveze-header">
@@ -1328,32 +1411,34 @@ function buildObavezeTable(klijenti, prefix, naslov, ikona, prazanTekst, tagFn) 
       </div>
     </div>
     <div class="obaveze-summary" id="obavezeSummary"></div>
-    <div style="display:flex;gap:14px;font-size:11px;color:var(--txt2);flex-wrap:wrap;margin-bottom:12px;align-items:center">
-      <span><span class="legenda-dot" style="background:#E8F8E8;border:1px solid #7DD4A0"></span>Uradjeno</span>
-      <span><span class="legenda-dot" style="background:#FFF8EC;outline:1.5px solid #E07B00;outline-offset:-1px"></span>Tekući mesec</span>
-      <span><span class="legenda-dot" style="background:var(--brd2)"></span>Budući mesec</span>
-    </div>`;
+    ${getMesFilterBarHtml(false)}`;
 
   if(!klijenti.length) {
     html += `<div class="empty-state"><i class="ti ${ikona}"></i>${prazanTekst}</div>`;
     document.getElementById('obavezeContent').innerHTML = html;
     return;
   }
+  if(visibleMonths.length === 0) {
+    html += '<div class="empty-state"><i class="ti ti-calendar-off"></i>Nema podataka za izabrani filter.</div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    updateObavezeSummary(obavezeGodina);
+    return;
+  }
 
   html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
-  MESECI.forEach((m,i) => {
+  visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${m}</th>`;
+    html += `<th class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr></thead><tbody>';
 
   klijenti.forEach(c => {
     let uradjeno = 0;
+    for(let m=0;m<12;m++) { if(ob[(prefix||'')+c.id+'_'+obavezeGodina+'_'+m]) uradjeno++; }
     html += `<tr><td class="col-naziv"><div style="font-weight:500;font-size:13px">${c.naziv}</div>${tagFn(c)}</td>`;
-    for(let m=0;m<12;m++) {
-      const key = prefix + c.id + '_' + obavezeGodina + '_' + m;
+    visibleMonths.forEach(m => {
+      const key = (prefix||'')+c.id+'_'+obavezeGodina+'_'+m;
       const done = !!ob[key];
-      if(done) uradjeno++;
       const isTek = obavezeGodina===tekGod && m===tekMes;
       const isPast = obavezeGodina<tekGod || (obavezeGodina===tekGod && m<tekMes);
       let cellCls = 'mes-cell';
@@ -1361,9 +1446,9 @@ function buildObavezeTable(klijenti, prefix, naslov, ikona, prazanTekst, tagFn) 
       else if(isTek) cellCls += ' mes-current';
       else if(!isPast) cellCls += ' mes-future';
       html += `<td><div class="${cellCls}" id="cell_${key}">
-        <input type="checkbox" class="mes-cb" id="ob_${key}" ${done?'checked':''} onchange="toggleObaveza(${c.id},${obavezeGodina},${m},'${prefix}')">
+        <input type="checkbox" class="mes-cb" id="ob_${key}" ${done?'checked':''} onchange="toggleObaveza(${c.id},${obavezeGodina},${m},'${prefix||''}')">
       </div></td>`;
-    }
+    });
     const pct = Math.round(uradjeno/12*100);
     html += `<td style="min-width:70px">
       <div style="font-size:12px;font-weight:600;color:${uradjeno===12?'#1E8C50':'var(--txt)'}">${uradjeno}/12</div>
@@ -1430,11 +1515,7 @@ function renderPorezNaDobit() {
       </div>
     </div>
     <div class="obaveze-summary" id="obavezeSummary"></div>
-    <div style="display:flex;gap:14px;font-size:11px;color:var(--txt2);flex-wrap:wrap;margin-bottom:12px;align-items:center">
-      <span><span class="legenda-dot" style="background:#B5D4F4;border:1px solid #0C447C"></span>Poslato</span>
-      <span><span class="legenda-dot" style="background:#C0DD97;border:1px solid #27500A"></span>Plaćeno</span>
-      <span><span class="legenda-dot" style="background:#FFF8EC;outline:1.5px solid #E07B00;outline-offset:-1px"></span>Tekući mesec</span>
-    </div>`;
+    ${getMesFilterBarHtml(true)}`;
 
   if(!klijenti.length) {
     html += '<div class="empty-state"><i class="ti ti-percentage"></i>Nema klijenata sa porezom na dobit.</div>';
@@ -1442,41 +1523,53 @@ function renderPorezNaDobit() {
     return;
   }
 
+  // Determine visible months based on filter
+  const visibleMonths = obavezeFilter==='sve' ? Array.from({length:12},(_,i)=>i)
+    : obavezeFilter==='tekuci' ? (obavezeGodina===tekGod?[tekMes]:[])
+    : obavezeFilter==='poslato' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob['pd_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']))
+    : obavezeFilter==='placeno' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob['pd_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']))
+    : Array.from({length:12},(_,i)=>i);
+
+  if(visibleMonths.length === 0) {
+    html += '<div class="empty-state"><i class="ti ti-calendar-off"></i>Nema podataka za izabrani filter.</div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    updateObavezeSummary(obavezeGodina);
+    return;
+  }
+
   html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
-  MESECI.forEach((m,i) => {
+  visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${m}</th>`;
+    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr>';
-
-  // Sub-header red
   html += '<tr><th class="col-naziv"></th>';
-  for(let m=0;m<12;m++) {
+  visibleMonths.forEach(()=>{
     html += `<th style="font-size:9px;color:#0C447C;padding:2px 2px;font-weight:500">Posl.</th>
              <th style="font-size:9px;color:#27500A;padding:2px 2px;font-weight:500">Plać.</th>`;
-  }
+  });
   html += '<th></th></tr></thead><tbody>';
 
   klijenti.forEach(c => {
     const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
     let poslatoUkupno=0, placenoUkupno=0;
+    for(let m=0;m<12;m++) {
+      if(ob['pd_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUkupno++;
+      if(ob['pd_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']) placenoUkupno++;
+    }
     html += `<tr><td class="col-naziv">
       <div style="font-weight:500;font-size:13px">${c.naziv}</div>
       <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${c.pravnaForma}</span>
     </td>`;
 
-    for(let m=0; m<12; m++) {
+    visibleMonths.forEach(m => {
       const kPoslat = 'pd_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat';
       const kPlacen = 'pd_'+c.id+'_'+obavezeGodina+'_'+m+'_placen';
       const poslat = !!ob[kPoslat];
       const placen = !!ob[kPlacen];
-      if(poslat) poslatoUkupno++;
-      if(placen) placenoUkupno++;
       const isTek = obavezeGodina===tekGod && m===tekMes;
       const isPast = obavezeGodina<tekGod || (obavezeGodina===tekGod && m<tekMes);
-
       const cellBase = isTek ? ' mes-current' : (!isPast ? ' mes-future' : '');
-
       html += `
         <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
           <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
@@ -1486,7 +1579,7 @@ function renderPorezNaDobit() {
           <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
             onchange="togglePorez('${kPlacen}')">
         </div></td>`;
-    }
+    });
 
     html += `<td style="min-width:80px;font-size:11px">
       <div style="color:#0C447C;font-weight:500">P: ${poslatoUkupno}/12</div>
@@ -1556,7 +1649,8 @@ function renderDash() {
 
   list.forEach(c=>{
     const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
-    const pb=c.porez==='Porez na dobit'?'b-dobit':'b-ppausl';
+    const pb=c.porez==='Porez na dobit'?'b-dobit':c.porez==='Paušalno oporezivanje'?'b-ppausl':'b-no';
+    const porezLabel=c.porez==='Porez na dobit'?'Na dobit':c.porez==='Paušalno oporezivanje'?'Paušal':'—';
     const wh=c.radnici&&c.workers.length>0
       ?c.workers.map(w=>`<span class="worker-tag">${w.ime}${w.neodredjeno?' · <span style="color:#888;font-style:italic">neodređeno</span>':w.do_?' · do '+fmt(w.do_):''}</span>`).join('')
       :(c.radnici?'<span class="badge b-yes">Da</span>':'<span class="badge b-no">Ne</span>');
@@ -1572,7 +1666,7 @@ function renderDash() {
     html+=`<tr>
       <td><div style="font-weight:500">${c.naziv}</div>${c.pib?'<div style="font-size:11px;color:var(--txt2)">PIB: '+c.pib+'</div>':''}${rodjStr}</td>
       <td><span class="badge ${fb}">${c.pravnaForma}</span></td>
-      <td><span class="badge ${pb}" style="font-size:10px">${c.porez==='Porez na dobit'?'Na dobit':'Paušal'}</span></td>
+      <td><span class="badge ${pb}" style="font-size:10px">${porezLabel}</span></td>
       <td><span class="badge ${c.pdv?'b-yes':'b-no'}">${c.pdv?'Da':'Ne'}</span></td>
       <td>${fisk}</td>
       <td>${zakupHtml}</td>
