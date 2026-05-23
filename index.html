@@ -312,7 +312,7 @@ select{cursor:pointer}
   </div>
   <div class="form-row">
     <div class="form-group"><label>Telefon</label><input type="text" id="telefon" placeholder="+381 ..."></div>
-    <div class="form-group"><label>Datum rođendana vlasnika</label><input type="date" id="rodjendan"></div>
+    <div class="form-group"><label>Datum rođendana vlasnika</label><div id="rodjendan-wrap"></div></div>
   </div>
 
   <div class="section-title">Pravna forma</div>
@@ -434,7 +434,7 @@ select{cursor:pointer}
     </div>
     <div class="form-row">
       <div class="form-group"><label>Telefon</label><input type="text" id="e_telefon"></div>
-      <div class="form-group"><label>Datum rođendana vlasnika</label><input type="date" id="e_rodjendan"></div>
+      <div class="form-group"><label>Datum rođendana vlasnika</label><div id="e_rodjendan-wrap"></div></div>
     </div>
 
     <div class="section-title">Pravna forma</div>
@@ -707,6 +707,9 @@ async function initApp() {
   document.getElementById('mainApp').style.display = 'block';
   await getUserInfo();
   await loadFromDrive();
+  // Init split date inputs
+  const rw=document.getElementById('rodjendan-wrap');
+  if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
   updateCenaPreview();
 }
 
@@ -787,10 +790,10 @@ function addWorker(data) {
   div.innerHTML=`
     <div class="form-group"><label>Ime i prezime</label><input type="text" id="wname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
     <div class="form-group"><label>JMBG</label><input type="text" id="wjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
-    <div class="form-group"><label>Prijavljen od</label><input type="date" id="wod-${wc}" value="${data?.od||''}"></div>
+    <div class="form-group"><label>Prijavljen od</label>${dateInputHtml('wod-'+wc, data?.od||'', false)}</div>
     <div class="form-group">
       <label>Ugovor do</label>
-      <input type="date" id="wdo-${wc}" value="${data?.do_||''}" ${neodredjeno?'disabled':''}>
+      ${dateInputHtml('wdo-'+wc, data?.do_||'', neodredjeno)}
       <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="wneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('wdo-${wc}',this)"> Neodređeno
       </label>
@@ -811,10 +814,44 @@ document.addEventListener('click',e=>{
 });
 
 function toggleNeodredjeno(dateId, cb) {
-  const inp = document.getElementById(dateId);
-  if(!inp) return;
-  if(cb.checked) { inp.value=''; inp.disabled=true; }
-  else { inp.disabled=false; }
+  // disable/enable the three parts
+  ['_d','_m','_y'].forEach(s=>{
+    const el=document.getElementById(dateId+s);
+    if(el) el.disabled=cb.checked;
+  });
+  if(cb.checked) {
+    ['_d','_m','_y'].forEach(s=>{
+      const el=document.getElementById(dateId+s);
+      if(el) el.value='';
+    });
+  }
+}
+
+function dateInputHtml(id, val, disabled) {
+  // val is YYYY-MM-DD, output DD/MM/YYYY split inputs
+  const p = val ? val.split('-') : ['','',''];
+  const d = p[2]||'', m = p[1]||'', y = p[0]||'';
+  const dis = disabled ? 'disabled' : '';
+  return `<div style="display:flex;gap:4px;align-items:center">
+    <input type="number" id="${id}_d" min="1" max="31" placeholder="DD" value="${d}" ${dis}
+      style="width:46px;text-align:center;padding:7px 4px;font-size:13px"
+      oninput="if(this.value.length==2)document.getElementById('${id}_m').focus()">
+    <span style="color:var(--txt2)">/</span>
+    <input type="number" id="${id}_m" min="1" max="12" placeholder="MM" value="${m}" ${dis}
+      style="width:46px;text-align:center;padding:7px 4px;font-size:13px"
+      oninput="if(this.value.length==2)document.getElementById('${id}_y').focus()">
+    <span style="color:var(--txt2)">/</span>
+    <input type="number" id="${id}_y" min="1900" max="2100" placeholder="GGGG" value="${y}" ${dis}
+      style="width:62px;text-align:center;padding:7px 4px;font-size:13px">
+  </div>`;
+}
+
+function getDateVal(id) {
+  const d = document.getElementById(id+'_d')?.value?.padStart(2,'0')||'';
+  const m = document.getElementById(id+'_m')?.value?.padStart(2,'0')||'';
+  const y = document.getElementById(id+'_y')?.value||'';
+  if(!d||!m||!y) return '';
+  return y+'-'+m+'-'+d; // YYYY-MM-DD for internal storage
 }
 
 function getRadio(g) { const s=document.querySelector('#'+g+' .selected'); return s?s.dataset.val:''; }
@@ -858,8 +895,8 @@ function collectWorkers(prefix, listId) {
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById(prefix+'wjmbg-'+id)?.value.trim()||'',
-      od:document.getElementById(prefix+'wod-'+id)?.value||'',
-      do_:neodredjeno?'':document.getElementById(prefix+'wdo-'+id)?.value||'',
+      od:getDateVal(prefix+'wod-'+id),
+      do_:neodredjeno?'':getDateVal(prefix+'wdo-'+id),
       neodredjeno
     });
   });
@@ -878,7 +915,7 @@ function saveClient() {
     mb:document.getElementById('mb').value.trim(),
     email:document.getElementById('email').value.trim(),
     telefon:document.getElementById('telefon').value.trim(),
-    rodjendan:document.getElementById('rodjendan').value||'',
+    rodjendan:getDateVal('rodjendan'),
     pravnaForma:getRadio('pravnaForma'),
     porez:getRadio('porez'),
     pdv:document.getElementById('pdvBtn').classList.contains('checked'),
@@ -894,7 +931,8 @@ function saveClient() {
 
 function resetForm() {
   ['naziv','pib','mb','email','telefon'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('rodjendan').value='';
+  const rw=document.getElementById('rodjendan-wrap');
+  if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
   document.querySelectorAll('#pravnaForma .radio-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   document.querySelectorAll('#porez .radio-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   document.getElementById('pdvBtn').classList.add('checked');
@@ -919,7 +957,8 @@ function openEdit(id) {
   document.getElementById('e_mb').value=c.mb||'';
   document.getElementById('e_email').value=c.email||'';
   document.getElementById('e_telefon').value=c.telefon||'';
-  document.getElementById('e_rodjendan').value=c.rodjendan||'';
+  const erw=document.getElementById('e_rodjendan-wrap');
+  if(erw) erw.innerHTML=dateInputHtml('e_rodjendan',c.rodjendan||'',false);
   document.getElementById('e_cenaMesecna').value=c.cenaMesecna||0;
 
   // radio pravna forma
@@ -973,10 +1012,10 @@ function addEditWorker(data) {
   div.innerHTML=`
     <div class="form-group"><label>Ime i prezime</label><input type="text" id="ewname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
     <div class="form-group"><label>JMBG</label><input type="text" id="ewjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
-    <div class="form-group"><label>Prijavljen od</label><input type="date" id="ewod-${wc}" value="${data?.od||''}"></div>
+    <div class="form-group"><label>Prijavljen od</label>${dateInputHtml('ewod-'+wc, data?.od||'', false)}</div>
     <div class="form-group">
       <label>Ugovor do</label>
-      <input type="date" id="ewdo-${wc}" value="${data?.do_||''}" ${neodredjeno?'disabled':''}>
+      ${dateInputHtml('ewdo-'+wc, data?.do_||'', neodredjeno)}
       <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="ewneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('ewdo-${wc}',this)"> Neodređeno
       </label>
@@ -1003,8 +1042,8 @@ function saveEdit() {
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById('ewjmbg-'+id)?.value.trim()||'',
-      od:document.getElementById('ewod-'+id)?.value||'',
-      do_:neodredjeno?'':document.getElementById('ewdo-'+id)?.value||'',
+      od:getDateVal('ewod-'+id),
+      do_:neodredjeno?'':getDateVal('ewdo-'+id),
       neodredjeno
     });
   });
@@ -1016,7 +1055,7 @@ function saveEdit() {
     mb:document.getElementById('e_mb').value.trim(),
     email:document.getElementById('e_email').value.trim(),
     telefon:document.getElementById('e_telefon').value.trim(),
-    rodjendan:document.getElementById('e_rodjendan').value||'',
+    rodjendan:getDateVal('e_rodjendan'),
     pravnaForma:getRadio('e_pravnaForma'),
     porez:getRadio('e_porez'),
     pdv:document.getElementById('e_pdvBtn').classList.contains('checked'),
