@@ -1048,8 +1048,8 @@ function ugovorStatus(do_) {
   const diff=Math.ceil((exp-danas)/86400000);
   if(diff<0) return {tip:'istekao',label:'Istekao pre '+Math.abs(diff)+' dana',dana:diff};
   if(diff===0) return {tip:'istekao',label:'Ističe danas!',dana:diff};
-  if(diff<=30) return {tip:'uskoro',label:'Ističe za '+diff+' '+(diff===1?'dan':'dana'),dana:diff};
-  return {tip:'aktivan',label:'Aktivan · još '+diff+' dana',dana:diff};
+  if(diff<=5) return {tip:'uskoro',label:'Ističe za '+diff+' '+(diff===1?'dan':'dana'),dana:diff};
+  return null; // nije u opasnoj zoni — ne prikazuj
 }
 
 function rodjendanStatus(rodjendan) {
@@ -1063,7 +1063,7 @@ function rodjendanStatus(rodjendan) {
     diff=Math.ceil((sledGod-danas)/86400000);
   }
   if(diff===0) return {dana:0,label:'🎂 Danas je rođendan!'};
-  if(diff<=30) return {dana:diff,label:'Rođendan za '+diff+' '+(diff===1?'dan':'dana')+' ('+fmt(ovdGod.getFullYear()<danas.getFullYear()?new Date(danas.getFullYear()+1,parseInt(p[1])-1,parseInt(p[2])).toISOString().split('T')[0]:ovdGod.toISOString().split('T')[0])+')'};
+  if(diff===1) return {dana:1,label:'🎂 Sutra je rođendan! ('+fmt(ovdGod.getFullYear()<danas.getFullYear()?new Date(danas.getFullYear()+1,parseInt(p[1])-1,parseInt(p[2])).toISOString().split('T')[0]:ovdGod.toISOString().split('T')[0])+')'};
   return null;
 }
 
@@ -1074,8 +1074,9 @@ function renderPodsetnici() {
   let sviU=[];
   clients.forEach(c=>{
     if(c.radnici&&c.workers.length>0) c.workers.forEach(w=>{
-      if(w.neodredjeno) return; // preskoči neodređene — ne idu u podsetnik
+      if(w.neodredjeno) return;
       const st=ugovorStatus(w.do_);
+      if(!st) return; // aktivan i daleko od isteka — ne prikazuj
       sviU.push({ime:w.ime,firma:c.naziv,pravnaForma:c.pravnaForma,do_:w.do_,status:st});
     });
   });
@@ -1087,9 +1088,7 @@ function renderPodsetnici() {
   });
   const grupeU=[
     {tip:'istekao',naslov:'Istekli ugovori radnika',ikona:'ti-alert-circle',items:sviU.filter(x=>x.status.tip==='istekao')},
-    {tip:'uskoro',naslov:'Ugovori ističu u 30 dana',ikona:'ti-clock-exclamation',items:sviU.filter(x=>x.status.tip==='uskoro')},
-    {tip:'aktivan',naslov:'Aktivni ugovori',ikona:'ti-circle-check',items:sviU.filter(x=>x.status.tip==='aktivan')},
-    {tip:'bezroka',naslov:'Bez roka trajanja',ikona:'ti-circle-dashed',items:sviU.filter(x=>x.status.tip==='bezroka')},
+    {tip:'uskoro',naslov:'Ugovori ističu u 5 dana',ikona:'ti-clock-exclamation',items:sviU.filter(x=>x.status.tip==='uskoro')},
   ].filter(g=>g.items.length>0);
 
   // --- Rođendani (samo oni u 30 dana) ---
