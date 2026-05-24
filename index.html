@@ -406,13 +406,16 @@ select{cursor:pointer}
 <!-- ═══ MESEČNE OBAVEZE ═══ -->
 <div class="page" id="page-obaveze">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.25rem">
-    <div class="obaveze-subtabs" style="margin-bottom:0">
+    <div class="obaveze-subtabs" style="margin-bottom:0;flex-wrap:wrap">
       <button class="obaveze-subtab active" id="stab-zakup" onclick="showObavezeTab('zakup')"><i class="ti ti-building-store"></i> Zakup</button>
-      <button class="obaveze-subtab" id="stab-fiskalna" onclick="showObavezeTab('fiskalna')"><i class="ti ti-device-desktop-analytics"></i> Periodični izveštaj (fiskalna)</button>
+      <button class="obaveze-subtab" id="stab-fiskalna" onclick="showObavezeTab('fiskalna')"><i class="ti ti-device-desktop-analytics"></i> Periodični izveštaj</button>
       <button class="obaveze-subtab" id="stab-porez" onclick="showObavezeTab('porez')"><i class="ti ti-percentage"></i> Porez na dobit</button>
+      <button class="obaveze-subtab" id="stab-pdv" onclick="showObavezeTab('pdv')"><i class="ti ti-receipt-tax"></i> PDV</button>
+      <button class="obaveze-subtab" id="stab-pausal" onclick="showObavezeTab('pausal')"><i class="ti ti-coins"></i> Paušal</button>
+      <button class="obaveze-subtab" id="stab-plata" onclick="showObavezeTab('plata')"><i class="ti ti-users"></i> Plata</button>
     </div>
     <button onclick="showNeuradjeno()" style="padding:8px 18px;background:#D32F2F;color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
-      <i class="ti ti-list-check"></i> Neuradjena za tekući mesec
+      <i class="ti ti-list-check"></i> Neurađeno za tekući mesec
     </button>
   </div>
   <div id="neuradjenoModal" style="display:none;margin-bottom:1.25rem;background:var(--bg);border:1.5px solid #D32F2F;border-radius:var(--rad-lg);overflow:hidden">
@@ -1288,7 +1291,8 @@ function showObavezeTab(tab) {
   obavezeAktivniTab = tab;
   obavezeFilter = 'sve';
   document.querySelectorAll('.obaveze-subtab').forEach(b => b.classList.remove('active'));
-  document.getElementById('stab-'+tab).classList.add('active');
+  const el = document.getElementById('stab-'+tab);
+  if(el) el.classList.add('active');
   renderObaveze();
 }
 
@@ -1533,7 +1537,7 @@ function showNeuradjeno() {
   const tekGod = danas.getFullYear();
   const mesIme = MESECI_PUNI[tekMes];
 
-  naslov.textContent = 'Neuradjena za ' + mesIme + ' ' + tekGod;
+  naslov.textContent = 'Neurađeno za ' + mesIme + ' ' + tekGod;
 
   let sekcije = [];
 
@@ -1591,9 +1595,51 @@ function showNeuradjeno() {
     });
   }
 
+  // 4. PDV
+  const pdvKlijenti = clients.filter(c => c.pdv);
+  const pdvNeuradj = pdvKlijenti.filter(c => !ob['pdv_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(pdvNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'PDV',
+      ikona: 'ti-receipt-tax',
+      boja: '#27500A',
+      bgBoja: '#C0DD97',
+      stavke: pdvNeuradj.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
+
+  // 5. Paušal
+  const pausalKlijenti = clients.filter(c => c.pravnaForma === 'Paušal');
+  const pausalNeuradj = pausalKlijenti.filter(c => !ob['ps_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(pausalNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'Paušal',
+      ikona: 'ti-coins',
+      boja: '#633806',
+      bgBoja: '#FAC775',
+      stavke: pausalNeuradj.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
+
+  // 6. Plata
+  const plataKlijenti = clients.filter(c => c.radnici && c.workers && c.workers.filter(w=>!w.neodredjeno).length > 0);
+  const plataNeuradj = plataKlijenti.filter(c => !ob['pl_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(plataNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'Plata',
+      ikona: 'ti-users',
+      boja: '#085041',
+      bgBoja: '#9FE1CB',
+      stavke: plataNeuradj.map(c => ({
+        naziv: c.naziv,
+        info: c.workers.filter(w=>!w.neodredjeno).length + ' radnika'
+      }))
+    });
+  }
+
   if(sekcije.length === 0) {
     content.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;color:#1E8C50;font-size:13px;font-weight:500">
-      <i class="ti ti-circle-check" style="font-size:20px"></i> Sve obaveze za ${mesIme} su uradjene! 🎉
+      <i class="ti ti-circle-check" style="font-size:20px"></i> Sve obaveze za ${mesIme} su završene! 🎉
     </div>`;
     modal.style.display = 'block';
     return;
@@ -1616,7 +1662,7 @@ function showNeuradjeno() {
   });
 
   const ukupno = sekcije.reduce((s,sec)=>s+sec.stavke.length, 0);
-  html = `<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Ukupno <strong style="color:#D32F2F">${ukupno}</strong> neuradjenih obaveza za ${mesIme} ${tekGod}</div>` + html;
+  html = `<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Ukupno <strong style="color:#D32F2F">${ukupno}</strong> neurađenih obaveza za ${mesIme} ${tekGod}</div>` + html;
 
   content.innerHTML = html;
   modal.style.display = 'block';
@@ -1645,7 +1691,7 @@ function renderObaveze() {
     );
   } else if(obavezeAktivniTab === 'porez') {
     renderPorezNaDobit();
-  } else {
+  } else if(obavezeAktivniTab === 'fiskalna') {
     const klijenti = clients.filter(c => c.fiskalna);
     buildObavezeTable(
       klijenti, 'f_',
@@ -1653,6 +1699,36 @@ function renderObaveze() {
       'ti-device-desktop-analytics',
       'Nema klijenata sa fiskalnom kasom. Označite fiskalnu kasu klijentu.',
       c => `<span class="badge b-fisk" style="font-size:10px;margin-top:2px"><i class="ti ti-device-desktop-analytics" style="font-size:9px;margin-right:3px"></i>Fiskalna kasa</span>`
+    );
+  } else if(obavezeAktivniTab === 'pdv') {
+    const klijenti = clients.filter(c => c.pdv);
+    buildObavezeTable(
+      klijenti, 'pdv_',
+      'Mesečne obaveze — PDV',
+      'ti-receipt-tax',
+      'Nema PDV obveznika. Označite PDV kod klijenta.',
+      c => `<span class="badge b-yes" style="font-size:10px;margin-top:2px">PDV obveznik</span>`
+    );
+  } else if(obavezeAktivniTab === 'pausal') {
+    const klijenti = clients.filter(c => c.pravnaForma === 'Paušal');
+    buildObavezeTable(
+      klijenti, 'ps_',
+      'Mesečne obaveze — Paušal',
+      'ti-coins',
+      'Nema paušalaca. Dodajte klijenta sa pravnom formom Paušal.',
+      c => `<span class="badge b-pausal" style="font-size:10px;margin-top:2px"><i class="ti ti-receipt" style="font-size:9px"></i> Paušal</span>`
+    );
+  } else if(obavezeAktivniTab === 'plata') {
+    const klijenti = clients.filter(c => c.radnici && c.workers && c.workers.filter(w=>!w.neodredjeno).length > 0);
+    buildObavezeTable(
+      klijenti, 'pl_',
+      'Mesečne obaveze — Plata',
+      'ti-users',
+      'Nema klijenata sa radnicima na određeno. Dodajte radnike klijentu.',
+      c => {
+        const aktiv = c.workers.filter(w=>!w.neodredjeno);
+        return `<span class="badge b-yes" style="font-size:10px;margin-top:2px"><i class="ti ti-users" style="font-size:9px"></i> ${aktiv.length} radnika</span>`;
+      }
     );
   }
 }
