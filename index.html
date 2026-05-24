@@ -432,20 +432,36 @@ select{cursor:pointer}
 
 <!-- ═══ CENE ═══ -->
 <div class="page" id="page-cene">
-  <div class="ukupno-bar">
-    <div><div class="ukupno-label">Ukupan mesečni prihod</div><div class="ukupno-val" id="ukupnoVal">€0</div></div>
-    <div><div class="ukupno-label">Godišnji prihod</div><div class="ukupno-val" id="godisnjiVal">€0</div></div>
-    <div style="text-align:right"><div class="ukupno-label">Klijenata sa ugovorenom cenom</div><div class="ukupno-val" id="klijSaCenom">0</div></div>
+  <div class="ukupno-bar" style="flex-wrap:wrap;gap:0;padding:0;overflow:hidden">
+    <div style="padding:14px 16px;border-right:0.5px solid var(--brd2);flex:1;min-width:140px">
+      <div class="ukupno-label">Mesečni prihod</div>
+      <div class="ukupno-val" id="ukupnoVal">€0</div>
+    </div>
+    <div style="padding:14px 16px;border-right:0.5px solid var(--brd2);flex:1;min-width:140px">
+      <div class="ukupno-label">Godišnji prihod</div>
+      <div class="ukupno-val" id="godisnjiVal">€0</div>
+    </div>
+    <div style="padding:14px 16px;border-right:0.5px solid var(--brd2);flex:1;min-width:140px">
+      <div class="ukupno-label">Mesečni rashodi</div>
+      <div class="ukupno-val" id="rashodiMesecVal" style="color:#D32F2F">€0</div>
+    </div>
+    <div style="padding:14px 16px;border-right:0.5px solid var(--brd2);flex:1;min-width:140px">
+      <div class="ukupno-label">Godišnji rashodi</div>
+      <div class="ukupno-val" id="rashodiGodisnjiVal" style="color:#D32F2F">€0</div>
+    </div>
+    <div style="padding:14px 16px;flex:1;min-width:140px">
+      <div class="ukupno-label">Profit / mes.</div>
+      <div class="ukupno-val" id="profitVal">€0</div>
+    </div>
   </div>
 
-  <div class="section-title">Mesečni rashodi</div>
+  <div class="section-title" style="margin-top:1.25rem">Mesečni rashodi</div>
   <div id="rashodiWrap">
     <div id="rashodiList"></div>
     <button class="add-worker-btn" id="addRashodBtn" onclick="addRashod()" style="margin-top:4px">
       <i class="ti ti-plus"></i> Dodaj stavku rashoda
     </button>
   </div>
-  <div id="rashodiSummary" style="margin-top:12px"></div>
 
   <div class="section-title" style="margin-top:1.5rem">Pregled cena po klijentima</div>
   <div class="table-wrap"><div id="ceneKlijenti"></div></div>
@@ -1782,8 +1798,7 @@ function renderDash() {
     <div class="stat-card"><div class="stat-label">Sa radnicima</div><div class="stat-val">${clients.filter(c=>c.radnici).length}</div></div>
     <div class="stat-card"><div class="stat-label">DOO / PR / Paušal</div><div class="stat-val">${clients.filter(c=>c.pravnaForma==='DOO').length} / ${clients.filter(c=>c.pravnaForma==='PR').length} / ${clients.filter(c=>c.pravnaForma==='Paušal').length}</div></div>
     <div class="stat-card"><div class="stat-label">Fiskalna kasa</div><div class="stat-val">${clients.filter(c=>c.fiskalna).length}</div></div>
-    <div class="stat-card"><div class="stat-label">Google recenzije</div><div class="stat-val" style="color:#fbbc05">${clients.filter(c=>c.recenzija).length} <span style="font-size:13px">★</span></div></div>
-    <div class="stat-card"><div class="stat-label">Mesečni prihod</div><div class="stat-val">${eur(ukupno)}</div></div>`;
+    <div class="stat-card"><div class="stat-label">Google recenzije</div><div class="stat-val" style="color:#fbbc05">${clients.filter(c=>c.recenzija).length} <span style="font-size:13px">★</span></div></div>`;
 
   const list=filtered();
   if(!list.length){
@@ -1905,35 +1920,30 @@ function renderRashodi() {
 }
 
 function renderRashodiSummary() {
-  const el = document.getElementById('rashodiSummary');
-  if(!el) return;
   const ukupnoRashodi = rashodi.reduce((s,r)=>s+(parseFloat(r.iznos)||0),0);
   const ukupnoPrihod = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
   const profit = ukupnoPrihod - ukupnoRashodi;
-  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
-    <div class="rashod-total">
-      <div><div class="rashod-total-label">Ukupni rashodi / mes.</div></div>
-      <div class="rashod-total-val">${eur(ukupnoRashodi)}</div>
-    </div>
-    <div class="rashod-total">
-      <div><div class="rashod-total-label">Ukupni prihodi / mes.</div></div>
-      <div style="font-size:20px;font-weight:600;color:#1E8C50">${eur(ukupnoPrihod)}</div>
-    </div>
-    <div class="rashod-total">
-      <div><div class="rashod-total-label">Profit / mes.</div></div>
-      <div class="profit-val ${profit>=0?'profit-pos':'profit-neg'}">${profit>=0?'+':''}${eur(profit)}</div>
-    </div>
-  </div>`;
+
+  const rMes = document.getElementById('rashodiMesecVal');
+  const rGod = document.getElementById('rashodiGodisnjiVal');
+  const pVal = document.getElementById('profitVal');
+
+  if(rMes) rMes.textContent = eur(ukupnoRashodi);
+  if(rGod) rGod.textContent = eur(ukupnoRashodi * 12);
+  if(pVal) {
+    pVal.textContent = (profit >= 0 ? '+' : '') + eur(profit);
+    pVal.style.color = profit >= 0 ? '#1E8C50' : '#D32F2F';
+  }
 }
 
 function renderCene() {
   const ukupno=clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
   document.getElementById('ukupnoVal').textContent=eur(ukupno);
   document.getElementById('godisnjiVal').textContent=eur(ukupno*12);
-  document.getElementById('klijSaCenom').textContent=clients.filter(c=>c.cenaMesecna>0).length;
 
   // Rashodi
   renderRashodi();
+  renderRashodiSummary();
 
   if(!clients.length){document.getElementById('ceneKlijenti').innerHTML='<div class="empty-state"><i class="ti ti-users"></i>Nema unetih klijenata.</div>';return;}
   let tbl='<table class="client-table"><thead><tr><th>Naziv</th><th>Tip</th><th>PDV</th><th>Radnici</th><th>Mesečna cena</th><th>Godišnje</th></tr></thead><tbody>';
