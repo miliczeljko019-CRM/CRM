@@ -2225,99 +2225,77 @@ function saveCiljevi() {
 }
 
 function renderCiljevi() {
-  const ukupnoKlijenti = clients.length;
-  const mesecniPrihod = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
-  const godisnjiPrihod = mesecniPrihod * 12;
+  const doo = clients.filter(c=>c.pravnaForma==='DOO').length;
+  const pr  = clients.filter(c=>c.pravnaForma==='PR').length;
+  const pau = clients.filter(c=>c.pravnaForma==='Paušal').length;
+  const ukupno = clients.length;
+  const mesecni  = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
+  const godisnji = mesecni * 12;
 
-  const cK = parseFloat(ciljevi.ciljKlijenti)||0;
-  const cM = parseFloat(ciljevi.ciljMesecni)||0;
-  const cG = parseFloat(ciljevi.ciljGodisnji)||0;
+  function pct(val, cilj) { return cilj>0 ? Math.min(Math.round(val/cilj*100),100) : 0; }
+  function barClr(p) { return p>=100?'#1E8C50':p>=60?'#E07B00':'#D32F2F'; }
 
-  function pct(val, cilj) { return cilj > 0 ? Math.min(Math.round(val/cilj*100), 100) : 0; }
-  function barColor(p) { return p >= 100 ? '#1E8C50' : p >= 60 ? '#E07B00' : '#D32F2F'; }
-  function pctLabel(val, cilj) {
-    if(!cilj) return '';
-    const p = pct(val, cilj);
-    return `<span class="cilj-pct" style="color:${barColor(p)}">${p}% cilja</span>`;
-  }
-  function progressBar(val, cilj) {
-    if(!cilj) return '';
-    const p = pct(val, cilj);
-    return `<div class="cilj-progress-wrap">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2)">
-        <span>Trenutno</span><span>Cilj</span>
-      </div>
-      <div class="cilj-progress-bar">
-        <div class="cilj-progress-fill" style="width:${p}%;background:${barColor(p)}"></div>
-      </div>
-      ${pctLabel(val, cilj)}
-    </div>`;
+  function ciljRow(label, val, valFmt, key, placeholder, unit, badge) {
+    const c = parseFloat(ciljevi[key])||0;
+    const p = pct(val, c);
+    const clr = barClr(p);
+    const nedostaje = c>0 ? (val>=c
+      ? `<span style="color:#1E8C50;font-size:12px;font-weight:500">✓ Cilj dostignut!</span>`
+      : `<span style="font-size:12px;color:var(--txt2)">Nedostaje: <strong style="color:${clr}">${typeof valFmt==='function'?valFmt(c-val):(c-val)}</strong></span>`)
+      : '';
+    return `<tr>
+      <td style="padding:12px 14px;font-size:13px;font-weight:500;white-space:nowrap">
+        ${badge||''} ${label}
+      </td>
+      <td style="padding:12px 14px;font-size:20px;font-weight:600">${typeof valFmt==='function'?valFmt(val):val}</td>
+      <td style="padding:12px 14px;min-width:180px">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${unit==='€'?'<span style="color:var(--txt2);font-size:14px">€</span>':''}
+          <input type="number" value="${c||''}" placeholder="${placeholder}" min="0"
+            style="font-size:16px;font-weight:600;width:110px;border:none;border-bottom:2px solid ${c?clr:'var(--brd2)'};border-radius:0;padding:3px 4px;background:transparent;color:var(--txt)"
+            onchange="updateCilj('${key}',this.value)">
+          ${unit&&unit!=='€'?`<span style="font-size:12px;color:var(--txt2)">${unit}</span>`:''}
+        </div>
+      </td>
+      <td style="padding:12px 14px;min-width:160px">
+        ${c>0?`<div style="height:7px;background:var(--brd2);border-radius:4px;overflow:hidden;margin-bottom:4px">
+          <div style="height:100%;width:${p}%;background:${clr};border-radius:4px;transition:width .4s"></div>
+        </div>
+        <span style="font-size:12px;font-weight:600;color:${clr}">${p}%</span>
+        `:'<span style="font-size:12px;color:var(--txt2)">Unesite cilj →</span>'}
+      </td>
+      <td style="padding:12px 14px">${nedostaje}</td>
+    </tr>`;
   }
 
   const html = `
-    <div style="margin-bottom:1.5rem">
-      <div style="font-size:16px;font-weight:600;margin-bottom:4px"><i class="ti ti-target" style="margin-right:6px"></i>Ciljevi</div>
-      <div style="font-size:13px;color:var(--txt2)">Postavi ciljeve i prati napredak</div>
+    <div style="margin-bottom:1.25rem;display:flex;align-items:baseline;gap:10px">
+      <div style="font-size:16px;font-weight:600"><i class="ti ti-target" style="margin-right:6px"></i>Ciljevi</div>
+      <div style="font-size:13px;color:var(--txt2)">Postavi ciljeve i prati napredak u realnom vremenu</div>
     </div>
 
-    <!-- Klijenti -->
-    <div class="cilj-row">
-      <div class="cilj-col left">
-        <div class="cilj-label">Ukupno klijenata</div>
-        <div class="cilj-val">${ukupnoKlijenti}</div>
-        <div class="cilj-sub">Trenutni broj klijenata</div>
-        ${progressBar(ukupnoKlijenti, cK)}
-      </div>
-      <div class="cilj-arrow"><i class="ti ti-arrow-right"></i></div>
-      <div class="cilj-col right">
-        <div class="cilj-label">Ciljani broj klijenata</div>
-        <div class="cilj-input-wrap">
-          <input type="number" id="inp-ciljKlijenti" value="${cK||''}" placeholder="npr. 50" min="0"
-            onchange="updateCilj('ciljKlijenti',this.value)">
-          <span style="font-size:12px;color:var(--txt2)">klijenata</span>
-        </div>
-        ${cK ? `<div class="cilj-sub" style="margin-top:8px">Nedostaje: <strong>${Math.max(0, cK - ukupnoKlijenti)}</strong> klijenata</div>` : '<div class="cilj-sub" style="margin-top:8px">Unesite cilj</div>'}
-      </div>
-    </div>
-
-    <!-- Mesecni prihod -->
-    <div class="cilj-row">
-      <div class="cilj-col left">
-        <div class="cilj-label">Trenutni mesečni prihod</div>
-        <div class="cilj-val">${eur(mesecniPrihod)}</div>
-        <div class="cilj-sub">Zbir svih mesečnih cena</div>
-        ${progressBar(mesecniPrihod, cM)}
-      </div>
-      <div class="cilj-arrow"><i class="ti ti-arrow-right"></i></div>
-      <div class="cilj-col right">
-        <div class="cilj-label">Ciljani mesečni prihod</div>
-        <div class="cilj-input-wrap">
-          <span>€</span>
-          <input type="number" id="inp-ciljMesecni" value="${cM||''}" placeholder="npr. 5000" min="0"
-            onchange="updateCilj('ciljMesecni',this.value)">
-        </div>
-        ${cM ? `<div class="cilj-sub" style="margin-top:8px">Nedostaje: <strong>${eur(Math.max(0, cM - mesecniPrihod))}</strong> / mes.</div>` : '<div class="cilj-sub" style="margin-top:8px">Unesite cilj</div>'}
-      </div>
-    </div>
-
-    <!-- Godisnji prihod -->
-    <div class="cilj-row">
-      <div class="cilj-col left">
-        <div class="cilj-label">Trenutni godišnji prihod</div>
-        <div class="cilj-val">${eur(godisnjiPrihod)}</div>
-        <div class="cilj-sub">Mesečni × 12</div>
-        ${progressBar(godisnjiPrihod, cG)}
-      </div>
-      <div class="cilj-arrow"><i class="ti ti-arrow-right"></i></div>
-      <div class="cilj-col right">
-        <div class="cilj-label">Ciljani godišnji prihod</div>
-        <div class="cilj-input-wrap">
-          <span>€</span>
-          <input type="number" id="inp-ciljGodisnji" value="${cG||''}" placeholder="npr. 60000" min="0"
-            onchange="updateCilj('ciljGodisnji',this.value)">
-        </div>
-        ${cG ? `<div class="cilj-sub" style="margin-top:8px">Nedostaje: <strong>${eur(Math.max(0, cG - godisnjiPrihod))}</strong> / god.</div>` : '<div class="cilj-sub" style="margin-top:8px">Unesite cilj</div>'}
-      </div>
+    <div class="table-wrap">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:0.5px solid var(--brd2)">
+          <th style="text-align:left;padding:8px 14px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap">Kategorija</th>
+          <th style="text-align:left;padding:8px 14px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em">Trenutno</th>
+          <th style="text-align:left;padding:8px 14px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em">Cilj</th>
+          <th style="text-align:left;padding:8px 14px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em">Napredak</th>
+          <th style="text-align:left;padding:8px 14px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:var(--bg2)"><td colspan="5" style="padding:6px 14px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em">Klijenti</td></tr>
+        ${ciljRow('Ukupno klijenata', ukupno, v=>v, 'ciljKlijenti', 'npr. 50', 'klijenata', '')}
+        ${ciljRow('DOO', doo, v=>v, 'ciljDOO', 'npr. 20', 'klijenata', '<span class="badge b-doo" style="font-size:10px">DOO</span>')}
+        ${ciljRow('PR', pr, v=>v, 'ciljPR', 'npr. 15', 'klijenata', '<span class="badge b-pr" style="font-size:10px">PR</span>')}
+        ${ciljRow('Paušal', pau, v=>v, 'ciljPausal', 'npr. 15', 'klijenata', '<span class="badge b-pausal" style="font-size:10px">Paušal</span>')}
+        <tr style="background:var(--bg2)"><td colspan="5" style="padding:6px 14px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em">Prihodi</td></tr>
+        ${ciljRow('Mesečni prihod', mesecni, eur, 'ciljMesecni', 'npr. 5000', '€', '')}
+        ${ciljRow('Godišnji prihod', godisnji, eur, 'ciljGodisnji', 'npr. 60000', '€', '')}
+      </tbody>
+    </table>
     </div>`;
 
   document.getElementById('ciljeviContent').innerHTML = html;
