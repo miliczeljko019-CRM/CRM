@@ -260,6 +260,25 @@ select{cursor:pointer}
 .profit-val{font-size:20px;font-weight:600}
 .profit-pos{color:#1E8C50}
 .profit-neg{color:#D32F2F}
+
+/* Ciljevi */
+.cilj-row{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;background:var(--bg);border:0.5px solid var(--brd2);border-radius:var(--rad-lg);overflow:hidden;margin-bottom:12px}
+.cilj-col{padding:16px 20px}
+.cilj-col.left{background:var(--bg2);border-right:0.5px solid var(--brd2)}
+.cilj-col.right{background:var(--bg)}
+.cilj-divider{display:flex;align-items:center;justify-content:center;padding:0 12px;background:var(--bg);border-right:0.5px solid var(--brd2);font-size:12px;color:var(--txt2);writing-mode:horizontal-tb}
+.cilj-label{font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.cilj-val{font-size:28px;font-weight:600;color:var(--txt);margin-bottom:4px}
+.cilj-sub{font-size:12px;color:var(--txt2)}
+.cilj-input-wrap{display:flex;align-items:center;gap:8px;margin-top:6px}
+.cilj-input-wrap span{font-size:16px;color:var(--txt2);font-weight:500}
+.cilj-input-wrap input{font-size:20px;font-weight:600;width:140px;border:none;border-bottom:2px solid var(--brd2);border-radius:0;padding:4px 4px;background:transparent;color:var(--txt);transition:border-color .15s}
+.cilj-input-wrap input:focus{border-bottom-color:var(--txt);outline:none}
+.cilj-progress-wrap{margin-top:10px}
+.cilj-progress-bar{height:8px;background:var(--brd2);border-radius:4px;overflow:hidden;margin-top:4px}
+.cilj-progress-fill{height:100%;border-radius:4px;transition:width .4s}
+.cilj-pct{font-size:12px;font-weight:500;margin-top:4px}
+.cilj-arrow{font-size:20px;color:var(--txt2);padding:0 8px;display:flex;align-items:center}
 .mes-filter-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border:0.5px solid var(--brd);border-radius:100px;font-size:12px;cursor:pointer;background:none;color:var(--txt2);transition:all .15s;user-select:none}
 .mes-filter-chip.active{border-color:var(--txt);color:var(--txt);font-weight:500;background:var(--bg2)}
 .mes-filter-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}</style>
@@ -308,6 +327,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('dash')"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
   <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
   <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
+  <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -468,6 +488,11 @@ select{cursor:pointer}
 
   <div class="section-title" style="margin-top:1.5rem">Pregled cena po klijentima</div>
   <div class="table-wrap"><div id="ceneKlijenti"></div></div>
+</div>
+
+<!-- ═══ CILJEVI ═══ -->
+<div class="page" id="page-ciljevi">
+  <div id="ciljeviContent"></div>
 </div>
 
 </div><!-- /app -->
@@ -721,6 +746,7 @@ async function loadFromDrive() {
     // Store obaveze back to localStorage for speed (checkboxes)
     if(data.obaveze) localStorage.setItem('knjg_crm_obaveze', JSON.stringify(data.obaveze));
     if(data.rashodi) localStorage.setItem('knjg_crm_rashodi', JSON.stringify(data.rashodi));
+    if(data.ciljevi) localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(data.ciljevi));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
@@ -736,7 +762,8 @@ function save() {
       if(!driveFileId) return;
       const obaveze = JSON.parse(localStorage.getItem('knjg_crm_obaveze') || '{}');
       const rashodiData = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
-      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData });
+      const ciljeviData = JSON.parse(localStorage.getItem('knjg_crm_ciljevi') || '{}');
+      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData });
       setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
     } catch(e) {
       setSyncStatus('error', 'Nije sačuvano: ' + e.message);
@@ -792,12 +819,13 @@ function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'
 
 // ── Tabs ──
 function showTab(t) {
-  const names=['form','dash','obaveze','cene'];
+  const names=['form','dash','obaveze','cene','ciljevi'];
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
   if(t==='dash'){renderDash();renderPodsetnici();}
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
+  if(t==='ciljevi') renderCiljevi();
 }
 
 // ── Forma ──
@@ -2185,6 +2213,120 @@ function exportRadniciExcel(){
   XLSX.utils.book_append_sheet(wb,ws,'Radnici');
   XLSX.writeFile(wb,'Radnici_'+new Date().toLocaleDateString('en-GB').replace(/\//g,'-')+'.xlsx');
   showToast('Excel radnici preuzet!');
+}
+
+// ── Ciljevi ──
+let ciljevi = JSON.parse(localStorage.getItem('knjg_crm_ciljevi') || '{}');
+// { ciljKlijenti, ciljMesecni, ciljGodisnji }
+
+function saveCiljevi() {
+  localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(ciljevi));
+  save();
+}
+
+function renderCiljevi() {
+  const ukupnoKlijenti = clients.length;
+  const mesecniPrihod = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
+  const godisnjiPrihod = mesecniPrihod * 12;
+
+  const cK = parseFloat(ciljevi.ciljKlijenti)||0;
+  const cM = parseFloat(ciljevi.ciljMesecni)||0;
+  const cG = parseFloat(ciljevi.ciljGodisnji)||0;
+
+  function pct(val, cilj) { return cilj > 0 ? Math.min(Math.round(val/cilj*100), 100) : 0; }
+  function barColor(p) { return p >= 100 ? '#1E8C50' : p >= 60 ? '#E07B00' : '#D32F2F'; }
+  function pctLabel(val, cilj) {
+    if(!cilj) return '';
+    const p = pct(val, cilj);
+    return `<span class="cilj-pct" style="color:${barColor(p)}">${p}% cilja</span>`;
+  }
+  function progressBar(val, cilj) {
+    if(!cilj) return '';
+    const p = pct(val, cilj);
+    return `<div class="cilj-progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt2)">
+        <span>Trenutno</span><span>Cilj</span>
+      </div>
+      <div class="cilj-progress-bar">
+        <div class="cilj-progress-fill" style="width:${p}%;background:${barColor(p)}"></div>
+      </div>
+      ${pctLabel(val, cilj)}
+    </div>`;
+  }
+
+  const html = `
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:16px;font-weight:600;margin-bottom:4px"><i class="ti ti-target" style="margin-right:6px"></i>Ciljevi</div>
+      <div style="font-size:13px;color:var(--txt2)">Postavi ciljeve i prati napredak</div>
+    </div>
+
+    <!-- Klijenti -->
+    <div class="cilj-row">
+      <div class="cilj-col left">
+        <div class="cilj-label">Ukupno klijenata</div>
+        <div class="cilj-val">${ukupnoKlijenti}</div>
+        <div class="cilj-sub">Trenutni broj klijenata</div>
+        ${progressBar(ukupnoKlijenti, cK)}
+      </div>
+      <div class="cilj-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="cilj-col right">
+        <div class="cilj-label">Ciljani broj klijenata</div>
+        <div class="cilj-input-wrap">
+          <input type="number" id="inp-ciljKlijenti" value="${cK||''}" placeholder="npr. 50" min="0"
+            onchange="updateCilj('ciljKlijenti',this.value)">
+          <span style="font-size:12px;color:var(--txt2)">klijenata</span>
+        </div>
+        ${cK ? `<div class="cilj-sub" style="margin-top:8px">Nedostaje: <strong>${Math.max(0, cK - ukupnoKlijenti)}</strong> klijenata</div>` : '<div class="cilj-sub" style="margin-top:8px">Unesite cilj</div>'}
+      </div>
+    </div>
+
+    <!-- Mesecni prihod -->
+    <div class="cilj-row">
+      <div class="cilj-col left">
+        <div class="cilj-label">Trenutni mesečni prihod</div>
+        <div class="cilj-val">${eur(mesecniPrihod)}</div>
+        <div class="cilj-sub">Zbir svih mesečnih cena</div>
+        ${progressBar(mesecniPrihod, cM)}
+      </div>
+      <div class="cilj-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="cilj-col right">
+        <div class="cilj-label">Ciljani mesečni prihod</div>
+        <div class="cilj-input-wrap">
+          <span>€</span>
+          <input type="number" id="inp-ciljMesecni" value="${cM||''}" placeholder="npr. 5000" min="0"
+            onchange="updateCilj('ciljMesecni',this.value)">
+        </div>
+        ${cM ? `<div class="cilj-sub" style="margin-top:8px">Nedostaje: <strong>${eur(Math.max(0, cM - mesecniPrihod))}</strong> / mes.</div>` : '<div class="cilj-sub" style="margin-top:8px">Unesite cilj</div>'}
+      </div>
+    </div>
+
+    <!-- Godisnji prihod -->
+    <div class="cilj-row">
+      <div class="cilj-col left">
+        <div class="cilj-label">Trenutni godišnji prihod</div>
+        <div class="cilj-val">${eur(godisnjiPrihod)}</div>
+        <div class="cilj-sub">Mesečni × 12</div>
+        ${progressBar(godisnjiPrihod, cG)}
+      </div>
+      <div class="cilj-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="cilj-col right">
+        <div class="cilj-label">Ciljani godišnji prihod</div>
+        <div class="cilj-input-wrap">
+          <span>€</span>
+          <input type="number" id="inp-ciljGodisnji" value="${cG||''}" placeholder="npr. 60000" min="0"
+            onchange="updateCilj('ciljGodisnji',this.value)">
+        </div>
+        ${cG ? `<div class="cilj-sub" style="margin-top:8px">Nedostaje: <strong>${eur(Math.max(0, cG - godisnjiPrihod))}</strong> / god.</div>` : '<div class="cilj-sub" style="margin-top:8px">Unesite cilj</div>'}
+      </div>
+    </div>`;
+
+  document.getElementById('ciljeviContent').innerHTML = html;
+}
+
+function updateCilj(key, val) {
+  ciljevi[key] = parseFloat(val)||0;
+  saveCiljevi();
+  renderCiljevi();
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
