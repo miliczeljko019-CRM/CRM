@@ -1622,7 +1622,7 @@ function showNeuradjeno() {
   }
 
   // 6. Plata
-  const plataKlijenti = clients.filter(c => c.radnici && c.workers && c.workers.filter(w=>!w.neodredjeno).length > 0);
+  const plataKlijenti = clients.filter(c => c.radnici && c.workers && c.workers.length > 0);
   const plataNeuradj = plataKlijenti.filter(c => !ob['pl_'+c.id+'_'+tekGod+'_'+tekMes]);
   if(plataNeuradj.length > 0) {
     sekcije.push({
@@ -1632,7 +1632,7 @@ function showNeuradjeno() {
       bgBoja: '#9FE1CB',
       stavke: plataNeuradj.map(c => ({
         naziv: c.naziv,
-        info: c.workers.filter(w=>!w.neodredjeno).length + ' radnika'
+        info: c.workers.length + ' radnika'
       }))
     });
   }
@@ -1719,15 +1719,14 @@ function renderObaveze() {
       c => `<span class="badge b-pausal" style="font-size:10px;margin-top:2px"><i class="ti ti-receipt" style="font-size:9px"></i> Paušal</span>`
     );
   } else if(obavezeAktivniTab === 'plata') {
-    const klijenti = clients.filter(c => c.radnici && c.workers && c.workers.filter(w=>!w.neodredjeno).length > 0);
+    const klijenti = clients.filter(c => c.radnici && c.workers && c.workers.length > 0);
     buildObavezeTable(
       klijenti, 'pl_',
       'Mesečne obaveze — Plata',
       'ti-users',
-      'Nema klijenata sa radnicima na određeno. Dodajte radnike klijentu.',
+      'Nema klijenata sa radnicima. Dodajte radnike klijentu.',
       c => {
-        const aktiv = c.workers.filter(w=>!w.neodredjeno);
-        return `<span class="badge b-yes" style="font-size:10px;margin-top:2px"><i class="ti ti-users" style="font-size:9px"></i> ${aktiv.length} radnika</span>`;
+        return `<span class="badge b-yes" style="font-size:10px;margin-top:2px"><i class="ti ti-users" style="font-size:9px"></i> ${c.workers.length} radnika</span>`;
       }
     );
   }
