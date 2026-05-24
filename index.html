@@ -55,7 +55,7 @@ input,select,button{font-family:inherit;font-size:inherit;color:var(--txt);backg
 input:focus,select:focus{border-color:var(--brd3)}
 select{cursor:pointer}
 
-.app{max-width:980px;margin:0 auto;padding:1.5rem 1rem}
+.app{max-width:980px;margin:0 auto;padding:1.5rem 2rem}
 .app-header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--brd2)}
 .app-header h1{font-size:17px;font-weight:600}
 .app-header p{font-size:12px;color:var(--txt2)}
@@ -66,7 +66,7 @@ select{cursor:pointer}
 .tab{padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--txt2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .tab.active{color:var(--txt);border-bottom-color:var(--txt)}
 .tab:hover:not(.active){color:var(--txt)}
-.page{display:none}.page.active{display:block}
+.page{display:none;padding:0}.page.active{display:block}
 
 .section-title{font-size:11px;font-weight:500;color:var(--txt2);letter-spacing:.06em;text-transform:uppercase;margin:1.25rem 0 .5rem}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
@@ -456,7 +456,7 @@ select{cursor:pointer}
 
 <!-- ═══ CENE ═══ -->
 <div class="page" id="page-cene">
-  <div class="ukupno-bar" style="flex-wrap:wrap;gap:0;padding:0;overflow:hidden;max-width:860px">
+  <div class="ukupno-bar" style="flex-wrap:wrap;gap:0;padding:0;overflow:hidden;margin-left:0;margin-right:0">
     <div style="padding:14px 16px;border-right:0.5px solid var(--brd2);flex:1;min-width:140px">
       <div class="ukupno-label">Mesečni prihod</div>
       <div class="ukupno-val" id="ukupnoVal">€0</div>
