@@ -1710,14 +1710,7 @@ function renderObaveze() {
       c => `<span class="badge b-yes" style="font-size:10px;margin-top:2px">PDV obveznik</span>`
     );
   } else if(obavezeAktivniTab === 'pausal') {
-    const klijenti = clients.filter(c => c.pravnaForma === 'Paušal');
-    buildObavezeTable(
-      klijenti, 'ps_',
-      'Mesečne obaveze — Paušal',
-      'ti-coins',
-      'Nema paušalaca. Dodajte klijenta sa pravnom formom Paušal.',
-      c => `<span class="badge b-pausal" style="font-size:10px;margin-top:2px"><i class="ti ti-receipt" style="font-size:9px"></i> Paušal</span>`
-    );
+    renderPausal();
   } else if(obavezeAktivniTab === 'plata') {
     const klijenti = clients.filter(c => c.radnici && c.workers && c.workers.length > 0);
     buildObavezeTable(
@@ -1730,6 +1723,123 @@ function renderObaveze() {
       }
     );
   }
+}
+
+function renderPausal() {
+  const ob = getObaveze();
+  const danas = new Date();
+  const tekGod = danas.getFullYear();
+  const tekMes = danas.getMonth();
+  const klijenti = clients.filter(c => c.pravnaForma === 'Paušal');
+
+  const visibleMonths = obavezeFilter==='sve' ? Array.from({length:12},(_,i)=>i)
+    : obavezeFilter==='tekuci' ? (obavezeGodina===tekGod?[tekMes]:[])
+    : obavezeFilter==='poslato' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob['pau_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']))
+    : obavezeFilter==='placeno' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob['pau_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']))
+    : Array.from({length:12},(_,i)=>i);
+
+  let html = `
+    <div class="obaveze-header">
+      <div>
+        <h2><i class="ti ti-coins" style="margin-right:6px"></i>Paušal</h2>
+        <div style="font-size:12px;color:var(--txt2);margin-top:3px">Štiklirajte poslato i plaćeno po mesecu</div>
+      </div>
+      <div class="godina-nav">
+        <button onclick="obavezeGodina--;renderObaveze()"><i class="ti ti-chevron-left"></i></button>
+        <span class="godina-val">${obavezeGodina}</span>
+        <button onclick="obavezeGodina++;renderObaveze()"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div class="obaveze-summary" id="obavezeSummary"></div>
+    ${getMesFilterBarHtml(true)}`;
+
+  if(!klijenti.length) {
+    html += '<div class="empty-state"><i class="ti ti-coins"></i>Nema paušalaca. Dodajte klijenta sa pravnom formom Paušal.</div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    return;
+  }
+
+  if(visibleMonths.length === 0) {
+    html += '<div class="empty-state"><i class="ti ti-calendar-off"></i>Nema podataka za izabrani filter.</div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    updatePausalSummary(obavezeGodina, ob, klijenti);
+    return;
+  }
+
+  html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
+  visibleMonths.forEach(i => {
+    const isTek = obavezeGodina===tekGod && i===tekMes;
+    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+  });
+  html += '<th>Ukupno</th></tr>';
+  html += '<tr><th class="col-naziv"></th>';
+  visibleMonths.forEach(()=>{
+    html += `<th style="font-size:9px;color:#0C447C;padding:2px 2px;font-weight:500">Posl.</th>
+             <th style="font-size:9px;color:#27500A;padding:2px 2px;font-weight:500">Plać.</th>`;
+  });
+  html += '<th></th></tr></thead><tbody>';
+
+  klijenti.forEach(c => {
+    let poslatoUk=0, placenoUk=0;
+    for(let m=0;m<12;m++){
+      if(ob['pau_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUk++;
+      if(ob['pau_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']) placenoUk++;
+    }
+    html += `<tr><td class="col-naziv">
+      <div style="font-weight:500;font-size:13px">${c.naziv}</div>
+      <span class="badge b-pausal" style="font-size:10px;margin-top:2px"><i class="ti ti-receipt" style="font-size:9px"></i> Paušal</span>
+    </td>`;
+    visibleMonths.forEach(m => {
+      const kPoslat = 'pau_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat';
+      const kPlacen = 'pau_'+c.id+'_'+obavezeGodina+'_'+m+'_placen';
+      const poslat = !!ob[kPoslat];
+      const placen = !!ob[kPlacen];
+      const isTek = obavezeGodina===tekGod && m===tekMes;
+      const isPast = obavezeGodina<tekGod || (obavezeGodina===tekGod && m<tekMes);
+      const cellBase = isTek ? ' mes-current' : (!isPast ? ' mes-future' : '');
+      html += `
+        <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
+          <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
+            onchange="togglePorez('${kPoslat}')">
+        </div></td>
+        <td><div class="mes-cell${placen?' mes-done':cellBase}" id="cell_${kPlacen}">
+          <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
+            onchange="togglePorez('${kPlacen}')">
+        </div></td>`;
+    });
+    html += `<td style="min-width:80px;font-size:11px">
+      <div style="color:#0C447C;font-weight:500">P: ${poslatoUk}/12</div>
+      <div style="color:#27500A;font-weight:500">Pl: ${placenoUk}/12</div>
+    </td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('obavezeContent').innerHTML = html;
+  updatePausalSummary(obavezeGodina, ob, klijenti);
+}
+
+function updatePausalSummary(godina, ob, klijenti) {
+  const danas = new Date();
+  const tekMes = danas.getMonth();
+  const tekGod = danas.getFullYear();
+  let poslatoTek=0, placanoTek=0, uk=klijenti.length;
+  if(godina===tekGod){
+    klijenti.forEach(c=>{
+      if(ob['pau_'+c.id+'_'+godina+'_'+tekMes+'_poslat']) poslatoTek++;
+      if(ob['pau_'+c.id+'_'+godina+'_'+tekMes+'_placen']) placanoTek++;
+    });
+  }
+  const el=document.getElementById('obavezeSummary');
+  if(el) el.innerHTML=`
+    <div class="obs-card"><div class="obs-label">Paušalaca</div><div class="obs-val">${uk}</div></div>
+    <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+      <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%"></div></div>
+    </div>
+    <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+      <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
+    </div>`;
 }
 
 function renderPorezNaDobit() {
