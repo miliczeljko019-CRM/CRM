@@ -357,7 +357,8 @@ select{cursor:pointer}
   <div class="section-title">Vrsta oporezivanja</div>
   <div class="radio-group" id="porez">
     <div class="radio-btn selected" data-val="Porez na dobit" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
-    <div class="radio-btn" data-val="Paušalno oporezivanje" onclick="pickRadio('porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
+    <div class="radio-btn" data-val="Porez na dobit - ne plaća" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-percentage" style="opacity:.5"></i> Porez na dobit - ne plaća</div>
+    <div class="radio-btn" data-val="Paušalno oporezivanje" id="porezPausalBtn" onclick="pickRadio('porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
   </div>
 
   <div class="section-title">Opcije</div>
@@ -528,7 +529,8 @@ select{cursor:pointer}
     <div class="section-title">Vrsta oporezivanja</div>
     <div class="radio-group" id="e_porez">
       <div class="radio-btn selected" data-val="Porez na dobit" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
-      <div class="radio-btn" data-val="Paušalno oporezivanje" onclick="pickRadio('e_porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
+      <div class="radio-btn" data-val="Porez na dobit - ne plaća" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-percentage" style="opacity:.5"></i> Porez na dobit - ne plaća</div>
+      <div class="radio-btn" data-val="Paušalno oporezivanje" id="e_porezPausalBtn" onclick="pickRadio('e_porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
     </div>
 
     <div class="section-title">Opcije</div>
@@ -832,19 +834,42 @@ function pickRadio(g, el) {
   document.querySelectorAll('#'+g+' .radio-btn').forEach(b=>b.classList.remove('selected'));
   el.classList.add('selected');
 
-  // Auto-podesi kad se izabere pravna forma
   const prefix = g.startsWith('e_') ? 'e_' : '';
-  if(g === prefix+'pravnaForma' && el.dataset.val === 'Paušal') {
-    // Automatski izaberi Paušalno oporezivanje
-    document.querySelectorAll('#'+prefix+'porez .radio-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.val === 'Paušalno oporezivanje');
-    });
-    // Automatski: nije PDV obveznik
-    document.getElementById(prefix+'pdvBtn').classList.remove('checked');
-    document.getElementById(prefix+'nijePdvBtn').classList.add('checked');
-  }
 
-  if(g==='pravnaForma') setTimeout(updateCenaPreview,50);
+  if(g === prefix+'pravnaForma') {
+    const val = el.dataset.val;
+    const pausalBtn = document.getElementById(prefix+'porezPausalBtn');
+
+    if(val === 'DOO' || val === 'PR') {
+      // Zaključaj Paušalno oporezivanje
+      if(pausalBtn) {
+        pausalBtn.style.opacity = '0.35';
+        pausalBtn.style.pointerEvents = 'none';
+        pausalBtn.title = 'Nije dostupno za DOO/PR';
+        if(pausalBtn.classList.contains('selected')) pausalBtn.classList.remove('selected');
+      }
+      // Auto Porez na dobit ako nije ništa izabrano
+      const anySelected = document.querySelector('#'+prefix+'porez .selected');
+      if(!anySelected) {
+        const dobitBtn = document.querySelector('#'+prefix+'porez [data-val="Porez na dobit"]');
+        if(dobitBtn) dobitBtn.classList.add('selected');
+      }
+    } else if(val === 'Paušal') {
+      // Otključaj Paušalno oporezivanje
+      if(pausalBtn) {
+        pausalBtn.style.opacity = '';
+        pausalBtn.style.pointerEvents = '';
+        pausalBtn.title = '';
+      }
+      // Auto-set Paušalno oporezivanje
+      document.querySelectorAll('#'+prefix+'porez .radio-btn').forEach(b=>b.classList.remove('selected'));
+      if(pausalBtn) pausalBtn.classList.add('selected');
+      // Auto PDV: nije obveznik
+      document.getElementById(prefix+'pdvBtn')?.classList.remove('checked');
+      document.getElementById(prefix+'nijePdvBtn')?.classList.add('checked');
+    }
+    setTimeout(updateCenaPreview, 50);
+  }
 }
 
 // Porez na dobit može da se toggle — klik bira, drugi klik odabira
@@ -1063,6 +1088,14 @@ function openEdit(id) {
 
   // radio pravna forma
   document.querySelectorAll('#e_pravnaForma .radio-btn').forEach(b=>b.classList.toggle('selected',b.dataset.val===c.pravnaForma));
+  // Lock/unlock Paušal based on pravna forma
+  const ePausalBtn = document.getElementById('e_porezPausalBtn');
+  if(ePausalBtn) {
+    const lockPausal = c.pravnaForma==='DOO' || c.pravnaForma==='PR';
+    ePausalBtn.style.opacity = lockPausal ? '0.35' : '';
+    ePausalBtn.style.pointerEvents = lockPausal ? 'none' : '';
+    ePausalBtn.title = lockPausal ? 'Nije dostupno za DOO/PR' : '';
+  }
   // radio porez
   document.querySelectorAll('#e_porez .radio-btn').forEach(b=>b.classList.toggle('selected',b.dataset.val===c.porez));
   // checkboxes
@@ -2024,8 +2057,8 @@ function renderDash() {
 
   list.forEach(c=>{
     const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
-    const pb=c.porez==='Porez na dobit'?'b-dobit':c.porez==='Paušalno oporezivanje'?'b-ppausl':'b-no';
-    const porezLabel=c.porez==='Porez na dobit'?'Na dobit':c.porez==='Paušalno oporezivanje'?'Paušal':'—';
+    const pb=c.porez==='Porez na dobit'?'b-dobit':c.porez==='Paušalno oporezivanje'?'b-ppausl':c.porez==='Porez na dobit - ne plaća'?'b-no':'b-no';
+    const porezLabel=c.porez==='Porez na dobit'?'Na dobit':c.porez==='Paušalno oporezivanje'?'Paušal':c.porez==='Porez na dobit - ne plaća'?'Ne plaća':'—';
     const wh=c.radnici&&c.workers.length>0
       ?c.workers.map(w=>`<span class="worker-tag">${w.ime}${w.neodredjeno?' · <span style="color:#888;font-style:italic">neodređeno</span>':w.do_?' · do '+fmt(w.do_):''}</span>`).join('')
       :(c.radnici?'<span class="badge b-yes">Da</span>':'<span class="badge b-no">Ne</span>');
