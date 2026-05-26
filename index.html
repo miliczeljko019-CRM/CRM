@@ -437,6 +437,7 @@ select{cursor:pointer}
       <button class="obaveze-subtab" id="stab-pausal" onclick="showObavezeTab('pausal')"><i class="ti ti-coins"></i> Paušal</button>
       <button class="obaveze-subtab" id="stab-plata" onclick="showObavezeTab('plata')"><i class="ti ti-users"></i> Plata</button>
       <button class="obaveze-subtab" id="stab-odo" onclick="showObavezeTab('odo')"><i class="ti ti-file-description"></i> OD-O</button>
+      <button class="obaveze-subtab" id="stab-pppPd" onclick="showObavezeTab('pppPd')"><i class="ti ti-receipt"></i> PPP-PD</button>
     </div>
     <button onclick="showNeuradjeno()" style="padding:8px 18px;background:#D32F2F;color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
       <i class="ti ti-list-check"></i> Neurađeno za tekući mesec
@@ -1186,12 +1187,14 @@ function saveEdit() {
     const id=wc.id.replace('eworker-','');
     const name=document.getElementById('ewname-'+id)?.value.trim();
     const neodredjeno=document.getElementById('ewneodredjeno-'+id)?.checked||false;
+    const pppPd=document.getElementById('ewpppPd-'+id)?.checked !== false;
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById('ewjmbg-'+id)?.value.trim()||'',
       od:getDateVal('ewod-'+id),
       do_:neodredjeno?'':getDateVal('ewdo-'+id),
-      neodredjeno
+      neodredjeno,
+      pppPd
     });
   });
   const idx=clients.findIndex(x=>x.id===editingId);
@@ -1710,6 +1713,19 @@ function showNeuradjeno() {
     });
   }
 
+  // 7. PPP-PD
+  const pppStavke = getPPPPDStavke();
+  const pppNeuradj = pppStavke.filter(s => !ob['ppp_'+s.workerId+'_'+tekGod+'_'+tekMes]);
+  if(pppNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'PPP-PD',
+      ikona: 'ti-receipt',
+      boja: '#0C447C',
+      bgBoja: '#DCEEFF',
+      stavke: pppNeuradj.map(s => ({ naziv: s.workerIme, info: s.clientNaziv }))
+    });
+  }
+
   if(sekcije.length === 0) {
     content.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;color:#1E8C50;font-size:13px;font-weight:500">
       <i class="ti ti-circle-check" style="font-size:20px"></i> Sve obaveze za ${mesIme} su završene! 🎉
@@ -1764,6 +1780,8 @@ function renderObaveze() {
     );
   } else if(obavezeAktivniTab === 'porez') {
     renderPorezNaDobit();
+  } else if(obavezeAktivniTab === 'pppPd') {
+    renderPPPPD();
   } else if(obavezeAktivniTab === 'odo') {
     renderODO();
   } else if(obavezeAktivniTab === 'fiskalna') {
@@ -1914,6 +1932,171 @@ function updatePausalSummary(godina, ob, klijenti) {
     <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
+    </div>`;
+}
+
+function renderPPPPD() {
+  const ob = getObaveze();
+  const danas = new Date();
+  const tekGod = danas.getFullYear();
+  const tekMes = danas.getMonth();
+
+  // Skupi sve radnike kojima je PPP-PD stiklirano
+  let stavke = []; // {clientId, clientNaziv, pravnaForma, workerIme, workerId}
+  clients.forEach(c => {
+    if(c.radnici && c.workers && c.workers.length > 0) {
+      c.workers.forEach((w, wi) => {
+        if(w.pppPd !== false) { // default true, show if not explicitly false
+          stavke.push({
+            clientId: c.id,
+            clientNaziv: c.naziv,
+            pravnaForma: c.pravnaForma,
+            workerIme: w.ime,
+            workerId: c.id + '_w' + wi
+          });
+        }
+      });
+    }
+  });
+
+  const visibleMonths = obavezeFilter==='sve' ? Array.from({length:12},(_,i)=>i)
+    : obavezeFilter==='tekuci' ? (obavezeGodina===tekGod?[tekMes]:[])
+    : obavezeFilter==='uradjeno' ? Array.from({length:12},(_,i)=>i).filter(m=>stavke.some(s=>ob['ppp_'+s.workerId+'_'+obavezeGodina+'_'+m]))
+    : Array.from({length:12},(_,i)=>i);
+
+  let html = `
+    <div class="obaveze-header">
+      <div>
+        <h2><i class="ti ti-receipt" style="margin-right:6px"></i>PPP-PD</h2>
+        <div style="font-size:12px;color:var(--txt2);margin-top:3px">Štiklirajte predatu PPP-PD prijavu po radniku i mesecu</div>
+      </div>
+      <div class="godina-nav">
+        <button onclick="obavezeGodina--;renderObaveze()"><i class="ti ti-chevron-left"></i></button>
+        <span class="godina-val">${obavezeGodina}</span>
+        <button onclick="obavezeGodina++;renderObaveze()"><i class="ti ti-chevron-right"></i></button>
+      </div>
+    </div>
+    <div class="obaveze-summary" id="obavezeSummary"></div>
+    ${getMesFilterBarHtml(false)}`;
+
+  if(!stavke.length) {
+    html += '<div class="empty-state"><i class="ti ti-receipt"></i>Nema radnika sa označenim PPP-PD.<br><span style="font-size:13px">Označite PPP-PD pri unosu radnika.</span></div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    return;
+  }
+
+  if(visibleMonths.length === 0) {
+    html += '<div class="empty-state"><i class="ti ti-calendar-off"></i>Nema podataka za izabrani filter.</div>';
+    document.getElementById('obavezeContent').innerHTML = html;
+    updatePPPPDSummary(obavezeGodina, ob, stavke);
+    return;
+  }
+
+  html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr>';
+  html += '<th class="col-naziv">Klijent</th>';
+  html += '<th style="min-width:140px;text-align:left;padding:8px 10px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em">Radnik</th>';
+  visibleMonths.forEach(i => {
+    const isTek = obavezeGodina===tekGod && i===tekMes;
+    html += `<th class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+  });
+  html += '<th>Ukupno</th></tr></thead><tbody>';
+
+  stavke.forEach(s => {
+    const fb = s.pravnaForma==='DOO'?'b-doo':s.pravnaForma==='PR'?'b-pr':'b-pausal';
+    let uradjeno = 0;
+    for(let m=0;m<12;m++) { if(ob['ppp_'+s.workerId+'_'+obavezeGodina+'_'+m]) uradjeno++; }
+
+    html += `<tr>
+      <td class="col-naziv">
+        <div style="font-weight:500;font-size:13px">${s.clientNaziv}</div>
+        <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${s.pravnaForma}</span>
+      </td>
+      <td style="padding:10px;font-size:13px;font-weight:500;color:var(--txt)">${s.workerIme}</td>`;
+
+    visibleMonths.forEach(m => {
+      const key = 'ppp_'+s.workerId+'_'+obavezeGodina+'_'+m;
+      const done = !!ob[key];
+      const isTek = obavezeGodina===tekGod && m===tekMes;
+      const isPast = obavezeGodina<tekGod || (obavezeGodina===tekGod && m<tekMes);
+      let cellCls = 'mes-cell';
+      if(done) cellCls += ' mes-done';
+      else if(isTek) cellCls += ' mes-current';
+      else if(!isPast) cellCls += ' mes-future';
+
+      html += `<td><div class="${cellCls}" id="cell_${key}">
+        <input type="checkbox" class="mes-cb" id="ob_${key}" ${done?'checked':''}
+          onchange="toggleObaveza_ppp('${key}')">
+      </div></td>`;
+    });
+
+    const pct = Math.round(uradjeno/12*100);
+    html += `<td style="min-width:70px">
+      <div style="font-size:12px;font-weight:600;color:${uradjeno===12?'#1E8C50':'var(--txt)'}">${uradjeno}/12</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </td></tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('obavezeContent').innerHTML = html;
+  updatePPPPDSummary(obavezeGodina, ob, stavke);
+}
+
+function toggleObaveza_ppp(key) {
+  const ob = getObaveze();
+  ob[key] = !ob[key];
+  saveObaveze(ob);
+  const cb = document.getElementById('ob_'+key);
+  const cell = document.getElementById('cell_'+key);
+  if(cb) cb.checked = !!ob[key];
+  if(cell) {
+    // parse godina and mesec from key: ppp_clientId_wN_godina_m
+    const parts = key.split('_');
+    const m = parseInt(parts[parts.length-1]);
+    const god = parseInt(parts[parts.length-2]);
+    cell.className = 'mes-cell' + (ob[key] ? ' mes-done' : getCellClass(god, m));
+  }
+  updatePPPPDSummary(obavezeGodina, getObaveze(), getPPPPDStavke());
+}
+
+function getPPPPDStavke() {
+  const stavke = [];
+  clients.forEach(c => {
+    if(c.radnici && c.workers && c.workers.length > 0) {
+      c.workers.forEach((w, wi) => {
+        if(w.pppPd !== false) {
+          stavke.push({
+            clientId: c.id, clientNaziv: c.naziv, pravnaForma: c.pravnaForma,
+            workerIme: w.ime, workerId: c.id+'_w'+wi
+          });
+        }
+      });
+    }
+  });
+  return stavke;
+}
+
+function updatePPPPDSummary(godina, ob, stavke) {
+  const danas = new Date();
+  const tekMes = danas.getMonth();
+  const tekGod = danas.getFullYear();
+  let uradjenoTek = 0, uk = stavke.length;
+  if(godina===tekGod) {
+    stavke.forEach(s => { if(ob['ppp_'+s.workerId+'_'+godina+'_'+tekMes]) uradjenoTek++; });
+  }
+  let uradjenoGod = 0;
+  for(let m=0;m<12;m++) stavke.forEach(s=>{ if(ob['ppp_'+s.workerId+'_'+godina+'_'+m]) uradjenoGod++; });
+  const ukGod = uk * 12;
+  const pct = ukGod > 0 ? Math.round(uradjenoGod/ukGod*100) : 0;
+  const el = document.getElementById('obavezeSummary');
+  if(el) el.innerHTML=`
+    <div class="obs-card"><div class="obs-label">Radnika sa PPP-PD</div><div class="obs-val">${uk}</div></div>
+    <div class="obs-card"><div class="obs-label">Uradjeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+      <div class="obs-val" style="color:${uradjenoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${uradjenoTek} / ${uk}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(uradjenoTek/uk*100):0}%"></div></div>
+    </div>
+    <div class="obs-card"><div class="obs-label">Ukupno ${godina}.</div>
+      <div class="obs-val">${uradjenoGod} / ${ukGod}</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
     </div>`;
 }
 
