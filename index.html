@@ -359,7 +359,6 @@ select{cursor:pointer}
     <div class="radio-btn selected" data-val="Porez na dobit" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
     <div class="radio-btn" data-val="Porez na dobit - ne plaća" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-percentage" style="opacity:.5"></i> Porez na dobit - ne plaća</div>
     <div class="radio-btn" data-val="Paušalno oporezivanje" id="porezPausalBtn" onclick="pickRadio('porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
-    <div class="radio-btn" data-val="ODO-O" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-file-invoice"></i> ODO-O</div>
     <div class="radio-btn" data-val="OD-O" onclick="togglePorezNaDobit('porez',this)"><i class="ti ti-file-description"></i> OD-O</div>
   </div>
 
@@ -437,7 +436,6 @@ select{cursor:pointer}
       <button class="obaveze-subtab" id="stab-pdv" onclick="showObavezeTab('pdv')"><i class="ti ti-receipt-tax"></i> PDV</button>
       <button class="obaveze-subtab" id="stab-pausal" onclick="showObavezeTab('pausal')"><i class="ti ti-coins"></i> Paušal</button>
       <button class="obaveze-subtab" id="stab-plata" onclick="showObavezeTab('plata')"><i class="ti ti-users"></i> Plata</button>
-      <button class="obaveze-subtab" id="stab-odoo" onclick="showObavezeTab('odoo')"><i class="ti ti-file-invoice"></i> ODO-O</button>
       <button class="obaveze-subtab" id="stab-odo" onclick="showObavezeTab('odo')"><i class="ti ti-file-description"></i> OD-O</button>
     </div>
     <button onclick="showNeuradjeno()" style="padding:8px 18px;background:#D32F2F;color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap">
@@ -535,7 +533,6 @@ select{cursor:pointer}
       <div class="radio-btn selected" data-val="Porez na dobit" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-percentage"></i> Porez na dobit</div>
       <div class="radio-btn" data-val="Porez na dobit - ne plaća" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-percentage" style="opacity:.5"></i> Porez na dobit - ne plaća</div>
       <div class="radio-btn" data-val="Paušalno oporezivanje" id="e_porezPausalBtn" onclick="pickRadio('e_porez',this)"><i class="ti ti-coins"></i> Paušalno oporezivanje</div>
-      <div class="radio-btn" data-val="ODO-O" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-file-invoice"></i> ODO-O</div>
       <div class="radio-btn" data-val="OD-O" onclick="togglePorezNaDobit('e_porez',this)"><i class="ti ti-file-description"></i> OD-O</div>
     </div>
 
@@ -914,6 +911,7 @@ function addWorker(data) {
   workerCount++;
   const wc = workerCount;
   const neodredjeno = data?.neodredjeno || false;
+  const pppPd = data?.pppPd !== false; // default true
   const div = document.createElement('div');
   div.className='worker-card'; div.id='worker-'+wc;
   div.innerHTML=`
@@ -925,6 +923,9 @@ function addWorker(data) {
       ${dateInputHtml('wdo-'+wc, data?.do_||'', neodredjeno)}
       <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="wneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('wdo-${wc}',this)"> Neodređeno
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="wpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:#0C447C;font-weight:500">PPP-PD</span>
       </label>
     </div>`;
   const row2=document.createElement('div');
@@ -1021,12 +1022,14 @@ function collectWorkers(prefix, listId) {
     const id=wc.id.split('-')[1];
     const name=document.getElementById(prefix+'wname-'+id)?.value.trim();
     const neodredjeno=document.getElementById(prefix+'wneodredjeno-'+id)?.checked||false;
+    const pppPd=document.getElementById(prefix+'wpppPd-'+id)?.checked !== false;
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById(prefix+'wjmbg-'+id)?.value.trim()||'',
       od:getDateVal(prefix+'wod-'+id),
       do_:neodredjeno?'':getDateVal(prefix+'wdo-'+id),
-      neodredjeno
+      neodredjeno,
+      pppPd
     });
   });
   return workers;
@@ -1147,6 +1150,7 @@ function addEditWorker(data) {
   editWorkerCount++;
   const wc=editWorkerCount;
   const neodredjeno = data?.neodredjeno || false;
+  const pppPd = data?.pppPd !== false; // default true
   const div=document.createElement('div');
   div.className='worker-card'; div.id='eworker-'+wc;
   div.innerHTML=`
@@ -1158,6 +1162,9 @@ function addEditWorker(data) {
       ${dateInputHtml('ewdo-'+wc, data?.do_||'', neodredjeno)}
       <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="ewneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('ewdo-${wc}',this)"> Neodređeno
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="ewpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:#0C447C;font-weight:500">PPP-PD</span>
       </label>
     </div>`;
   const row2=document.createElement('div');
@@ -1759,8 +1766,6 @@ function renderObaveze() {
     renderPorezNaDobit();
   } else if(obavezeAktivniTab === 'odo') {
     renderODO();
-  } else if(obavezeAktivniTab === 'odoo') {
-    renderODOO();
   } else if(obavezeAktivniTab === 'fiskalna') {
     const klijenti = clients.filter(c => c.fiskalna);
     buildObavezeTable(
@@ -2030,124 +2035,6 @@ function updateODOSummary(godina, ob, klijenti) {
     </div>`;
 }
 
-function renderODOO() {
-  const ob = getObaveze();
-  const danas = new Date();
-  const tekGod = danas.getFullYear();
-  const tekMes = danas.getMonth();
-  const klijenti = clients.filter(c => c.porez === 'ODO-O');
-
-  const visibleMonths = obavezeFilter==='sve' ? Array.from({length:12},(_,i)=>i)
-    : obavezeFilter==='tekuci' ? (obavezeGodina===tekGod?[tekMes]:[])
-    : obavezeFilter==='poslato' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob['odo_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']))
-    : obavezeFilter==='placeno' ? Array.from({length:12},(_,i)=>i).filter(m=>klijenti.some(c=>ob['odo_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']))
-    : Array.from({length:12},(_,i)=>i);
-
-  let html = `
-    <div class="obaveze-header">
-      <div>
-        <h2><i class="ti ti-file-invoice" style="margin-right:6px"></i>ODO-O</h2>
-        <div style="font-size:12px;color:var(--txt2);margin-top:3px">Štiklirajte poslato i plaćeno po mesecu</div>
-      </div>
-      <div class="godina-nav">
-        <button onclick="obavezeGodina--;renderObaveze()"><i class="ti ti-chevron-left"></i></button>
-        <span class="godina-val">${obavezeGodina}</span>
-        <button onclick="obavezeGodina++;renderObaveze()"><i class="ti ti-chevron-right"></i></button>
-      </div>
-    </div>
-    <div class="obaveze-summary" id="obavezeSummary"></div>
-    ${getMesFilterBarHtml(true)}`;
-
-  if(!klijenti.length) {
-    html += '<div class="empty-state"><i class="ti ti-file-invoice"></i>Nema klijenata sa ODO-O oporezivanjem.</div>';
-    document.getElementById('obavezeContent').innerHTML = html;
-    return;
-  }
-
-  if(visibleMonths.length === 0) {
-    html += '<div class="empty-state"><i class="ti ti-calendar-off"></i>Nema podataka za izabrani filter.</div>';
-    document.getElementById('obavezeContent').innerHTML = html;
-    updateODOOSummary(obavezeGodina, ob, klijenti);
-    return;
-  }
-
-  html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
-  visibleMonths.forEach(i => {
-    const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
-  });
-  html += '<th>Ukupno</th></tr>';
-  html += '<tr><th class="col-naziv"></th>';
-  visibleMonths.forEach(()=>{
-    html += `<th style="font-size:9px;color:#0C447C;padding:2px 2px;font-weight:500">Posl.</th>
-             <th style="font-size:9px;color:#27500A;padding:2px 2px;font-weight:500">Plać.</th>`;
-  });
-  html += '<th></th></tr></thead><tbody>';
-
-  klijenti.forEach(c => {
-    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
-    let poslatoUk=0, placenoUk=0;
-    for(let m=0;m<12;m++){
-      if(ob['odo_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUk++;
-      if(ob['odo_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']) placenoUk++;
-    }
-    html += `<tr><td class="col-naziv">
-      <div style="font-weight:500;font-size:13px">${c.naziv}</div>
-      <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${c.pravnaForma}</span>
-    </td>`;
-    visibleMonths.forEach(m => {
-      const kPoslat = 'odo_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat';
-      const kPlacen = 'odo_'+c.id+'_'+obavezeGodina+'_'+m+'_placen';
-      const poslat = !!ob[kPoslat];
-      const placen = !!ob[kPlacen];
-      const isTek = obavezeGodina===tekGod && m===tekMes;
-      const isPast = obavezeGodina<tekGod || (obavezeGodina===tekGod && m<tekMes);
-      const cellBase = isTek ? ' mes-current' : (!isPast ? ' mes-future' : '');
-      html += `
-        <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
-          <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
-            onchange="togglePorez('${kPoslat}')">
-        </div></td>
-        <td><div class="mes-cell${placen?' mes-done':cellBase}" id="cell_${kPlacen}">
-          <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
-            onchange="togglePorez('${kPlacen}')">
-        </div></td>`;
-    });
-    html += `<td style="min-width:80px;font-size:11px">
-      <div style="color:#0C447C;font-weight:500">P: ${poslatoUk}/12</div>
-      <div style="color:#27500A;font-weight:500">Pl: ${placenoUk}/12</div>
-    </td></tr>`;
-  });
-
-  html += '</tbody></table></div>';
-  document.getElementById('obavezeContent').innerHTML = html;
-  updateODOOSummary(obavezeGodina, ob, klijenti);
-}
-
-function updateODOOSummary(godina, ob, klijenti) {
-  const danas = new Date();
-  const tekMes = danas.getMonth();
-  const tekGod = danas.getFullYear();
-  let poslatoTek=0, placanoTek=0, uk=klijenti.length;
-  if(godina===tekGod){
-    klijenti.forEach(c=>{
-      if(ob['odo_'+c.id+'_'+godina+'_'+tekMes+'_poslat']) poslatoTek++;
-      if(ob['odo_'+c.id+'_'+godina+'_'+tekMes+'_placen']) placanoTek++;
-    });
-  }
-  const el=document.getElementById('obavezeSummary');
-  if(el) el.innerHTML=`
-    <div class="obs-card"><div class="obs-label">Klijenata — ODO-O</div><div class="obs-val">${uk}</div></div>
-    <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
-      <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%"></div></div>
-    </div>
-    <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
-      <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
-    </div>`;
-}
-
 function renderPorezNaDobit() {
   const ob = getObaveze();
   const danas = new Date();
@@ -2303,8 +2190,8 @@ function renderDash() {
 
   list.forEach(c=>{
     const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
-    const pb=c.porez==='Porez na dobit'?'b-dobit':c.porez==='Paušalno oporezivanje'?'b-ppausl':c.porez==='Porez na dobit - ne plaća'?'b-no':c.porez==='ODO-O'?'b-pr':c.porez==='OD-O'?'b-doo':'b-no';
-    const porezLabel=c.porez==='Porez na dobit'?'Na dobit':c.porez==='Paušalno oporezivanje'?'Paušal':c.porez==='Porez na dobit - ne plaća'?'Ne plaća':c.porez==='ODO-O'?'ODO-O':c.porez==='OD-O'?'OD-O':'—';
+    const pb=c.porez==='Porez na dobit'?'b-dobit':c.porez==='Paušalno oporezivanje'?'b-ppausl':c.porez==='Porez na dobit - ne plaća'?'b-no':c.porez==='OD-O'?'b-doo':'b-no';
+    const porezLabel=c.porez==='Porez na dobit'?'Na dobit':c.porez==='Paušalno oporezivanje'?'Paušal':c.porez==='Porez na dobit - ne plaća'?'Ne plaća':c.porez==='OD-O'?'OD-O':'—';
     const wh=c.radnici&&c.workers.length>0
       ?c.workers.map(w=>`<span class="worker-tag">${w.ime}${w.neodredjeno?' · <span style="color:#888;font-style:italic">neodređeno</span>':w.do_?' · do '+fmt(w.do_):''}</span>`).join('')
       :(c.radnici?'<span class="badge b-yes">Da</span>':'<span class="badge b-no">Ne</span>');
