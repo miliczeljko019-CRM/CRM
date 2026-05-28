@@ -2787,7 +2787,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // KREDITI MODULE
 // ══════════════════════════════════════════════════════
 
-// krediti = [ { id, klijentId, naziv, banka, datumUvoza, rate: [ {rbr, datum, ukupnaRata, kamata, ostatakDuga, placena} ] } ]
+// krediti = [ { id, klijentId, naziv, banka, datumUvoza, pocetnoStanje,
+//              rate: [ {rbr, datum, anuitet, glavnica, kamata, stanjeKredita, placena} ] } ]
 let krediti = JSON.parse(localStorage.getItem('knjg_crm_krediti') || '[]');
 let aktivniKreditId = null; // currently selected loan
 
@@ -2797,10 +2798,9 @@ function saveKrediti() {
 }
 
 // ── PDF parsing via PDF.js ──
+// Columns from the bank PDF: Anuitet | Uplata glavnice | Uplata kamate | Druge uplate/troškovi | Stanje kredita
+// The "isplata kredita" row has the initial loan amount in the last column
 async function parsePDFKredit(file) {
-  if (typeof pdfjsLib === 'undefined') {
-    // set worker
-  }
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   const arrayBuffer = await file.arrayBuffer();
@@ -2810,7 +2810,6 @@ async function parsePDFKredit(file) {
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const content = await page.getTextContent();
-    // Group items by Y position (row)
     const byY = {};
     content.items.forEach(item => {
       const y = Math.round(item.transform[5]);
@@ -2824,61 +2823,92 @@ async function parsePDFKredit(file) {
     });
   }
 
-  // Detect rows that look like loan schedule data
-  // Typical columns: RBR | Datum | Ukupna rata | Kamata | Ostatak duga (+ possible other cols)
-  // We look for rows where first col is a number (rbr) and second looks like a date
-  const dateRe = /^\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{2,4}$/;
-  const numRe = /^[\d\s.,]+$/;
-
   function cleanNum(s) {
     if(!s) return 0;
-    // Remove spaces, replace comma with dot for decimal
-    return parseFloat(s.replace(/\s/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.')) || 0;
+    // Handle Serbian/European format: 9.970.000,00 or 9,970,000.00
+    let v = s.replace(/\s/g,'');
+    // If both . and , present: last separator is decimal
+    if(v.indexOf('.')>-1 && v.indexOf(',')>-1) {
+      const lastDot = v.lastIndexOf('.');
+      const lastComma = v.lastIndexOf(',');
+      if(lastComma > lastDot) { v = v.replace(/\./g,'').replace(',','.'); }
+      else { v = v.replace(/,/g,''); }
+    } else if(v.indexOf(',')>-1) {
+      // Only comma — check if it's decimal (e.g. 1.234,56) or thousands
+      const commaPos = v.lastIndexOf(',');
+      const afterComma = v.substring(commaPos+1);
+      if(afterComma.length === 2) { v = v.replace(/\./g,'').replace(',','.'); }
+      else { v = v.replace(',',''); }
+    }
+    return parseFloat(v) || 0;
   }
 
-  function isDate(s) { return dateRe.test(s.replace(/\s/g,'')); }
-  function looksLikeNum(s) { return /^[\d\s.,]+$/.test(s.replace(/\s/g,'')); }
+  function isDate(s) { return /^\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{2,4}$/.test(s.replace(/\s/g,'')); }
 
-  const rate = [];
+  // First pass: find "isplata kredita" row to get pocetnoStanje
+  let pocetnoStanje = 0;
   allLines.forEach(row => {
-    // Try to find a row that starts with a number (rbr) followed by date
-    let rbr = null, datum = '', ukupnaRata = 0, kamata = 0, ostatakDuga = 0;
-
-    // Find rbr: first token that is a small integer
-    let startIdx = -1;
-    for (let i = 0; i < row.length; i++) {
-      const n = parseInt(row[i]);
-      if (!isNaN(n) && n > 0 && n < 1000 && String(n) === row[i].trim()) {
-        rbr = n; startIdx = i; break;
+    const joined = row.join(' ').toLowerCase();
+    if(joined.includes('isplata') || joined.includes('početno') || joined.includes('pocetno') || joined.includes('iznos kredita')) {
+      // Last numeric value in this row is the initial loan amount
+      for(let i = row.length-1; i >= 0; i--) {
+        const v = cleanNum(row[i]);
+        if(v > 1000) { pocetnoStanje = v; break; }
       }
-    }
-    if (rbr === null) return;
-
-    // Find date after rbr
-    let dateIdx = -1;
-    for (let i = startIdx + 1; i < row.length; i++) {
-      if (isDate(row[i])) { datum = row[i]; dateIdx = i; break; }
-    }
-    if (!datum) return;
-
-    // Collect numbers after date — we expect at least 3 (ukupna rata, kamata, ostatak)
-    const nums = [];
-    for (let i = dateIdx + 1; i < row.length; i++) {
-      const v = cleanNum(row[i]);
-      if (v > 0) nums.push(v);
-    }
-    if (nums.length >= 2) {
-      // Heuristic: largest = ostatak duga (cumulative), smallest of first two = kamata
-      // Order usually: ukupna rata | kamata | ostatak duga  OR  kamata | ukupna rata | ostatak
-      // We'll take: nums[0]=ukupnaRata, nums[1]=kamata, last=ostatakDuga
-      ukupnaRata = nums[0];
-      kamata = nums.length >= 2 ? nums[1] : 0;
-      ostatakDuga = nums[nums.length - 1];
-      rate.push({ rbr, datum, ukupnaRata, kamata, ostatakDuga, placena: false });
     }
   });
 
-  return rate;
+  // Second pass: parse installment rows
+  // Pattern: RBR (integer) + Date + 3-5 numbers (anuitet, glavnica, kamata, [drugeUplate,] stanjeKredita)
+  const rate = [];
+  allLines.forEach(row => {
+    let rbr = null, datum = '', anuitet = 0, glavnica = 0, kamata = 0, stanjeKredita = 0;
+
+    // Find RBR: first token that is a plain positive integer ≤ 1000
+    let startIdx = -1;
+    for (let i = 0; i < row.length; i++) {
+      const trimmed = row[i].trim();
+      if(/^\d+$/.test(trimmed)) {
+        const n = parseInt(trimmed);
+        if(n > 0 && n <= 1000) { rbr = n; startIdx = i; break; }
+      }
+    }
+    if(rbr === null) return;
+
+    // Find date after RBR
+    let dateIdx = -1;
+    for (let i = startIdx+1; i < row.length; i++) {
+      if(isDate(row[i])) { datum = row[i]; dateIdx = i; break; }
+    }
+    if(!datum) return;
+
+    // Collect numeric values after date
+    const nums = [];
+    for(let i = dateIdx+1; i < row.length; i++) {
+      const v = cleanNum(row[i]);
+      if(v >= 0 && row[i].trim() !== '') nums.push(v);
+    }
+
+    // Expected column order: anuitet | glavnica | kamata | [drugeUplate] | stanjeKredita
+    // We need at least 3 values (anuitet, kamata, stanje — or anuitet, glavnica, stanje)
+    if(nums.length >= 3) {
+      anuitet      = nums[0];
+      glavnica     = nums[1];
+      kamata       = nums[2];
+      // Last value is always stanje kredita
+      stanjeKredita = nums[nums.length - 1];
+      // If only 3 nums: anuitet, kamata, stanje (no glavnica column)
+      if(nums.length === 3) { glavnica = 0; kamata = nums[1]; stanjeKredita = nums[2]; }
+      rate.push({ rbr, datum, anuitet, glavnica, kamata, stanjeKredita, placena: false });
+    }
+  });
+
+  // If pocetnoStanje not found from isplata row, use first row's stanjeKredita + its glavnica
+  if(pocetnoStanje === 0 && rate.length > 0) {
+    pocetnoStanje = rate[0].stanjeKredita + rate[0].glavnica;
+  }
+
+  return { rate, pocetnoStanje };
 }
 
 // ── Render Krediti main view ──
@@ -2942,13 +2972,44 @@ function renderKrediti() {
   const placene = rate.filter(r=>r.placena).length;
   const ukupno = rate.length;
   const preostale = ukupno - placene;
-  const ukupnaObaveza = rate.reduce((s,r)=>s+r.ukupnaRata,0);
-  const ukupnoPlaceno = rate.filter(r=>r.placena).reduce((s,r)=>s+r.ukupnaRata,0);
+
+  // Početno stanje iz kredita (isplata kredita)
+  const pocetnoStanje = kredit.pocetnoStanje || (rate.length > 0 ? rate[0].stanjeKredita + rate[0].glavnica : 0);
+
+  // Stanje kredita: uzimamo stanjeKredita poslednje neplaćene rate, ili 0 ako sve plaćene
+  const neplacene = rate.filter(r=>!r.placena);
+  const trenutnoStanje = neplacene.length > 0 ? neplacene[0].stanjeKredita : 0;
+
+  // Sums
+  const ukupnoAnuitet = rate.reduce((s,r)=>s+r.anuitet,0);
+  const ukupnoGlavnica = rate.reduce((s,r)=>s+r.glavnica,0);
   const ukupnoKamata = rate.reduce((s,r)=>s+r.kamata,0);
-  const ukupnoKamataPlacena = rate.filter(r=>r.placena).reduce((s,r)=>s+r.kamata,0);
-  const ostatakDugaPos = rate.filter(r=>!r.placena);
-  const sledecaRata = ostatakDugaPos.length > 0 ? ostatakDugaPos[0] : null;
+  const placenaGlavnica = rate.filter(r=>r.placena).reduce((s,r)=>s+r.glavnica,0);
+  const placenaKamata = rate.filter(r=>r.placena).reduce((s,r)=>s+r.kamata,0);
+
+  const sledecaRata = neplacene.length > 0 ? neplacene[0] : null;
   const pct = ukupno > 0 ? Math.round(placene/ukupno*100) : 0;
+  // Progress po iznosu glavnice
+  const pctIznos = pocetnoStanje > 0 ? Math.min(Math.round(placenaGlavnica/pocetnoStanje*100),100) : 0;
+
+  // ── Početno stanje highlight ──
+  html += `
+  <div style="background:linear-gradient(135deg,#0C447C 0%,#1a6bb0 100%);border-radius:var(--rad-lg);padding:16px 20px;margin-bottom:1rem;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Početno stanje kredita (isplata banke)</div>
+      <div style="font-size:28px;font-weight:700;letter-spacing:-.5px">${eur(pocetnoStanje)}</div>
+    </div>
+    <div style="width:1px;height:48px;background:rgba(255,255,255,.25);flex-shrink:0"></div>
+    <div>
+      <div style="font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Trenutno stanje (ostalo za otplatu)</div>
+      <div style="font-size:28px;font-weight:700;letter-spacing:-.5px;color:${trenutnoStanje>0?'#FFD580':'#7DED9F'}">${eur(trenutnoStanje)}</div>
+    </div>
+    <div style="margin-left:auto;text-align:right">
+      <div style="font-size:11px;opacity:.75;margin-bottom:4px">Otplaćeno</div>
+      <div style="font-size:22px;font-weight:700">${pctIznos}%</div>
+      <div style="font-size:12px;opacity:.7">${eur(placenaGlavnica)} od ${eur(pocetnoStanje)}</div>
+    </div>
+  </div>`;
 
   // Info cards
   html += `
@@ -2956,26 +3017,24 @@ function renderKrediti() {
     <div class="kr-card"><div class="lbl">Ukupno rata</div><div class="val b">${ukupno}</div></div>
     <div class="kr-card"><div class="lbl">Plaćeno rata</div><div class="val g">${placene}</div></div>
     <div class="kr-card"><div class="lbl">Preostalo rata</div><div class="val ${preostale>0?'r':'g'}">${preostale}</div></div>
-    <div class="kr-card"><div class="lbl">Ukupna obaveza</div><div class="val">${eur(ukupnaObaveza)}</div></div>
-    <div class="kr-card"><div class="lbl">Plaćeno</div><div class="val g">${eur(ukupnoPlaceno)}</div></div>
-    <div class="kr-card"><div class="lbl">Ostatak duga</div><div class="val ${preostale>0?'r':'g'}">${ostatakDugaPos.length>0?eur(ostatakDugaPos[0].ostatakDuga):'€0'}</div></div>
+    <div class="kr-card"><div class="lbl">Anuitet (mesečna rata)</div><div class="val">${rate.length>0?eur(rate[0].anuitet):'—'}</div></div>
     <div class="kr-card"><div class="lbl">Ukupno kamata</div><div class="val w">${eur(ukupnoKamata)}</div></div>
-    <div class="kr-card"><div class="lbl">Kamata plaćena</div><div class="val">${eur(ukupnoKamataPlacena)}</div></div>
+    <div class="kr-card"><div class="lbl">Kamata plaćena</div><div class="val">${eur(placenaKamata)}</div></div>
   </div>`;
 
-  // Progress bar
+  // Progress bar (po broju rata)
   html += `
   <div class="kr-prog">
     <div class="kr-prog-top">
-      <span>Napredak otplate</span>
+      <span>Napredak otplate (rate)</span>
       <span style="font-weight:600;color:${pct>=100?'#1E8C50':pct>=50?'#E07B00':'#D32F2F'}">${pct}% (${placene}/${ukupno} rata)</span>
     </div>
     <div class="kr-prog-bg"><div class="kr-prog-fill" style="width:${pct}%"></div></div>
   </div>`;
 
-  // Upcoming rate alert
+  // Upcoming alert
   if (sledecaRata) {
-    html += `<div class="kr-alert warn"><i class="ti ti-bell"></i> Sledeća rata: <strong>RBR ${sledecaRata.rbr}</strong> — ${sledecaRata.datum} — <strong>${eur(sledecaRata.ukupnaRata)}</strong></div>`;
+    html += `<div class="kr-alert warn"><i class="ti ti-bell"></i> Sledeća rata: <strong>RBR ${sledecaRata.rbr}</strong> — ${sledecaRata.datum} — anuitet <strong>${eur(sledecaRata.anuitet)}</strong> &nbsp;|&nbsp; stanje posle uplate: <strong>${eur(sledecaRata.stanjeKredita)}</strong></div>`;
   }
   if (preostale === 0 && ukupno > 0) {
     html += `<div class="kr-alert green"><i class="ti ti-circle-check"></i> Kredit je u potpunosti otplaćen! 🎉</div>`;
@@ -2999,9 +3058,10 @@ function renderKrediti() {
         <th style="width:42px;text-align:center">Pl.</th>
         <th>RBR</th>
         <th>Datum</th>
-        <th class="r">Ukupna rata</th>
-        <th class="r">Kamata</th>
-        <th class="r">Ostatak duga</th>
+        <th class="r">Anuitet</th>
+        <th class="r">Uplata glavnice</th>
+        <th class="r">Uplata kamate</th>
+        <th class="r" style="color:#0C447C;font-weight:700">Stanje kredita</th>
         <th style="text-align:center">Status</th>
       </tr></thead>
       <tbody>`;
@@ -3022,18 +3082,23 @@ function renderKrediti() {
         </td>
         <td style="font-weight:500">${r.rbr}</td>
         <td>${r.datum}</td>
-        <td class="r" style="font-weight:500">${eur(r.ukupnaRata)}</td>
+        <td class="r" style="font-weight:500">${eur(r.anuitet)}</td>
+        <td class="r">${eur(r.glavnica)}</td>
         <td class="r" style="color:#E07B00">${eur(r.kamata)}</td>
-        <td class="r">${eur(r.ostatakDuga)}</td>
+        <td class="r" style="font-weight:600;color:${r.placena?'var(--txt2)':'#0C447C'}">${eur(r.stanjeKredita)}</td>
         <td style="text-align:center">${badge}</td>
       </tr>`;
     });
 
     // Summary row
+    const ukupnoAnuitetSum = rate.reduce((s,r)=>s+r.anuitet,0);
+    const ukupnoGlavnicaSum = rate.reduce((s,r)=>s+r.glavnica,0);
+    const ukupnoKamataSum = rate.reduce((s,r)=>s+r.kamata,0);
     html += `<tr class="kr-sum-row">
       <td colspan="3" style="text-align:right;font-size:12px;padding:10px">UKUPNO:</td>
-      <td class="r">${eur(ukupnaObaveza)}</td>
-      <td class="r" style="color:#E07B00">${eur(ukupnoKamata)}</td>
+      <td class="r">${eur(ukupnoAnuitetSum)}</td>
+      <td class="r">${eur(ukupnoGlavnicaSum)}</td>
+      <td class="r" style="color:#E07B00">${eur(ukupnoKamataSum)}</td>
       <td class="r"></td>
       <td></td>
     </tr>`;
@@ -3133,6 +3198,7 @@ function showDodajKreditModal() {
 }
 
 let parsedRateTmp = [];
+let parsedPocetnoStanjeTmp = 0;
 
 async function handleKreditPDF(input) {
   const f = input.files[0];
@@ -3153,8 +3219,11 @@ async function handleKreditPDFFile(f) {
   if(preview) preview.innerHTML = '<div style="font-size:13px;color:var(--txt2);padding:8px 0"><i class="ti ti-loader spin"></i> Učitavam i parsiram PDF...</div>';
 
   try {
-    const rate = await parsePDFKredit(f);
+    const result = await parsePDFKredit(f);
+    const rate = result.rate;
+    const pocetnoStanje = result.pocetnoStanje;
     parsedRateTmp = rate;
+    parsedPocetnoStanjeTmp = pocetnoStanje;
 
     if(rate.length === 0) {
       if(preview) preview.innerHTML = `
@@ -3165,22 +3234,21 @@ async function handleKreditPDFFile(f) {
       return;
     }
 
-    const ukupno = rate.reduce((s,r)=>s+r.ukupnaRata,0);
     const prvaRata = rate[0];
     const zadnjaRata = rate[rate.length-1];
 
     if(preview) preview.innerHTML = `
       <div class="kr-alert green"><i class="ti ti-circle-check"></i> Parsiran ${rate.length} rata iz PDF-a!</div>
       <div class="kr-meta" style="margin-top:8px">
+        <div class="kr-card"><div class="lbl">Početno stanje</div><div class="val b" style="font-size:16px">${eur(pocetnoStanje)}</div></div>
         <div class="kr-card"><div class="lbl">Broj rata</div><div class="val b">${rate.length}</div></div>
-        <div class="kr-card"><div class="lbl">Ukupna obaveza</div><div class="val">${eur(ukupno)}</div></div>
-        <div class="kr-card"><div class="lbl">Prva rata</div><div class="val" style="font-size:13px">${prvaRata.datum}</div></div>
+        <div class="kr-card"><div class="lbl">Anuitet</div><div class="val">${eur(prvaRata.anuitet)}</div></div>
         <div class="kr-card"><div class="lbl">Zadnja rata</div><div class="val" style="font-size:13px">${zadnjaRata.datum}</div></div>
       </div>
       <div style="margin-top:8px;max-height:180px;overflow-y:auto;border:0.5px solid var(--brd2);border-radius:var(--rad)">
         <table class="kr-tbl" style="font-size:12px">
-          <thead><tr><th>RBR</th><th>Datum</th><th class="r">Rata</th><th class="r">Kamata</th><th class="r">Ostatak</th></tr></thead>
-          <tbody>${rate.slice(0,5).map(r=>`<tr><td>${r.rbr}</td><td>${r.datum}</td><td class="r">${eur(r.ukupnaRata)}</td><td class="r">${eur(r.kamata)}</td><td class="r">${eur(r.ostatakDuga)}</td></tr>`).join('')}
+          <thead><tr><th>RBR</th><th>Datum</th><th class="r">Anuitet</th><th class="r">Kamata</th><th class="r">Stanje kredita</th></tr></thead>
+          <tbody>${rate.slice(0,5).map(r=>`<tr><td>${r.rbr}</td><td>${r.datum}</td><td class="r">${eur(r.anuitet)}</td><td class="r">${eur(r.kamata)}</td><td class="r" style="color:#0C447C;font-weight:600">${eur(r.stanjeKredita)}</td></tr>`).join('')}
           ${rate.length>5?`<tr><td colspan="5" style="text-align:center;color:var(--txt2)">... i još ${rate.length-5} rata</td></tr>`:''}
           </tbody>
         </table>
@@ -3192,6 +3260,7 @@ async function handleKreditPDFFile(f) {
     if(preview) preview.innerHTML = `<div class="kr-alert red"><i class="ti ti-alert-circle"></i> Greška pri parsiranju: ${e.message}</div>`;
     if(saveBtn) saveBtn.disabled = false;
     parsedRateTmp = [];
+    parsedPocetnoStanjeTmp = 0;
   }
 }
 
@@ -3204,6 +3273,7 @@ function saveKreditFromModal() {
   const noviKredit = {
     id: Date.now(),
     naziv, banka, klijentId,
+    pocetnoStanje: parsedPocetnoStanjeTmp || 0,
     datumUvoza: new Date().toLocaleDateString('sr-RS'),
     rate: parsedRateTmp.map(r=>({...r}))
   };
@@ -3214,6 +3284,7 @@ function saveKreditFromModal() {
   document.getElementById('kreditModal')?.remove();
   document.body.style.overflow='';
   parsedRateTmp = [];
+  parsedPocetnoStanjeTmp = 0;
   renderKrediti();
   showToast('Kredit "'+naziv+'" dodat!');
 }
@@ -3223,10 +3294,10 @@ function exportKreditExcel() {
   const k = krediti.find(x=>x.id===aktivniKreditId);
   if(!k||!k.rate.length){ showToast('Nema podataka za izvoz!'); return; }
   const wb = XLSX.utils.book_new();
-  const h = ['RBR','Datum','Ukupna rata (€)','Kamata (€)','Ostatak duga (€)','Plaćena'];
-  const rows = k.rate.map(r=>[r.rbr,r.datum,r.ukupnaRata,r.kamata,r.ostatakDuga,r.placena?'Da':'Ne']);
+  const h = ['RBR','Datum','Anuitet','Uplata glavnice','Uplata kamate','Stanje kredita','Plaćena'];
+  const rows = k.rate.map(r=>[r.rbr,r.datum,r.anuitet,r.glavnica,r.kamata,r.stanjeKredita,r.placena?'Da':'Ne']);
   const ws = XLSX.utils.aoa_to_sheet([h,...rows]);
-  ws['!cols']=[{wch:6},{wch:14},{wch:18},{wch:14},{wch:18},{wch:10}];
+  ws['!cols']=[{wch:6},{wch:14},{wch:16},{wch:18},{wch:16},{wch:18},{wch:10}];
   styleHeader(ws,{s:{r:0,c:0},e:{r:0,c:h.length-1}},'0C447C');
   XLSX.utils.book_append_sheet(wb,ws,'Plan otplate');
   const d=new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
