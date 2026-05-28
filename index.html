@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.19.0/webfont/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root {
   --bg: #ffffff; --bg2: #f7f7f5; --txt: #1a1a18; --txt2: #6b6b68;
@@ -212,7 +213,55 @@ select{cursor:pointer}
 .modal-body{padding:1.25rem}
 .modal-footer{display:flex;gap:10px;padding:1rem 1.25rem;border-top:0.5px solid var(--brd2);flex-wrap:wrap}
 
-/* ── Mesečne obaveze ── */
+/* ── Krediti ── */
+.kr-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem}
+.kr-selector{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px 16px;margin-bottom:1.25rem}
+.kr-selector label{font-size:13px;color:var(--txt2);margin-right:8px}
+.kr-selector select{font-size:13px;padding:6px 10px;min-width:220px}
+.kr-upload-zone{border:2px dashed var(--brd2);border-radius:var(--rad);padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);margin-bottom:1rem}
+.kr-upload-zone:hover,.kr-upload-zone.drag{border-color:#3d7eff;background:rgba(61,126,255,.05)}
+.kr-upload-zone.loaded{border-color:#1E8C50;border-style:solid}
+.kr-upload-zone i{font-size:28px;display:block;margin-bottom:8px}
+.kr-upload-zone p{font-size:13px;color:var(--txt2)}
+.kr-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:1rem}
+.kr-card{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px}
+.kr-card .lbl{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.kr-card .val{font-size:16px;font-weight:600}
+.kr-card .val.g{color:#1E8C50}.kr-card .val.r{color:#D32F2F}.kr-card .val.w{color:#E07B00}.kr-card .val.b{color:#3d7eff}
+.kr-prog{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px;margin-bottom:1rem}
+.kr-prog-top{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);margin-bottom:6px}
+.kr-prog-bg{height:8px;background:var(--brd2);border-radius:4px;overflow:hidden}
+.kr-prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#3d7eff,#1E8C50);transition:width .4s}
+.kr-alert{padding:9px 13px;border-radius:var(--rad);margin-bottom:10px;font-size:13px;display:flex;align-items:center;gap:8px}
+.kr-alert.red{background:rgba(211,47,47,.1);border:0.5px solid rgba(211,47,47,.3);color:#D32F2F}
+.kr-alert.green{background:rgba(30,140,80,.1);border:0.5px solid rgba(30,140,80,.3);color:#1E8C50}
+.kr-alert.warn{background:rgba(224,123,0,.1);border:0.5px solid rgba(224,123,0,.3);color:#E07B00}
+.kr-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.kr-tbl th{text-align:left;padding:8px 10px;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--brd2);white-space:nowrap}
+.kr-tbl td{padding:9px 10px;border-bottom:0.5px solid var(--brd2);vertical-align:middle;white-space:nowrap}
+.kr-tbl tr:last-child td{border-bottom:none}
+.kr-tbl tr:hover td{background:var(--bg2)}
+.kr-tbl tr.kr-paid td{background:rgba(30,140,80,.04);color:var(--txt2)}
+.kr-tbl tr.kr-over td{background:rgba(211,47,47,.04)}
+.kr-tbl tr.kr-soon td{background:rgba(224,123,0,.05)}
+.kr-tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
+.kr-cb{width:16px;height:16px;cursor:pointer;accent-color:#1E8C50}
+.kr-idate{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);color:var(--txt);padding:4px 8px;font-size:12px;width:118px}
+.kr-idate:focus{outline:none;border-color:#3d7eff}
+.kr-idate:disabled{opacity:.3;cursor:default}
+.kr-inote{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);color:var(--txt);padding:4px 8px;font-size:12px;width:150px}
+.kr-inote:focus{outline:none;border-color:#3d7eff}
+.kr-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600}
+.kb-paid{background:rgba(30,140,80,.15);color:#1E8C50}
+.kb-over{background:rgba(211,47,47,.15);color:#D32F2F}
+.kb-soon{background:rgba(224,123,0,.15);color:#E07B00}
+.kb-pend{background:rgba(136,146,170,.1);color:var(--txt2)}
+.kr-mismatch{font-size:10px;color:#D32F2F;display:flex;align-items:center;gap:3px;margin-top:2px}
+.kr-sum-row td{background:var(--bg2)!important;font-weight:600;border-top:0.5px solid var(--brd2)!important;color:var(--txt)}
+.kr-empty{text-align:center;padding:3rem;color:var(--txt2)}
+.kr-empty i{font-size:36px;display:block;margin-bottom:10px;opacity:.3}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block}
 .obaveze-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:12px}
 .obaveze-header h2{font-size:15px;font-weight:600}
 .godina-nav{display:flex;align-items:center;gap:8px}
@@ -329,6 +378,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
   <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
   <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
+  <button class="tab" onclick="showTab('krediti')"><i class="ti ti-credit-card"></i> Krediti</button>
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -500,6 +550,11 @@ select{cursor:pointer}
 <!-- ═══ CILJEVI ═══ -->
 <div class="page" id="page-ciljevi">
   <div id="ciljeviContent"></div>
+</div>
+
+<!-- ═══ KREDITI ═══ -->
+<div class="page" id="page-krediti">
+  <div id="kreditiContent"></div>
 </div>
 
 </div><!-- /app -->
@@ -760,6 +815,7 @@ async function loadFromDrive() {
     if(data.obaveze) localStorage.setItem('knjg_crm_obaveze', JSON.stringify(data.obaveze));
     if(data.rashodi) localStorage.setItem('knjg_crm_rashodi', JSON.stringify(data.rashodi));
     if(data.ciljevi) localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(data.ciljevi));
+    if(data.krediti) localStorage.setItem('knjg_crm_krediti', JSON.stringify(data.krediti));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
@@ -776,7 +832,8 @@ function save() {
       const obaveze = JSON.parse(localStorage.getItem('knjg_crm_obaveze') || '{}');
       const rashodiData = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
       const ciljeviData = JSON.parse(localStorage.getItem('knjg_crm_ciljevi') || '{}');
-      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData });
+      const kreditiData = JSON.parse(localStorage.getItem('knjg_crm_krediti') || '[]');
+      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData, krediti: kreditiData });
       setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
     } catch(e) {
       setSyncStatus('error', 'Nije sačuvano: ' + e.message);
@@ -832,13 +889,14 @@ function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'
 
 // ── Tabs ──
 function showTab(t) {
-  const names=['form','dash','obaveze','cene','ciljevi'];
+  const names=['form','dash','obaveze','cene','ciljevi','krediti'];
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
   if(t==='dash'){renderDash();renderPodsetnici();}
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
+  if(t==='krediti') renderKrediti();
 }
 
 // ── Forma ──
@@ -2724,6 +2782,457 @@ function updateCilj(key, val) {
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ══════════════════════════════════════════════════════
+// KREDITI MODULE
+// ══════════════════════════════════════════════════════
+
+// krediti = [ { id, klijentId, naziv, banka, datumUvoza, rate: [ {rbr, datum, ukupnaRata, kamata, ostatakDuga, placena} ] } ]
+let krediti = JSON.parse(localStorage.getItem('knjg_crm_krediti') || '[]');
+let aktivniKreditId = null; // currently selected loan
+
+function saveKrediti() {
+  localStorage.setItem('knjg_crm_krediti', JSON.stringify(krediti));
+  save();
+}
+
+// ── PDF parsing via PDF.js ──
+async function parsePDFKredit(file) {
+  if (typeof pdfjsLib === 'undefined') {
+    // set worker
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let allLines = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    // Group items by Y position (row)
+    const byY = {};
+    content.items.forEach(item => {
+      const y = Math.round(item.transform[5]);
+      if (!byY[y]) byY[y] = [];
+      byY[y].push({ x: item.transform[4], text: item.str.trim() });
+    });
+    const sortedYs = Object.keys(byY).map(Number).sort((a,b)=>b-a);
+    sortedYs.forEach(y => {
+      const row = byY[y].sort((a,b)=>a.x-b.x).map(i=>i.text).filter(t=>t);
+      if (row.length > 0) allLines.push(row);
+    });
+  }
+
+  // Detect rows that look like loan schedule data
+  // Typical columns: RBR | Datum | Ukupna rata | Kamata | Ostatak duga (+ possible other cols)
+  // We look for rows where first col is a number (rbr) and second looks like a date
+  const dateRe = /^\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{2,4}$/;
+  const numRe = /^[\d\s.,]+$/;
+
+  function cleanNum(s) {
+    if(!s) return 0;
+    // Remove spaces, replace comma with dot for decimal
+    return parseFloat(s.replace(/\s/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.')) || 0;
+  }
+
+  function isDate(s) { return dateRe.test(s.replace(/\s/g,'')); }
+  function looksLikeNum(s) { return /^[\d\s.,]+$/.test(s.replace(/\s/g,'')); }
+
+  const rate = [];
+  allLines.forEach(row => {
+    // Try to find a row that starts with a number (rbr) followed by date
+    let rbr = null, datum = '', ukupnaRata = 0, kamata = 0, ostatakDuga = 0;
+
+    // Find rbr: first token that is a small integer
+    let startIdx = -1;
+    for (let i = 0; i < row.length; i++) {
+      const n = parseInt(row[i]);
+      if (!isNaN(n) && n > 0 && n < 1000 && String(n) === row[i].trim()) {
+        rbr = n; startIdx = i; break;
+      }
+    }
+    if (rbr === null) return;
+
+    // Find date after rbr
+    let dateIdx = -1;
+    for (let i = startIdx + 1; i < row.length; i++) {
+      if (isDate(row[i])) { datum = row[i]; dateIdx = i; break; }
+    }
+    if (!datum) return;
+
+    // Collect numbers after date — we expect at least 3 (ukupna rata, kamata, ostatak)
+    const nums = [];
+    for (let i = dateIdx + 1; i < row.length; i++) {
+      const v = cleanNum(row[i]);
+      if (v > 0) nums.push(v);
+    }
+    if (nums.length >= 2) {
+      // Heuristic: largest = ostatak duga (cumulative), smallest of first two = kamata
+      // Order usually: ukupna rata | kamata | ostatak duga  OR  kamata | ukupna rata | ostatak
+      // We'll take: nums[0]=ukupnaRata, nums[1]=kamata, last=ostatakDuga
+      ukupnaRata = nums[0];
+      kamata = nums.length >= 2 ? nums[1] : 0;
+      ostatakDuga = nums[nums.length - 1];
+      rate.push({ rbr, datum, ukupnaRata, kamata, ostatakDuga, placena: false });
+    }
+  });
+
+  return rate;
+}
+
+// ── Render Krediti main view ──
+function renderKrediti() {
+  const el = document.getElementById('kreditiContent');
+  if (!el) return;
+
+  // Header with client selector and add button
+  let clientOptions = '<option value="">— Izaberite klijenta —</option>';
+  clients.forEach(c => { clientOptions += `<option value="${c.id}">${c.naziv}</option>`; });
+
+  let kreditOptions = '<option value="">— Izaberite kredit —</option>';
+  krediti.forEach(k => {
+    const cl = clients.find(c=>c.id===k.klijentId);
+    kreditOptions += `<option value="${k.id}" ${k.id===aktivniKreditId?'selected':''}>${cl?cl.naziv+' — ':''} ${k.naziv} (${k.banka||''})</option>`;
+  });
+
+  let html = `
+  <div class="kr-header">
+    <div>
+      <div style="font-size:16px;font-weight:600"><i class="ti ti-credit-card" style="margin-right:6px"></i>Planovi otplate kredita</div>
+      <div style="font-size:13px;color:var(--txt2);margin-top:3px">Uploadujte PDF plan otplate i pratite plaćene rate</div>
+    </div>
+    <button class="btn-primary" onclick="showDodajKreditModal()">
+      <i class="ti ti-plus"></i> Dodaj kredit
+    </button>
+  </div>`;
+
+  if (krediti.length === 0) {
+    html += `
+    <div class="kr-upload-zone" onclick="showDodajKreditModal()" style="cursor:pointer;max-width:560px">
+      <i class="ti ti-file-upload" style="color:var(--txt2)"></i>
+      <p style="font-size:14px;font-weight:500;margin-bottom:4px">Uploadujte PDF plan otplate</p>
+      <p>Kliknite da dodate prvi kredit ili prevucite PDF ovde</p>
+    </div>`;
+    document.getElementById('kreditiContent').innerHTML = html;
+    return;
+  }
+
+  // Selector bar
+  html += `
+  <div class="kr-selector">
+    <label>Aktivan kredit:</label>
+    <select id="kreditSelect" onchange="selectKredit(this.value)" style="min-width:280px">
+      ${kreditOptions}
+    </select>
+    ${aktivniKreditId ? `<button onclick="deleteKredit(${aktivniKreditId})" style="margin-left:10px;padding:6px 12px;background:none;border:0.5px solid var(--brd-danger);color:var(--danger);border-radius:var(--rad);cursor:pointer;font-size:12px"><i class="ti ti-trash"></i> Obriši</button>` : ''}
+  </div>`;
+
+  if (!aktivniKreditId && krediti.length > 0) {
+    aktivniKreditId = krediti[0].id;
+  }
+
+  const kredit = krediti.find(k => k.id === aktivniKreditId);
+  if (!kredit) {
+    document.getElementById('kreditiContent').innerHTML = html;
+    return;
+  }
+
+  const rate = kredit.rate || [];
+  const placene = rate.filter(r=>r.placena).length;
+  const ukupno = rate.length;
+  const preostale = ukupno - placene;
+  const ukupnaObaveza = rate.reduce((s,r)=>s+r.ukupnaRata,0);
+  const ukupnoPlaceno = rate.filter(r=>r.placena).reduce((s,r)=>s+r.ukupnaRata,0);
+  const ukupnoKamata = rate.reduce((s,r)=>s+r.kamata,0);
+  const ukupnoKamataPlacena = rate.filter(r=>r.placena).reduce((s,r)=>s+r.kamata,0);
+  const ostatakDugaPos = rate.filter(r=>!r.placena);
+  const sledecaRata = ostatakDugaPos.length > 0 ? ostatakDugaPos[0] : null;
+  const pct = ukupno > 0 ? Math.round(placene/ukupno*100) : 0;
+
+  // Info cards
+  html += `
+  <div class="kr-meta">
+    <div class="kr-card"><div class="lbl">Ukupno rata</div><div class="val b">${ukupno}</div></div>
+    <div class="kr-card"><div class="lbl">Plaćeno rata</div><div class="val g">${placene}</div></div>
+    <div class="kr-card"><div class="lbl">Preostalo rata</div><div class="val ${preostale>0?'r':'g'}">${preostale}</div></div>
+    <div class="kr-card"><div class="lbl">Ukupna obaveza</div><div class="val">${eur(ukupnaObaveza)}</div></div>
+    <div class="kr-card"><div class="lbl">Plaćeno</div><div class="val g">${eur(ukupnoPlaceno)}</div></div>
+    <div class="kr-card"><div class="lbl">Ostatak duga</div><div class="val ${preostale>0?'r':'g'}">${ostatakDugaPos.length>0?eur(ostatakDugaPos[0].ostatakDuga):'€0'}</div></div>
+    <div class="kr-card"><div class="lbl">Ukupno kamata</div><div class="val w">${eur(ukupnoKamata)}</div></div>
+    <div class="kr-card"><div class="lbl">Kamata plaćena</div><div class="val">${eur(ukupnoKamataPlacena)}</div></div>
+  </div>`;
+
+  // Progress bar
+  html += `
+  <div class="kr-prog">
+    <div class="kr-prog-top">
+      <span>Napredak otplate</span>
+      <span style="font-weight:600;color:${pct>=100?'#1E8C50':pct>=50?'#E07B00':'#D32F2F'}">${pct}% (${placene}/${ukupno} rata)</span>
+    </div>
+    <div class="kr-prog-bg"><div class="kr-prog-fill" style="width:${pct}%"></div></div>
+  </div>`;
+
+  // Upcoming rate alert
+  if (sledecaRata) {
+    html += `<div class="kr-alert warn"><i class="ti ti-bell"></i> Sledeća rata: <strong>RBR ${sledecaRata.rbr}</strong> — ${sledecaRata.datum} — <strong>${eur(sledecaRata.ukupnaRata)}</strong></div>`;
+  }
+  if (preostale === 0 && ukupno > 0) {
+    html += `<div class="kr-alert green"><i class="ti ti-circle-check"></i> Kredit je u potpunosti otplaćen! 🎉</div>`;
+  }
+
+  // Table
+  if (rate.length === 0) {
+    html += `<div class="kr-empty"><i class="ti ti-table-off"></i>Nema rata. Pokušajte ponovo da uploadujete PDF.</div>`;
+  } else {
+    html += `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="font-size:13px;font-weight:500">Plan otplate — ${kredit.naziv}</div>
+      <span style="font-size:12px;color:var(--txt2)">${kredit.banka||''}</span>
+      <button onclick="exportKreditExcel()" style="margin-left:auto;padding:6px 14px;background:#1D6F42;color:#fff;border:none;border-radius:var(--rad);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+        <i class="ti ti-file-spreadsheet"></i> Excel
+      </button>
+    </div>
+    <div class="table-wrap">
+    <table class="kr-tbl">
+      <thead><tr>
+        <th style="width:42px;text-align:center">Pl.</th>
+        <th>RBR</th>
+        <th>Datum</th>
+        <th class="r">Ukupna rata</th>
+        <th class="r">Kamata</th>
+        <th class="r">Ostatak duga</th>
+        <th style="text-align:center">Status</th>
+      </tr></thead>
+      <tbody>`;
+
+    rate.forEach((r, idx) => {
+      const rowCls = r.placena ? 'kr-paid' : '';
+      const badge = r.placena
+        ? `<span class="kr-badge kb-paid"><i class="ti ti-check" style="font-size:10px"></i> Plaćena</span>`
+        : (idx === rate.findIndex(x=>!x.placena)
+          ? `<span class="kr-badge kb-soon"><i class="ti ti-clock" style="font-size:10px"></i> Sledeća</span>`
+          : `<span class="kr-badge kb-pend">Čeka</span>`);
+
+      html += `<tr class="${rowCls}" id="kr-row-${kredit.id}-${idx}">
+        <td style="text-align:center">
+          <input type="checkbox" class="kr-cb" ${r.placena?'checked':''}
+            onchange="toggleRata(${kredit.id},${idx},this.checked)"
+            title="${r.placena?'Označi kao neplaćenu':'Označi kao plaćenu'}">
+        </td>
+        <td style="font-weight:500">${r.rbr}</td>
+        <td>${r.datum}</td>
+        <td class="r" style="font-weight:500">${eur(r.ukupnaRata)}</td>
+        <td class="r" style="color:#E07B00">${eur(r.kamata)}</td>
+        <td class="r">${eur(r.ostatakDuga)}</td>
+        <td style="text-align:center">${badge}</td>
+      </tr>`;
+    });
+
+    // Summary row
+    html += `<tr class="kr-sum-row">
+      <td colspan="3" style="text-align:right;font-size:12px;padding:10px">UKUPNO:</td>
+      <td class="r">${eur(ukupnaObaveza)}</td>
+      <td class="r" style="color:#E07B00">${eur(ukupnoKamata)}</td>
+      <td class="r"></td>
+      <td></td>
+    </tr>`;
+
+    html += `</tbody></table></div>`;
+  }
+
+  document.getElementById('kreditiContent').innerHTML = html;
+}
+
+function selectKredit(id) {
+  aktivniKreditId = id ? parseInt(id) : null;
+  renderKrediti();
+}
+
+function toggleRata(kreditId, idx, checked) {
+  const k = krediti.find(x=>x.id===kreditId);
+  if (!k) return;
+  k.rate[idx].placena = checked;
+  saveKrediti();
+  // Re-render just the summary stats without full re-render for speed
+  renderKrediti();
+}
+
+function deleteKredit(id) {
+  const k = krediti.find(x=>x.id===id);
+  if (!k || !confirm('Obrisati kredit "'+k.naziv+'"?')) return;
+  krediti = krediti.filter(x=>x.id!==id);
+  aktivniKreditId = krediti.length > 0 ? krediti[0].id : null;
+  saveKrediti();
+  renderKrediti();
+  showToast('Kredit obrisan.');
+}
+
+// ── Modal za dodavanje kredita ──
+function showDodajKreditModal() {
+  // Create modal dynamically
+  let existing = document.getElementById('kreditModal');
+  if (existing) existing.remove();
+
+  let clientOptions = '<option value="">— Bez klijenta —</option>';
+  clients.forEach(c => { clientOptions += `<option value="${c.id}">${c.naziv}</option>`; });
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'kreditModal';
+  modal.innerHTML = `
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h2><i class="ti ti-credit-card" style="margin-right:6px"></i>Dodaj kredit</h2>
+      <button class="modal-close" onclick="document.getElementById('kreditModal').remove();document.body.style.overflow=''"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Naziv kredita</label>
+          <input type="text" id="km_naziv" placeholder="npr. Stambeni kredit 2024"></div>
+        <div class="form-group"><label>Banka</label>
+          <input type="text" id="km_banka" placeholder="npr. Raiffeisen"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px"><label>Klijent (opciono)</label>
+        <select id="km_klijent">${clientOptions}</select>
+      </div>
+
+      <div class="section-title" style="margin-top:1rem">PDF plan otplate</div>
+      <div class="kr-upload-zone" id="km_dropzone" onclick="document.getElementById('km_pdf').click()">
+        <i class="ti ti-file-type-pdf" style="color:#D32F2F" id="km_ikona"></i>
+        <p id="km_txt" style="font-size:13px;font-weight:500;margin-bottom:4px">Kliknite ili prevucite PDF</p>
+        <p id="km_subtxt" style="font-size:12px">Plan otplate iz banke u PDF formatu</p>
+      </div>
+      <input type="file" id="km_pdf" accept=".pdf" style="display:none" onchange="handleKreditPDF(this)">
+
+      <div id="km_preview" style="margin-top:10px"></div>
+
+      <div style="margin-top:10px;padding:10px 12px;background:var(--bg2);border-radius:var(--rad);font-size:12px;color:var(--txt2);line-height:1.6">
+        <strong>Napomena:</strong> Automatski se parsiraju kolone: RBR, Datum, Ukupna rata, Kamata, Ostatak duga.<br>
+        Ako PDF nije parsiran ispravno, rate možete dodati ručno nakon uvoza.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="km_saveBtn" onclick="saveKreditFromModal()" disabled><i class="ti ti-device-floppy"></i> Sačuvaj kredit</button>
+      <button class="btn-secondary" onclick="document.getElementById('kreditModal').remove();document.body.style.overflow=''">Odustani</button>
+    </div>
+  </div>`;
+
+  // Drag and drop
+  modal.querySelector('#km_dropzone').addEventListener('dragover', e=>{e.preventDefault();e.currentTarget.classList.add('drag');});
+  modal.querySelector('#km_dropzone').addEventListener('dragleave', e=>{e.currentTarget.classList.remove('drag');});
+  modal.querySelector('#km_dropzone').addEventListener('drop', e=>{
+    e.preventDefault(); e.currentTarget.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if(f && f.type==='application/pdf') handleKreditPDFFile(f);
+  });
+
+  document.body.appendChild(modal);
+  document.body.style.overflow='hidden';
+  modal.addEventListener('click', e=>{if(e.target===modal){modal.remove();document.body.style.overflow='';}});
+}
+
+let parsedRateTmp = [];
+
+async function handleKreditPDF(input) {
+  const f = input.files[0];
+  if(!f) return;
+  await handleKreditPDFFile(f);
+}
+
+async function handleKreditPDFFile(f) {
+  const preview = document.getElementById('km_preview');
+  const txt = document.getElementById('km_txt');
+  const subtxt = document.getElementById('km_subtxt');
+  const dropzone = document.getElementById('km_dropzone');
+  const saveBtn = document.getElementById('km_saveBtn');
+
+  if(txt) txt.textContent = 'Parsiranje PDF-a...';
+  if(subtxt) subtxt.textContent = f.name;
+  if(dropzone) dropzone.classList.add('loaded');
+  if(preview) preview.innerHTML = '<div style="font-size:13px;color:var(--txt2);padding:8px 0"><i class="ti ti-loader spin"></i> Učitavam i parsiram PDF...</div>';
+
+  try {
+    const rate = await parsePDFKredit(f);
+    parsedRateTmp = rate;
+
+    if(rate.length === 0) {
+      if(preview) preview.innerHTML = `
+        <div class="kr-alert red"><i class="ti ti-alert-circle"></i>
+          Nije moguće automatski parsirati tabelu iz ovog PDF-a. Kredit će biti sačuvan bez rata — možete ih dodati ručno.
+        </div>`;
+      if(saveBtn) saveBtn.disabled = false;
+      return;
+    }
+
+    const ukupno = rate.reduce((s,r)=>s+r.ukupnaRata,0);
+    const prvaRata = rate[0];
+    const zadnjaRata = rate[rate.length-1];
+
+    if(preview) preview.innerHTML = `
+      <div class="kr-alert green"><i class="ti ti-circle-check"></i> Parsiran ${rate.length} rata iz PDF-a!</div>
+      <div class="kr-meta" style="margin-top:8px">
+        <div class="kr-card"><div class="lbl">Broj rata</div><div class="val b">${rate.length}</div></div>
+        <div class="kr-card"><div class="lbl">Ukupna obaveza</div><div class="val">${eur(ukupno)}</div></div>
+        <div class="kr-card"><div class="lbl">Prva rata</div><div class="val" style="font-size:13px">${prvaRata.datum}</div></div>
+        <div class="kr-card"><div class="lbl">Zadnja rata</div><div class="val" style="font-size:13px">${zadnjaRata.datum}</div></div>
+      </div>
+      <div style="margin-top:8px;max-height:180px;overflow-y:auto;border:0.5px solid var(--brd2);border-radius:var(--rad)">
+        <table class="kr-tbl" style="font-size:12px">
+          <thead><tr><th>RBR</th><th>Datum</th><th class="r">Rata</th><th class="r">Kamata</th><th class="r">Ostatak</th></tr></thead>
+          <tbody>${rate.slice(0,5).map(r=>`<tr><td>${r.rbr}</td><td>${r.datum}</td><td class="r">${eur(r.ukupnaRata)}</td><td class="r">${eur(r.kamata)}</td><td class="r">${eur(r.ostatakDuga)}</td></tr>`).join('')}
+          ${rate.length>5?`<tr><td colspan="5" style="text-align:center;color:var(--txt2)">... i još ${rate.length-5} rata</td></tr>`:''}
+          </tbody>
+        </table>
+      </div>`;
+    if(saveBtn) saveBtn.disabled = false;
+    if(txt) txt.textContent = `PDF parsiran — ${rate.length} rata`;
+
+  } catch(e) {
+    if(preview) preview.innerHTML = `<div class="kr-alert red"><i class="ti ti-alert-circle"></i> Greška pri parsiranju: ${e.message}</div>`;
+    if(saveBtn) saveBtn.disabled = false;
+    parsedRateTmp = [];
+  }
+}
+
+function saveKreditFromModal() {
+  const naziv = document.getElementById('km_naziv')?.value.trim();
+  const banka = document.getElementById('km_banka')?.value.trim()||'';
+  const klijentId = parseInt(document.getElementById('km_klijent')?.value)||null;
+  if(!naziv){ showToast('Unesite naziv kredita!'); return; }
+
+  const noviKredit = {
+    id: Date.now(),
+    naziv, banka, klijentId,
+    datumUvoza: new Date().toLocaleDateString('sr-RS'),
+    rate: parsedRateTmp.map(r=>({...r}))
+  };
+
+  krediti.push(noviKredit);
+  aktivniKreditId = noviKredit.id;
+  saveKrediti();
+  document.getElementById('kreditModal')?.remove();
+  document.body.style.overflow='';
+  parsedRateTmp = [];
+  renderKrediti();
+  showToast('Kredit "'+naziv+'" dodat!');
+}
+
+// ── Export Kredit Excel ──
+function exportKreditExcel() {
+  const k = krediti.find(x=>x.id===aktivniKreditId);
+  if(!k||!k.rate.length){ showToast('Nema podataka za izvoz!'); return; }
+  const wb = XLSX.utils.book_new();
+  const h = ['RBR','Datum','Ukupna rata (€)','Kamata (€)','Ostatak duga (€)','Plaćena'];
+  const rows = k.rate.map(r=>[r.rbr,r.datum,r.ukupnaRata,r.kamata,r.ostatakDuga,r.placena?'Da':'Ne']);
+  const ws = XLSX.utils.aoa_to_sheet([h,...rows]);
+  ws['!cols']=[{wch:6},{wch:14},{wch:18},{wch:14},{wch:18},{wch:10}];
+  styleHeader(ws,{s:{r:0,c:0},e:{r:0,c:h.length-1}},'0C447C');
+  XLSX.utils.book_append_sheet(wb,ws,'Plan otplate');
+  const d=new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
+  XLSX.writeFile(wb,'Kredit_'+k.naziv.replace(/\s/g,'_')+'_'+d+'.xlsx');
+  showToast('Excel preuzet!');
+}
 
 // ── Start ──
 initApp();
