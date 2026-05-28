@@ -330,6 +330,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
   <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
   <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
+  <button class="tab" onclick="showTab('knjizice')"><i class="ti ti-health-recognition"></i> Zdravstvene knjižice</button>
 
 </div>
 
@@ -502,6 +503,11 @@ select{cursor:pointer}
 <!-- ═══ CILJEVI ═══ -->
 <div class="page" id="page-ciljevi">
   <div id="ciljeviContent"></div>
+</div>
+
+<!-- ═══ ZDRAVSTVENE KNJIŽICE ═══ -->
+<div class="page" id="page-knjizice">
+  <div id="knjiziceContent"></div>
 </div>
 
 
@@ -836,13 +842,14 @@ function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'
 
 // ── Tabs ──
 function showTab(t) {
-  const names=['form','dash','obaveze','cene','ciljevi'];
+  const names=['form','dash','obaveze','cene','ciljevi','knjizice'];
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
   if(t==='dash'){renderDash();renderPodsetnici();}
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
+  if(t==='knjizice') renderKnjizice();
 }
 
 // ── Forma ──
@@ -990,7 +997,8 @@ function addWorker(data) {
       <label style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="wpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:#0C447C;font-weight:500">PPP-PD</span>
       </label>
-    </div>`;
+    </div>
+    <div class="form-group"><label><i class="ti ti-health-recognition" style="color:#C0186A;font-size:13px"></i> Zdravstvena knjižica važi do</label>${dateInputHtml('wknjizica-'+wc, data?.knjizicaDo||'', false)}</div>`;
   const row2=document.createElement('div');
   row2.style.cssText='display:flex;justify-content:flex-end;margin:-2px 0 6px';
   const rb=document.createElement('button'); rb.className='remove-small';
@@ -1092,7 +1100,8 @@ function collectWorkers(prefix, listId) {
       od:getDateVal(prefix+'wod-'+id),
       do_:neodredjeno?'':getDateVal(prefix+'wdo-'+id),
       neodredjeno,
-      pppPd
+      pppPd,
+      knjizicaDo:getDateVal(prefix+'wknjizica-'+id)
     });
   });
   return workers;
@@ -1231,7 +1240,8 @@ function addEditWorker(data) {
       <label style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;cursor:pointer">
         <input type="checkbox" id="ewpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:#0C447C;font-weight:500">PPP-PD</span>
       </label>
-    </div>`;
+    </div>
+    <div class="form-group"><label><i class="ti ti-health-recognition" style="color:#C0186A;font-size:13px"></i> Zdravstvena knjižica važi do</label>${dateInputHtml('ewknjizica-'+wc, data?.knjizicaDo||'', false)}</div>`;
   const row2=document.createElement('div');
   row2.style.cssText='display:flex;justify-content:flex-end;margin:-2px 0 6px';
   const rb=document.createElement('button'); rb.className='remove-small';
@@ -1258,7 +1268,8 @@ function saveEdit() {
       od:getDateVal('ewod-'+id),
       do_:neodredjeno?'':getDateVal('ewdo-'+id),
       neodredjeno,
-      pppPd
+      pppPd,
+      knjizicaDo:getDateVal('ewknjizica-'+id)
     });
   });
   const idx=clients.findIndex(x=>x.id===editingId);
@@ -1295,7 +1306,7 @@ function deleteFromModal() {
   showToast('Klijent obrisan.');
 }
 
-// ── Podsetnici (ugovori + rođendani) ──
+// ── Podsetnici (ugovori + rođendani + knjižice) ──
 function ugovorStatus(do_) {
   if(!do_) return {tip:'bezroka',label:'Bez roka',dana:null};
   const danas=new Date(); danas.setHours(0,0,0,0);
@@ -1305,6 +1316,17 @@ function ugovorStatus(do_) {
   if(diff===0) return {tip:'istekao',label:'Ističe danas!',dana:diff};
   if(diff<=5) return {tip:'uskoro',label:'Ističe za '+diff+' '+(diff===1?'dan':'dana'),dana:diff};
   return null; // nije u opasnoj zoni — ne prikazuj
+}
+
+function knjizicaStatus(knjizicaDo) {
+  if(!knjizicaDo) return null;
+  const danas=new Date(); danas.setHours(0,0,0,0);
+  const exp=new Date(knjizicaDo); exp.setHours(0,0,0,0);
+  const diff=Math.ceil((exp-danas)/86400000);
+  if(diff<0) return {tip:'istekla',label:'Istekla pre '+Math.abs(diff)+' dana',dana:diff};
+  if(diff===0) return {tip:'danas',label:'Ističe danas!',dana:0};
+  if(diff===1) return {tip:'uskoro',label:'Ističe sutra!',dana:1};
+  return {tip:'aktivna',label:'Važi još '+diff+' dana',dana:diff};
 }
 
 function rodjendanStatus(rodjendan) {
@@ -1346,6 +1368,25 @@ function renderPodsetnici() {
     {tip:'uskoro',naslov:'Ugovori ističu u 5 dana',ikona:'ti-clock-exclamation',items:sviU.filter(x=>x.status.tip==='uskoro')},
   ].filter(g=>g.items.length>0);
 
+  // --- Zdravstvene knjižice ---
+  let sviK=[];
+  clients.forEach(c=>{
+    if(c.radnici&&c.workers.length>0) c.workers.forEach(w=>{
+      if(!w.knjizicaDo) return;
+      const st=knjizicaStatus(w.knjizicaDo);
+      if(!st) return;
+      // prikazuj samo istekle, danas i uskoro (sutra)
+      if(st.tip==='aktivna' && st.dana>1) return;
+      sviK.push({ime:w.ime,firma:c.naziv,pravnaForma:c.pravnaForma,knjizicaDo:w.knjizicaDo,status:st});
+    });
+  });
+  sviK.sort((a,b)=>a.status.dana-b.status.dana);
+  const grupeK=[
+    {tip:'kistekla',naslov:'Istekle zdravstvene knjižice',ikona:'ti-health-recognition',items:sviK.filter(x=>x.status.tip==='istekla')},
+    {tip:'kdanas',naslov:'Zdravstvene knjižice ističu danas',ikona:'ti-health-recognition',items:sviK.filter(x=>x.status.tip==='danas')},
+    {tip:'kuskoro',naslov:'Zdravstvene knjižice ističu sutra',ikona:'ti-health-recognition',items:sviK.filter(x=>x.status.tip==='uskoro')},
+  ].filter(g=>g.items.length>0);
+
   // --- Rođendani (samo oni u 30 dana) ---
   let rodj=[];
   clients.forEach(c=>{
@@ -1376,6 +1417,34 @@ function renderPodsetnici() {
     html+=`</div></div>`;
   }
 
+  // Blokovi zdravstvene knjižice
+  if(grupeK.length>0) {
+    html+='<div style="font-size:11px;font-weight:500;color:var(--txt2);letter-spacing:.06em;text-transform:uppercase;margin:10px 0 6px">Podsetnik — zdravstvene knjižice</div>';
+    const kBoja={kistekla:'istekao',kdanas:'istekao',kuskoro:'uskoro'};
+    const kIkona={kistekla:'ti-alert-circle',kdanas:'ti-alert-circle',kuskoro:'ti-clock-exclamation'};
+    grupeK.forEach(g=>{
+      const bojaTip=kBoja[g.tip]||'uskoro';
+      const col=collapsedGroups[g.tip]||false;
+      html+=`<div class="podsetnik-blok s-${bojaTip}" style="margin-bottom:8px">
+        <div class="podsetnik-header" onclick="toggleGrupa('${g.tip}')">
+          <div class="podsetnik-header-left"><span class="dot dot-${bojaTip}"></span><i class="ti ${g.ikona}"></i><span>${g.naslov}</span><span style="font-size:11px;opacity:.7;margin-left:2px">(${g.items.length})</span></div>
+          <i class="ti ti-chevron-down chevron ${col?'':'open'}" id="chev-${g.tip}"></i>
+        </div>
+        <div id="grupa-${g.tip}" style="display:${col?'none':'block'}">`;
+      g.items.forEach(w=>{
+        const fb=w.pravnaForma==='DOO'?'b-doo':w.pravnaForma==='PR'?'b-pr':'b-pausal';
+        html+=`<div class="podsetnik-row">
+          <span class="dot dot-${bojaTip}" style="margin-right:4px"></span>
+          <span class="p-ime">${w.ime}</span>
+          <span class="p-firma"><span class="badge ${fb}" style="font-size:10px;padding:1px 6px">${w.pravnaForma}</span> ${w.firma}</span>
+          <span class="p-status us-${bojaTip}">${w.status.label}</span>
+          <span class="p-datum">${w.knjizicaDo?'do '+fmt(w.knjizicaDo):''}</span>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    });
+  }
+
   // Blokovi ugovori
   if(grupeU.length>0) {
     html+='<div style="font-size:11px;font-weight:500;color:var(--txt2);letter-spacing:.06em;text-transform:uppercase;margin:10px 0 6px">Podsetnik — ugovori radnika</div>';
@@ -1402,7 +1471,7 @@ function renderPodsetnici() {
   }
 
   html+='</div>';
-  if(rodj.length===0 && grupeU.length===0) { wrap.innerHTML=''; return; }
+  if(rodj.length===0 && grupeU.length===0 && grupeK.length===0) { wrap.innerHTML=''; return; }
   wrap.innerHTML=html;
 }
 
@@ -2725,6 +2794,100 @@ function updateCilj(key, val) {
   ciljevi[key] = parseFloat(val)||0;
   saveCiljevi();
   renderCiljevi();
+}
+
+// ── Zdravstvene knjižice ──
+function renderKnjizice() {
+  const wrap = document.getElementById('knjiziceContent');
+  if(!wrap) return;
+
+  // Skupi sve radnike
+  let stavke = [];
+  clients.forEach(c => {
+    if(c.radnici && c.workers && c.workers.length > 0) {
+      c.workers.forEach(w => {
+        const st = knjizicaStatus(w.knjizicaDo);
+        stavke.push({
+          workerIme: w.ime,
+          clientNaziv: c.naziv,
+          clientId: c.id,
+          pravnaForma: c.pravnaForma,
+          knjizicaDo: w.knjizicaDo || '',
+          status: st
+        });
+      });
+    }
+  });
+
+  // Sortiraj: istekle prvo, pa danas, pa sutra, pa aktivne sa datumom, pa bez datuma
+  const orderK = {istekla:0, danas:1, uskoro:2, aktivna:3};
+  stavke.sort((a,b) => {
+    const ta = a.status ? orderK[a.status.tip] : 4;
+    const tb = b.status ? orderK[b.status.tip] : 4;
+    if(ta !== tb) return ta - tb;
+    if(a.knjizicaDo && b.knjizicaDo) return a.knjizicaDo.localeCompare(b.knjizicaDo);
+    if(a.knjizicaDo) return -1;
+    if(b.knjizicaDo) return 1;
+    return 0;
+  });
+
+  const istekle = stavke.filter(s => s.status?.tip === 'istekla');
+  const danas_   = stavke.filter(s => s.status?.tip === 'danas');
+  const uskoro_  = stavke.filter(s => s.status?.tip === 'uskoro');
+  const aktivne  = stavke.filter(s => s.status?.tip === 'aktivna');
+  const bezDat   = stavke.filter(s => !s.knjizicaDo);
+
+  // Stats
+  const ukupnoSaKnjizicama = stavke.filter(s => s.knjizicaDo).length;
+
+  let html = `
+    <div style="margin-bottom:1.25rem;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <div style="font-size:16px;font-weight:600"><i class="ti ti-health-recognition" style="margin-right:6px;color:#C0186A"></i>Zdravstvene knjižice radnika</div>
+      <div style="font-size:13px;color:var(--txt2)">Pregled statusa za sve radnike</div>
+    </div>
+
+    <div class="dash-stats" style="margin-bottom:1.25rem">
+      <div class="stat-card"><div class="stat-label">Ukupno radnika</div><div class="stat-val">${stavke.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Sa unetim datumom</div><div class="stat-val">${ukupnoSaKnjizicama}</div></div>
+      <div class="stat-card"><div class="stat-label"><span style="color:#D32F2F">Istekle</span></div><div class="stat-val" style="color:#D32F2F">${istekle.length}</div></div>
+      <div class="stat-card"><div class="stat-label"><span style="color:#E07B00">Uskoro ističu</span></div><div class="stat-val" style="color:#E07B00">${danas_.length + uskoro_.length}</div></div>
+      <div class="stat-card"><div class="stat-label"><span style="color:#1E8C50">Aktivne</span></div><div class="stat-val" style="color:#1E8C50">${aktivne.length}</div></div>
+    </div>`;
+
+  if(!stavke.length) {
+    html += '<div class="empty-state"><i class="ti ti-health-recognition"></i>Nema radnika. Dodajte klijente sa radnicima.</div>';
+    wrap.innerHTML = html;
+    return;
+  }
+
+  function knjizicaBadge(st, knjizicaDo) {
+    if(!knjizicaDo) return '<span class="badge b-no" style="font-size:11px">Nema datuma</span>';
+    if(!st) return '<span class="badge b-no" style="font-size:11px">—</span>';
+    if(st.tip==='istekla') return `<span class="badge" style="background:#FFE0E0;color:#7A0000;font-size:11px;font-weight:700"><i class="ti ti-alert-circle" style="font-size:10px"></i> ISTEKLA</span>`;
+    if(st.tip==='danas')   return `<span class="badge" style="background:#FFE0E0;color:#7A0000;font-size:11px;font-weight:700"><i class="ti ti-alert-circle" style="font-size:10px"></i> ISTIČE DANAS</span>`;
+    if(st.tip==='uskoro')  return `<span class="badge" style="background:#FFEFC8;color:#6B3A00;font-size:11px;font-weight:700"><i class="ti ti-clock-exclamation" style="font-size:10px"></i> SUTRA</span>`;
+    if(st.tip==='aktivna') return `<span class="badge" style="background:#D8F5E5;color:#0D4A28;font-size:11px"><i class="ti ti-circle-check" style="font-size:10px"></i> Važi još ${st.dana} dana</span>`;
+    return '';
+  }
+
+  html += `<div class="table-wrap"><table class="client-table"><thead><tr>
+    <th>Radnik</th><th>Firma</th><th>Pravna forma</th><th>Knjižica važi do</th><th>Status</th>
+  </tr></thead><tbody>`;
+
+  stavke.forEach(s => {
+    const fb = s.pravnaForma==='DOO'?'b-doo':s.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const rowBg = s.status?.tip==='istekla'||s.status?.tip==='danas' ? 'background:rgba(211,47,47,.04)' : s.status?.tip==='uskoro' ? 'background:rgba(224,123,0,.04)' : '';
+    html += `<tr style="${rowBg}">
+      <td style="font-weight:500;font-size:13px">${s.workerIme}</td>
+      <td>${s.clientNaziv}</td>
+      <td><span class="badge ${fb}">${s.pravnaForma}</span></td>
+      <td>${s.knjizicaDo ? `<span style="font-size:13px;font-weight:500">${fmt(s.knjizicaDo)}</span>` : '<span style="color:var(--txt2);font-size:12px">—</span>'}</td>
+      <td>${knjizicaBadge(s.status, s.knjizicaDo)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
