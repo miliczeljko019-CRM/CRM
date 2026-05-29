@@ -138,58 +138,11 @@ select{cursor:pointer}
   display:flex;align-items:center;justify-content:center;
 }
 
-/* ── Klijenti statusna traka ── */
-.clients-statusbar{
-  position:fixed;top:44px;left:0;right:0;z-index:400;
-  height:36px;
-  background:rgba(29,29,31,.97);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(255,255,255,.07);
-  display:flex;align-items:center;
-  overflow:hidden;
-}
-.csb-inner{
-  display:flex;align-items:center;
-  padding:0 16px;gap:0;
-  overflow-x:auto;scrollbar-width:none;
-  flex:1;
-}
-.csb-inner::-webkit-scrollbar{display:none}
-.csb-label{
-  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  color:rgba(255,255,255,.25);padding-right:14px;border-right:1px solid rgba(255,255,255,.08);
-  margin-right:12px;flex-shrink:0;white-space:nowrap;
-}
-.csb-chip{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:3px 10px;border-radius:100px;
-  font-size:11px;font-weight:500;
-  color:rgba(255,255,255,.55);
-  border:1px solid rgba(255,255,255,.1);
-  margin-right:6px;flex-shrink:0;
-  cursor:pointer;transition:all .15s;white-space:nowrap;
-  background:rgba(255,255,255,.04);
-  text-decoration:none;
-}
-.csb-chip:hover{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.1)}
-.csb-chip .csb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.csb-chip.doo .csb-dot{background:#a78bfa}
-.csb-chip.pr  .csb-dot{background:#34d399}
-.csb-chip.pau .csb-dot{background:#fbbf24}
-.csb-right{
-  display:flex;align-items:center;gap:12px;
-  padding:0 14px;flex-shrink:0;
-  border-left:1px solid rgba(255,255,255,.07);
-  font-size:11px;color:rgba(255,255,255,.3);
-}
-.csb-right strong{color:rgba(255,255,255,.6);font-weight:600}
-
-/* ── App body (offset for fixed nav+statusbar) ── */
+/* ── App body (offset for fixed nav) ── */
 .app{
   max-width:980px;margin:0 auto;
   padding:1.5rem 1rem;
-  padding-top:calc(44px + 36px + 1.5rem);
+  padding-top:calc(44px + 1.5rem);
 }
 .logo-icon{width:36px;height:36px;background:var(--txt);border-radius:var(--rad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-icon i{color:var(--bg);font-size:20px}
@@ -225,8 +178,11 @@ select{cursor:pointer}
 .remove-small{height:26px;padding:0 10px;font-size:11px;color:var(--danger);border:0.5px solid var(--brd-danger);border-radius:var(--rad);cursor:pointer;background:none}
 
 .workers-section{border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px;background:var(--bg2)}
-.worker-card{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:end}
-@media(max-width:660px){.worker-card{grid-template-columns:1fr 1fr}}
+.worker-card{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px;margin-bottom:8px;}
+.worker-card-row1{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;align-items:end;margin-bottom:10px}
+.worker-card-row2{display:flex;gap:20px;align-items:center;padding-top:8px;border-top:0.5px solid var(--brd2)}
+.worker-card-footer{display:flex;justify-content:flex-end;margin-top:6px}
+@media(max-width:660px){.worker-card-row1{grid-template-columns:1fr 1fr}}
 .add-worker-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border:0.5px dashed var(--brd);border-radius:var(--rad);background:none;color:var(--txt2);cursor:pointer;font-size:13px;transition:all .15s;margin-top:6px}
 .add-worker-btn:hover{border-color:var(--brd3);color:var(--txt)}
 
@@ -502,19 +458,6 @@ select{cursor:pointer}
         <i class="ti ti-logout" style="font-size:11px;opacity:.5"></i>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- ══ CLIENTS STATUS BAR ══ -->
-<div class="clients-statusbar" id="clientsStatusBar">
-  <div class="csb-inner" id="csbInner">
-    <span class="csb-label">Klijenti</span>
-    <span style="font-size:11px;color:rgba(255,255,255,.25);padding:0 8px">Učitavam...</span>
-  </div>
-  <div class="csb-right">
-    <span id="csbTotal">0 klijenata</span>
-    <span>·</span>
-    <strong id="csbPrihod">€0/mes</strong>
   </div>
 </div>
 
@@ -1026,7 +969,6 @@ async function initApp() {
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
   updateCenaPreview();
-  renderClientsStatusBar();
 }
 
 // ── Data variables (populated by loadFromDrive) ──
@@ -1056,7 +998,6 @@ function showTab(t) {
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
-  renderClientsStatusBar();
 }
 
 // ── Forma ──
@@ -1192,27 +1133,22 @@ function addWorker(data) {
   const div = document.createElement('div');
   div.className='worker-card'; div.id='worker-'+wc;
   div.innerHTML=`
-    <div class="form-group"><label>Ime i prezime</label><input type="text" id="wname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
-    <div class="form-group"><label>JMBG</label><input type="text" id="wjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
-    <div class="form-group"><label>Prijavljen od</label>${dateInputHtml('wod-'+wc, data?.od||'', false)}</div>
-    <div class="form-group">
-      <label>Ugovor do</label>
-      ${dateInputHtml('wdo-'+wc, data?.do_||'', neodredjeno)}
-      <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
+    <div class="worker-card-row1">
+      <div class="form-group"><label>Ime i prezime</label><input type="text" id="wname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
+      <div class="form-group"><label>JMBG</label><input type="text" id="wjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
+      <div class="form-group"><label>Prijavljen od</label>${dateInputHtml('wod-'+wc, data?.od||'', false)}</div>
+      <div class="form-group"><label>Ugovor do</label>${dateInputHtml('wdo-'+wc, data?.do_||'', neodredjeno)}</div>
+    </div>
+    <div class="worker-card-row2">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
         <input type="checkbox" id="wneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('wdo-${wc}',this)"> Neodređeno
       </label>
-      <label style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="wpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:#0C447C;font-weight:500">PPP-PD</span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="wpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:var(--blue-600,#1d4ed8);font-weight:600">PPP-PD</span>
       </label>
+      <button onclick="this.closest('.worker-card').nextElementSibling?.remove();this.closest('.worker-card').remove();setTimeout(updateCenaPreview,50)" class="remove-small" style="margin-left:auto"><i class="ti ti-trash"></i> Ukloni</button>
     </div>`;
-  const row2=document.createElement('div');
-  row2.style.cssText='display:flex;justify-content:flex-end;margin:-2px 0 6px';
-  const rb=document.createElement('button'); rb.className='remove-small';
-  rb.innerHTML='<i class="ti ti-trash"></i> Ukloni';
-  rb.onclick=()=>{div.remove();row2.remove();setTimeout(updateCenaPreview,50)};
-  row2.appendChild(rb);
   document.getElementById('workersList').appendChild(div);
-  document.getElementById('workersList').appendChild(row2);
   setTimeout(updateCenaPreview,50);
 }
 
@@ -1337,7 +1273,6 @@ function saveClient() {
     datum:new Date().toLocaleDateString('en-GB')
   });
   save(); showToast('Klijent "'+naziv+'" sačuvan!'); resetForm();
-  renderClientsStatusBar();
   setTimeout(()=>showTab('dash'),600);
 }
 
@@ -1434,27 +1369,22 @@ function addEditWorker(data) {
   const div=document.createElement('div');
   div.className='worker-card'; div.id='eworker-'+wc;
   div.innerHTML=`
-    <div class="form-group"><label>Ime i prezime</label><input type="text" id="ewname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
-    <div class="form-group"><label>JMBG</label><input type="text" id="ewjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
-    <div class="form-group"><label>Prijavljen od</label>${dateInputHtml('ewod-'+wc, data?.od||'', false)}</div>
-    <div class="form-group">
-      <label>Ugovor do</label>
-      ${dateInputHtml('ewdo-'+wc, data?.do_||'', neodredjeno)}
-      <label style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:12px;cursor:pointer">
+    <div class="worker-card-row1">
+      <div class="form-group"><label>Ime i prezime</label><input type="text" id="ewname-${wc}" placeholder="Petar Petrović" value="${data?.ime||''}"></div>
+      <div class="form-group"><label>JMBG</label><input type="text" id="ewjmbg-${wc}" maxlength="13" value="${data?.jmbg||''}"></div>
+      <div class="form-group"><label>Prijavljen od</label>${dateInputHtml('ewod-'+wc, data?.od||'', false)}</div>
+      <div class="form-group"><label>Ugovor do</label>${dateInputHtml('ewdo-'+wc, data?.do_||'', neodredjeno)}</div>
+    </div>
+    <div class="worker-card-row2">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
         <input type="checkbox" id="ewneodredjeno-${wc}" ${neodredjeno?'checked':''} onchange="toggleNeodredjeno('ewdo-${wc}',this)"> Neodređeno
       </label>
-      <label style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="ewpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:#0C447C;font-weight:500">PPP-PD</span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ewpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:var(--blue-600,#1d4ed8);font-weight:600">PPP-PD</span>
       </label>
+      <button onclick="this.closest('.worker-card').nextElementSibling?.remove();this.closest('.worker-card').remove()" class="remove-small" style="margin-left:auto"><i class="ti ti-trash"></i> Ukloni</button>
     </div>`;
-  const row2=document.createElement('div');
-  row2.style.cssText='display:flex;justify-content:flex-end;margin:-2px 0 6px';
-  const rb=document.createElement('button'); rb.className='remove-small';
-  rb.innerHTML='<i class="ti ti-trash"></i> Ukloni';
-  rb.onclick=()=>{div.remove();row2.remove()};
-  row2.appendChild(rb);
   document.getElementById('e_workersList').appendChild(div);
-  document.getElementById('e_workersList').appendChild(row2);
 }
 
 function saveEdit() {
@@ -1496,7 +1426,7 @@ function saveEdit() {
     cenaMesecna:parseFloat(document.getElementById('e_cenaMesecna').value)||0
   };
   save(); closeModal();
-  setTimeout(()=>{ renderDash(); renderPodsetnici(); renderClientsStatusBar(); }, 100);
+  setTimeout(()=>{ renderDash(); renderPodsetnici(); }, 100);
   showToast('Podaci klijenta "'+naziv+'" su ažurirani!');
 }
 
@@ -1505,7 +1435,7 @@ function deleteFromModal() {
   if(!c) return;
   if(!confirm('Obrisati klijenta "'+c.naziv+'"?')) return;
   clients=clients.filter(x=>x.id!==editingId);
-  save(); closeModal(); renderDash(); renderPodsetnici(); renderClientsStatusBar();
+  save(); closeModal(); renderDash(); renderPodsetnici();
   showToast('Klijent obrisan.');
 }
 
@@ -2694,7 +2624,7 @@ function deleteClient(id) {
   const c=clients.find(x=>x.id===id);
   if(!c||!confirm('Obrisati klijenta "'+c.naziv+'"?')) return;
   clients=clients.filter(x=>x.id!==id);
-  save(); renderDash(); renderPodsetnici(); renderClientsStatusBar();
+  save(); renderDash(); renderPodsetnici();
   showToast('Klijent obrisan.');
 }
 
@@ -3190,34 +3120,6 @@ function countNeuradjenoPregled(ob, god, mes) {
   return n;
 }
 
-// ── Clients status bar ──
-function renderClientsStatusBar() {
-  const inner = document.getElementById('csbInner');
-  const total = document.getElementById('csbTotal');
-  const prihod = document.getElementById('csbPrihod');
-  if(!inner) return;
-
-  const ukupnoCena = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
-  if(total) total.textContent = clients.length + (clients.length===1?' klijent':clients.length>=2&&clients.length<=4?' klijenta':' klijenata');
-  if(prihod) prihod.textContent = eur(ukupnoCena)+'/mes';
-
-  if(!clients.length) {
-    inner.innerHTML = '<span class="csb-label">Klijenti</span><span style="font-size:11px;color:rgba(255,255,255,.25)">Nema unetih klijenata</span>';
-    return;
-  }
-
-  let html = '<span class="csb-label">Klijenti</span>';
-  clients.forEach(c => {
-    const tipCls = c.pravnaForma==='DOO'?'doo':c.pravnaForma==='PR'?'pr':'pau';
-    const dotColor = c.pravnaForma==='DOO'?'#a78bfa':c.pravnaForma==='PR'?'#34d399':'#fbbf24';
-    const pdvBadge = c.pdv ? '<span style="font-size:9px;opacity:.5;margin-left:2px">PDV</span>' : '';
-    html += `<span class="csb-chip ${tipCls}" onclick="openEdit(${c.id})" title="${c.naziv} · ${c.pravnaForma}${c.pdv?' · PDV':''}${c.cenaMesecna?' · '+eur(c.cenaMesecna)+'/mes':''}">
-      <span class="csb-dot" style="background:${dotColor}"></span>
-      ${c.naziv}${pdvBadge}
-    </span>`;
-  });
-  inner.innerHTML = html;
-}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
