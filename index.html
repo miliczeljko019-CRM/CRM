@@ -212,7 +212,52 @@ select{cursor:pointer}
 .modal-body{padding:1.25rem}
 .modal-footer{display:flex;gap:10px;padding:1rem 1.25rem;border-top:0.5px solid var(--brd2);flex-wrap:wrap}
 
-
+/* ── Krediti ── */
+.kr-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem}
+.kr-selector{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px 16px;margin-bottom:1.25rem}
+.kr-selector label{font-size:13px;color:var(--txt2);margin-right:8px}
+.kr-selector select{font-size:13px;padding:6px 10px;min-width:220px}
+.kr-upload-zone{border:2px dashed var(--brd2);border-radius:var(--rad);padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);margin-bottom:1rem}
+.kr-upload-zone:hover,.kr-upload-zone.drag{border-color:#3d7eff;background:rgba(61,126,255,.05)}
+.kr-upload-zone.loaded{border-color:#1E8C50;border-style:solid}
+.kr-upload-zone i{font-size:28px;display:block;margin-bottom:8px}
+.kr-upload-zone p{font-size:13px;color:var(--txt2)}
+.kr-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:1rem}
+.kr-card{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px}
+.kr-card .lbl{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.kr-card .val{font-size:16px;font-weight:600}
+.kr-card .val.g{color:#1E8C50}.kr-card .val.r{color:#D32F2F}.kr-card .val.w{color:#E07B00}.kr-card .val.b{color:#3d7eff}
+.kr-prog{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px;margin-bottom:1rem}
+.kr-prog-top{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);margin-bottom:6px}
+.kr-prog-bg{height:8px;background:var(--brd2);border-radius:4px;overflow:hidden}
+.kr-prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#3d7eff,#1E8C50);transition:width .4s}
+.kr-alert{padding:9px 13px;border-radius:var(--rad);margin-bottom:10px;font-size:13px;display:flex;align-items:center;gap:8px}
+.kr-alert.red{background:rgba(211,47,47,.1);border:0.5px solid rgba(211,47,47,.3);color:#D32F2F}
+.kr-alert.green{background:rgba(30,140,80,.1);border:0.5px solid rgba(30,140,80,.3);color:#1E8C50}
+.kr-alert.warn{background:rgba(224,123,0,.1);border:0.5px solid rgba(224,123,0,.3);color:#E07B00}
+.kr-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.kr-tbl th{text-align:left;padding:8px 10px;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--brd2);white-space:nowrap}
+.kr-tbl td{padding:9px 10px;border-bottom:0.5px solid var(--brd2);vertical-align:middle;white-space:nowrap}
+.kr-tbl tr:last-child td{border-bottom:none}
+.kr-tbl tr:hover td{background:var(--bg2)}
+.kr-tbl tr.kr-paid td{background:rgba(30,140,80,.04);color:var(--txt2)}
+.kr-tbl tr.kr-over td{background:rgba(211,47,47,.04)}
+.kr-tbl tr.kr-soon td{background:rgba(224,123,0,.05)}
+.kr-tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
+.kr-cb{width:16px;height:16px;cursor:pointer;accent-color:#1E8C50}
+.kr-idate{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);color:var(--txt);padding:4px 8px;font-size:12px;width:118px}
+.kr-idate:focus{outline:none;border-color:#3d7eff}
+.kr-idate:disabled{opacity:.3;cursor:default}
+.kr-inote{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);color:var(--txt);padding:4px 8px;font-size:12px;width:150px}
+.kr-inote:focus{outline:none;border-color:#3d7eff}
+.kr-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600}
+.kb-paid{background:rgba(30,140,80,.15);color:#1E8C50}
+.kb-over{background:rgba(211,47,47,.15);color:#D32F2F}
+.kb-soon{background:rgba(224,123,0,.15);color:#E07B00}
+.kb-pend{background:rgba(136,146,170,.1);color:var(--txt2)}
+.kr-mismatch{font-size:10px;color:#D32F2F;display:flex;align-items:center;gap:3px;margin-top:2px}
+.kr-sum-row td{background:var(--bg2)!important;font-weight:600;border-top:0.5px solid var(--brd2)!important;color:var(--txt)}
+.kr-empty{text-align:center;padding:3rem;color:var(--txt2)}
 .kr-empty i{font-size:36px;display:block;margin-bottom:10px;opacity:.3}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{animation:spin 1s linear infinite;display:inline-block}
@@ -263,6 +308,40 @@ select{cursor:pointer}
 .profit-val{font-size:20px;font-weight:600}
 .profit-pos{color:#1E8C50}
 .profit-neg{color:#D32F2F}
+
+/* ── Pregled tabela ── */
+.pregled-wrap{margin-bottom:1.5rem}
+.pregled-info-bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);margin-bottom:1rem;font-size:13px;flex-wrap:wrap;gap:8px}
+.pregled-info-bar i{font-size:16px;color:var(--txt2)}
+.pregled-info-bar strong{color:#D32F2F}
+.pregled-table{width:100%;border-collapse:collapse;font-size:12px}
+.pregled-table th{text-align:center;padding:7px 6px;color:var(--txt2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--brd2);white-space:nowrap;background:var(--bg2)}
+.pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--bg2);z-index:2}
+.pregled-table th.col-tip{min-width:56px}
+.pregled-table td{padding:9px 6px;border-bottom:0.5px solid var(--brd2);text-align:center;vertical-align:middle}
+.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:var(--bg);z-index:1}
+.pregled-table tr:hover td{background:#f9f9f7}
+@media(prefers-color-scheme:dark){.pregled-table tr:hover td{background:#252523}.pregled-table td.col-klijent{background:#1c1c1a}.pregled-table th.col-klijent{background:#252523}}
+.pregled-table tr:last-child td{border-bottom:none}
+
+/* Status ćelije */
+.st-cell{display:inline-flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border-radius:5px;padding:4px 6px;min-width:52px;transition:background .12s;user-select:none}
+.st-cell:hover{background:rgba(0,0,0,.05)}
+.st-done{color:#1E8C50}
+.st-todo{color:#D32F2F}
+.st-none{color:var(--brd3)}
+.st-icon{font-size:15px;font-weight:700;line-height:1}
+.st-lbl{font-size:9px;font-weight:600;letter-spacing:.02em;line-height:1.2;text-align:center}
+
+/* Dual cell (Poslat + Plaćen) */
+.dual-cell{display:inline-flex;flex-direction:column;align-items:center;gap:3px;cursor:default;min-width:60px}
+.dual-row{display:flex;align-items:center;gap:4px;cursor:pointer;border-radius:4px;padding:2px 5px;transition:background .12s}
+.dual-row:hover{background:rgba(0,0,0,.06)}
+.dual-icon{font-size:13px;font-weight:700;line-height:1}
+.dual-lbl{font-size:9px;font-weight:600;letter-spacing:.01em}
+.dual-done-blue .dual-icon,.dual-done-blue .dual-lbl{color:#0C447C}
+.dual-done-green .dual-icon,.dual-done-green .dual-lbl{color:#1E8C50}
+.dual-todo .dual-icon,.dual-todo .dual-lbl{color:#D32F2F}
 
 /* Ograniči širinu sadržaja stranica na max-width kao app */
 .page-inner{max-width:980px;margin:0 auto;width:100%}
@@ -329,10 +408,11 @@ select{cursor:pointer}
 <div class="tabs">
   <button class="tab active" onclick="showTab('form')"><i class="ti ti-user-plus"></i> Novi klijent</button>
   <button class="tab" onclick="showTab('dash')"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+  <button class="tab" onclick="showTab('pregled')"><i class="ti ti-table"></i> Pregled obaveza</button>
   <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
   <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
   <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
-
+  <button class="tab" onclick="showTab('krediti')"><i class="ti ti-credit-card"></i> Krediti</button>
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -434,6 +514,11 @@ select{cursor:pointer}
   <div class="table-wrap"><div id="dashContent"></div></div>
 </div>
 
+<!-- ═══ PREGLED OBAVEZA ═══ -->
+<div class="page" id="page-pregled">
+  <div id="pregledContent"></div>
+</div>
+
 <!-- ═══ MESEČNE OBAVEZE ═══ -->
 <div class="page" id="page-obaveze">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.25rem">
@@ -507,7 +592,9 @@ select{cursor:pointer}
 </div>
 
 <!-- ═══ KREDITI ═══ -->
-
+<div class="page" id="page-krediti">
+  <div id="kreditiContent"></div>
+</div>
 
 </div><!-- /app -->
 
@@ -839,10 +926,11 @@ function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'
 
 // ── Tabs ──
 function showTab(t) {
-  const names=['form','dash','obaveze','cene','ciljevi'];
+  const names=['form','dash','pregled','obaveze','cene','ciljevi'];
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
   if(t==='dash'){renderDash();renderPodsetnici();}
+  if(t==='pregled') renderPregled();
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
@@ -1683,187 +1771,143 @@ function showNeuradjeno() {
 
   naslov.textContent = 'Neurađeno za ' + mesIme + ' ' + tekGod;
 
-  // Prikupi sve klijente koji imaju bar jednu neurađenu obavezu
-  // Za svaki klijent pamtimo šta je neurađeno po kolonama
-  const pppStavke = getPPPPDStavke();
+  let sekcije = [];
 
-  // Skup svih klijenata koji se pojavljuju
-  const klijentMap = {}; // id -> { klijent, zakup, fiskalna, porezPoslat, porezPlacan, pdv, pausal, plata, ppp }
-
-  clients.forEach(c => {
+  // 1. Zakup — samo Zakup lokala i Zakup vozila, ne Lokal u vlasništvu
+  const zakupKlijenti = clients.filter(c => {
     const zArr = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
-    const imaZakup = zArr.some(z => z === 'Zakup lokala' || z === 'Zakup vozila');
-    const zakupNeuradj = imaZakup && !ob[c.id+'_'+tekGod+'_'+tekMes];
-    const fiskalNeuradj = c.fiskalna && !ob['f_'+c.id+'_'+tekGod+'_'+tekMes];
-    const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
-    const imaPorez = porezArr.includes('Porez na dobit');
-    const porezNePoslat = imaPorez && !ob['pd_'+c.id+'_'+tekGod+'_'+tekMes+'_poslat'];
-    const porezNePlacan = imaPorez && !ob['pd_'+c.id+'_'+tekGod+'_'+tekMes+'_placen'];
-    const pdvNeuradj = c.pdv && !ob['pdv_'+c.id+'_'+tekGod+'_'+tekMes];
-    const isPausal = c.pravnaForma === 'Paušal';
-    const pausalNeuradj = isPausal && !ob['ps_'+c.id+'_'+tekGod+'_'+tekMes];
-    const imaPlataNeuradj = c.radnici && c.workers && c.workers.length > 0 && !ob['pl_'+c.id+'_'+tekGod+'_'+tekMes];
-    // PPP-PD radnici za ovog klijenta
-    const pppRadnici = pppStavke.filter(s => s.clientId === c.id && !ob['ppp_'+s.workerId+'_'+tekGod+'_'+tekMes]);
-
-    const imaBiloSta = zakupNeuradj || fiskalNeuradj || porezNePoslat || porezNePlacan || pdvNeuradj || pausalNeuradj || imaPlataNeuradj || pppRadnici.length > 0;
-    if(!imaBiloSta) return;
-
-    klijentMap[c.id] = {
-      c,
-      zakup: zakupNeuradj ? zArr.filter(z=>z==='Zakup lokala'||z==='Zakup vozila') : null,
-      fiskalna: fiskalNeuradj,
-      porezPoslat: porezNePoslat,
-      porezPlacan: porezNePlacan,
-      pdv: pdvNeuradj,
-      pausal: pausalNeuradj,
-      plata: imaPlataNeuradj ? c.workers.length : null,
-      pppRadnici: pppRadnici.length > 0 ? pppRadnici : null
-    };
+    return zArr.some(z => z === 'Zakup lokala' || z === 'Zakup vozila');
   });
+  const zakupNeuradj = zakupKlijenti.filter(c => !ob[c.id+'_'+tekGod+'_'+tekMes]);
+  if(zakupNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'Zakup',
+      ikona: 'ti-building-store',
+      boja: '#0C447C',
+      bgBoja: '#E0F0FF',
+      stavke: zakupNeuradj.map(c => {
+        const zArr = Array.isArray(c.zakup)?c.zakup:[c.zakup];
+        return { naziv: c.naziv, info: zArr.join(', ') };
+      })
+    });
+  }
 
-  const redovi = Object.values(klijentMap);
+  // 2. Fiskalna
+  const fiskalnaNeuradj = clients.filter(c => c.fiskalna && !ob['f_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(fiskalnaNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'Periodični izveštaj (fiskalna)',
+      ikona: 'ti-device-desktop-analytics',
+      boja: '#6B21A8',
+      bgBoja: '#F0E6FF',
+      stavke: fiskalnaNeuradj.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
 
-  if(redovi.length === 0) {
-    content.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:12px 4px;color:#1E8C50;font-size:13px;font-weight:600">
-      <i class="ti ti-circle-check" style="font-size:22px"></i> Sve obaveze za ${mesIme} su završene! 🎉
+  // 3. Porez na dobit — poslat
+  const porezKlijenti = clients.filter(c => c.porez === 'Porez na dobit');
+  const porezNePoslat = porezKlijenti.filter(c => !ob['pd_'+c.id+'_'+tekGod+'_'+tekMes+'_poslat']);
+  const porezNePlacan = porezKlijenti.filter(c => !ob['pd_'+c.id+'_'+tekGod+'_'+tekMes+'_placen']);
+  if(porezNePoslat.length > 0) {
+    sekcije.push({
+      naslov: 'Porez na dobit — nije poslat',
+      ikona: 'ti-percentage',
+      boja: '#0C447C',
+      bgBoja: '#DCEEFF',
+      stavke: porezNePoslat.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
+  if(porezNePlacan.length > 0) {
+    sekcije.push({
+      naslov: 'Porez na dobit — nije plaćen',
+      ikona: 'ti-coin',
+      boja: '#27500A',
+      bgBoja: '#E8F8E8',
+      stavke: porezNePlacan.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
+
+  // 4. PDV
+  const pdvKlijenti = clients.filter(c => c.pdv);
+  const pdvNeuradj = pdvKlijenti.filter(c => !ob['pdv_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(pdvNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'PDV',
+      ikona: 'ti-receipt-tax',
+      boja: '#27500A',
+      bgBoja: '#C0DD97',
+      stavke: pdvNeuradj.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
+
+  // 5. Paušal
+  const pausalKlijenti = clients.filter(c => c.pravnaForma === 'Paušal');
+  const pausalNeuradj = pausalKlijenti.filter(c => !ob['ps_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(pausalNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'Paušal',
+      ikona: 'ti-coins',
+      boja: '#633806',
+      bgBoja: '#FAC775',
+      stavke: pausalNeuradj.map(c => ({ naziv: c.naziv, info: c.pravnaForma }))
+    });
+  }
+
+  // 6. Plata
+  const plataKlijenti = clients.filter(c => c.radnici && c.workers && c.workers.length > 0);
+  const plataNeuradj = plataKlijenti.filter(c => !ob['pl_'+c.id+'_'+tekGod+'_'+tekMes]);
+  if(plataNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'Plata',
+      ikona: 'ti-users',
+      boja: '#085041',
+      bgBoja: '#9FE1CB',
+      stavke: plataNeuradj.map(c => ({
+        naziv: c.naziv,
+        info: c.workers.length + ' radnika'
+      }))
+    });
+  }
+
+  // 7. PPP-PD
+  const pppStavke = getPPPPDStavke();
+  const pppNeuradj = pppStavke.filter(s => !ob['ppp_'+s.workerId+'_'+tekGod+'_'+tekMes]);
+  if(pppNeuradj.length > 0) {
+    sekcije.push({
+      naslov: 'PPP-PD',
+      ikona: 'ti-receipt',
+      boja: '#0C447C',
+      bgBoja: '#DCEEFF',
+      stavke: pppNeuradj.map(s => ({ naziv: s.workerIme, info: s.clientNaziv }))
+    });
+  }
+
+  if(sekcije.length === 0) {
+    content.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;color:#1E8C50;font-size:13px;font-weight:500">
+      <i class="ti ti-circle-check" style="font-size:20px"></i> Sve obaveze za ${mesIme} su završene! 🎉
     </div>`;
     modal.style.display = 'block';
     return;
   }
 
-  // Ukupan broj neurađenih
-  let ukupno = 0;
-  redovi.forEach(r => {
-    if(r.zakup) ukupno++;
-    if(r.fiskalna) ukupno++;
-    if(r.porezPoslat) ukupno++;
-    if(r.porezPlacan) ukupno++;
-    if(r.pdv) ukupno++;
-    if(r.pausal) ukupno++;
-    if(r.plata) ukupno++;
-    if(r.pppRadnici) ukupno += r.pppRadnici.length;
+  let html = '';
+  sekcije.forEach(s => {
+    html += `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:${s.boja};margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">
+        <i class="ti ${s.ikona}"></i> ${s.naslov} <span style="font-size:11px;opacity:.7">(${s.stavke.length})</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    s.stavke.forEach(st => {
+      html += `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:${s.bgBoja};color:${s.boja};border-radius:100px;font-size:12px;font-weight:500">
+        <i class="ti ti-x" style="font-size:10px;opacity:.6"></i> ${st.naziv}
+        <span style="opacity:.6;font-size:10px">${st.info}</span>
+      </span>`;
+    });
+    html += `</div></div>`;
   });
 
-  function cellNeuradj(tekst, ikona, boja, bgBoja) {
-    return `<td style="padding:9px 10px;border-bottom:0.5px solid var(--brd2);vertical-align:middle;white-space:nowrap">
-      <span style="display:inline-flex;align-items:center;gap:4px;color:${boja};font-size:12px;font-weight:500;background:${bgBoja};padding:3px 8px;border-radius:4px;white-space:nowrap">
-        <i class="ti ${ikona}" style="font-size:11px"></i> ${tekst}
-      </span>
-    </td>`;
-  }
-
-  function cellOk() {
-    return `<td style="padding:9px 10px;border-bottom:0.5px solid var(--brd2);text-align:center;color:var(--txt2);font-size:13px">—</td>`;
-  }
-
-  function cellNema() {
-    return `<td style="padding:9px 10px;border-bottom:0.5px solid var(--brd2);text-align:center;color:var(--brd3);font-size:12px">—</td>`;
-  }
-
-  const thStyle = `text-align:left;padding:8px 10px;color:var(--txt2);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--brd2);white-space:nowrap`;
-
-  let html = `
-    <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">
-      Pregled za <strong style="color:var(--txt)">${mesIme} ${tekGod}</strong> • Ukupno preostalo: <strong style="color:#D32F2F">${ukupno}</strong> neurađenih obaveza.
-    </div>
-    <div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead>
-        <tr style="background:var(--bg2)">
-          <th style="${thStyle}">Klijent</th>
-          <th style="${thStyle}">Tip</th>
-          <th style="${thStyle}"><i class="ti ti-building-store" style="font-size:11px"></i> Zakup</th>
-          <th style="${thStyle}"><i class="ti ti-device-desktop-analytics" style="font-size:11px"></i> Period. izveštaj</th>
-          <th style="${thStyle}"><i class="ti ti-percentage" style="font-size:11px"></i> Porez na dobit</th>
-          <th style="${thStyle}"><i class="ti ti-receipt-tax" style="font-size:11px"></i> PDV</th>
-          <th style="${thStyle}"><i class="ti ti-coins" style="font-size:11px"></i> Paušal</th>
-          <th style="${thStyle}"><i class="ti ti-users" style="font-size:11px"></i> Plata</th>
-          <th style="${thStyle}"><i class="ti ti-receipt" style="font-size:11px"></i> PPP-PD</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-  redovi.forEach(r => {
-    const c = r.c;
-    const fb = c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
-
-    // Zakup kolona
-    let zakupCell;
-    if(r.zakup) {
-      const zakupTekst = r.zakup.map(z=>z==='Zakup lokala'?'Lokal':z==='Zakup vozila'?'Vozilo':z).join(', ');
-      zakupCell = cellNeuradj(zakupTekst, 'ti-x', '#c0392b', '#fdf0f0');
-    } else {
-      const zArr = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
-      zakupCell = zArr.some(z=>z==='Zakup lokala'||z==='Zakup vozila') ? cellOk() : cellNema();
-    }
-
-    // Fiskalna kolona
-    let fiskalnaCell;
-    if(r.fiskalna) {
-      fiskalnaCell = cellNeuradj('Neurađeno', 'ti-x', '#6B21A8', '#f5eeff');
-    } else {
-      fiskalnaCell = c.fiskalna ? cellOk() : cellNema();
-    }
-
-    // Porez na dobit kolona — pokazujemo i poslat i plaćen
-    const porezArr2 = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
-    const imaPorez2 = porezArr2.includes('Porez na dobit');
-    let porezCell;
-    if(!imaPorez2) {
-      porezCell = cellNema();
-    } else if(r.porezPoslat && r.porezPlacan) {
-      porezCell = cellNeuradj('Neplaćeno', 'ti-x', '#c0392b', '#fdf0f0');
-    } else if(r.porezPoslat) {
-      porezCell = cellNeuradj('Neplaćeno', 'ti-x', '#c0392b', '#fdf0f0');
-    } else if(r.porezPlacan) {
-      porezCell = cellNeuradj('Neplaćeno', 'ti-coin', '#E07B00', '#fff8ec');
-    } else {
-      porezCell = cellOk();
-    }
-
-    // PDV kolona
-    let pdvCell;
-    if(r.pdv) {
-      pdvCell = cellNeuradj('Neurađeno', 'ti-x', '#c0392b', '#fdf0f0');
-    } else {
-      pdvCell = c.pdv ? cellOk() : cellNema();
-    }
-
-    // Paušal kolona
-    let pausalCell;
-    if(r.pausal) {
-      pausalCell = cellNeuradj('Paušal', 'ti-x', '#633806', '#fff3dc');
-    } else {
-      pausalCell = c.pravnaForma==='Paušal' ? cellOk() : cellNema();
-    }
-
-    // Plata kolona
-    let plataCell;
-    if(r.plata) {
-      plataCell = cellNeuradj('('+r.plata+' radnika)', 'ti-x', '#c0392b', '#fdf0f0');
-    } else {
-      plataCell = (c.radnici && c.workers && c.workers.length > 0) ? cellOk() : cellNema();
-    }
-
-    // PPP-PD kolona
-    let pppCell;
-    if(r.pppRadnici) {
-      const pppIme = r.pppRadnici.map(s=>'('+s.workerIme.split(' ')[0]+')').join(', ');
-      pppCell = cellNeuradj(pppIme, 'ti-x', '#0C447C', '#dceeff');
-    } else {
-      const hasPpp = pppStavke.some(s => s.clientId === c.id);
-      pppCell = hasPpp ? cellOk() : cellNema();
-    }
-
-    html += `<tr style="transition:background .1s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
-      <td style="padding:9px 10px;border-bottom:0.5px solid var(--brd2);font-weight:600;font-size:13px;white-space:nowrap">${c.naziv}</td>
-      <td style="padding:9px 10px;border-bottom:0.5px solid var(--brd2)"><span class="badge ${fb}">${c.pravnaForma}</span></td>
-      ${zakupCell}${fiskalnaCell}${porezCell}${pdvCell}${pausalCell}${plataCell}${pppCell}
-    </tr>`;
-  });
-
-  html += `</tbody></table></div>`;
+  const ukupno = sekcije.reduce((s,sec)=>s+sec.stavke.length, 0);
+  html = `<div style="font-size:12px;color:var(--txt2);margin-bottom:12px">Ukupno <strong style="color:#D32F2F">${ukupno}</strong> neurađenih obaveza za ${mesIme} ${tekGod}</div>` + html;
 
   content.innerHTML = html;
   modal.style.display = 'block';
@@ -2772,6 +2816,255 @@ function updateCilj(key, val) {
   ciljevi[key] = parseFloat(val)||0;
   saveCiljevi();
   renderCiljevi();
+}
+
+// ── Pregled mesečnih obaveza (tabela sa X/kvačica) ──
+let pregledGodina = new Date().getFullYear();
+let pregledMesec  = new Date().getMonth();
+
+function renderPregled() {
+  const ob = getObaveze();
+  const danas = new Date();
+  const tekGod = danas.getFullYear();
+  const tekMes = danas.getMonth();
+
+  // Izračunaj neurađene za tekući mesec
+  let neuradjenoBroj = countNeuradjenoPregled(ob, pregledGodina, pregledMesec);
+
+  // Kolone: Zakup | Periodični | Porez na dobit (P+Pl) | PDV | Paušal (P+Pl) | Plata | PPP-PD | OD-O (P+Pl)
+  const cols = [
+    {id:'zakup',    label:'Zakup',            dual:false},
+    {id:'fisk',     label:'Periodični Izveštaj', dual:false},
+    {id:'pdobit',   label:'Porez na Dobit',   dual:true,  lblA:'Posl.',lblB:'Plać.'},
+    {id:'pdv',      label:'PDV',              dual:false},
+    {id:'pausal',   label:'Paušal',           dual:true,  lblA:'Posl.',lblB:'Plać.'},
+    {id:'plata',    label:'Plata',            dual:false},
+    {id:'pppPd',    label:'PPP-PD',           dual:false},
+    {id:'odo',      label:'OD-O',             dual:true,  lblA:'Posl.',lblB:'Plać.'},
+  ];
+
+  const mesNazivi = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
+
+  let html = `
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem">
+    <div style="font-size:15px;font-weight:600"><i class="ti ti-table" style="margin-right:6px"></i>Pregled mesečnih obaveza</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="pregledMesec=pregledMesec===0?(pregledGodina--,11):pregledMesec-1;renderPregled()" style="background:none;border:0.5px solid var(--brd);border-radius:var(--rad);padding:5px 10px;cursor:pointer;color:var(--txt);font-size:13px"><i class="ti ti-chevron-left"></i></button>
+      <span style="font-size:14px;font-weight:600;min-width:160px;text-align:center">${mesNazivi[pregledMesec]} ${pregledGodina}.</span>
+      <button onclick="pregledMesec=pregledMesec===11?(pregledGodina++,0):pregledMesec+1;renderPregled()" style="background:none;border:0.5px solid var(--brd);border-radius:var(--rad);padding:5px 10px;cursor:pointer;color:var(--txt);font-size:13px"><i class="ti ti-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <div class="pregled-info-bar">
+    <i class="ti ti-calendar-stats"></i>
+    <span>Pregled za <strong>${mesNazivi[pregledMesec]} ${pregledGodina}.</strong></span>
+    <span style="width:1px;height:16px;background:var(--brd2);display:inline-block;margin:0 4px"></span>
+    ${neuradjenoBroj > 0
+      ? `<span>Ukupno preostalo: <strong>${neuradjenoBroj} neurađenih obaveza.</strong></span>`
+      : `<span style="color:#1E8C50;font-weight:500"><i class="ti ti-circle-check"></i> Sve obaveze završene! 🎉</span>`}
+    <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#1E8C50;font-weight:600"><span style="font-size:13px">✓</span> Urađeno</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#D32F2F;font-weight:600"><span style="font-size:13px;font-weight:900">✕</span> Neurađeno</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2)">— Nije primenjivo</span>
+    </div>
+  </div>`;
+
+  if(!clients.length) {
+    html += '<div class="empty-state"><i class="ti ti-users"></i>Nema unetih klijenata.</div>';
+    document.getElementById('pregledContent').innerHTML = html;
+    return;
+  }
+
+  html += '<div class="table-wrap"><table class="pregled-table"><thead><tr>';
+  html += '<th class="col-klijent">Klijent</th><th class="col-tip">Tip</th>';
+  cols.forEach(c => {
+    if(c.dual) html += `<th colspan="2">${c.label}</th>`;
+    else html += `<th>${c.label}</th>`;
+  });
+  html += '</tr>';
+
+  // Sub-header for dual cols
+  html += '<tr style="border-bottom:1px solid var(--brd2)">';
+  html += '<th class="col-klijent" style="border-bottom:none"></th><th class="col-tip" style="border-bottom:none"></th>';
+  cols.forEach(c => {
+    if(c.dual) {
+      html += `<th style="font-size:9px;color:#0C447C;padding:2px 4px;background:var(--bg2);border-bottom:none">${c.lblA}</th>`;
+      html += `<th style="font-size:9px;color:#27500A;padding:2px 4px;background:var(--bg2);border-bottom:none">${c.lblB}</th>`;
+    } else {
+      html += '<th style="background:var(--bg2);border-bottom:none"></th>';
+    }
+  });
+  html += '</tr></thead><tbody>';
+
+  clients.forEach(c => {
+    const fb = c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
+
+    // Determine applicability per column
+    const zArr = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
+    const hasZakup  = zArr.some(z=>z==='Zakup lokala'||z==='Zakup vozila');
+    const hasFisk   = !!c.fiskalna;
+    const hasDobit  = porezArr.includes('Porez na dobit');
+    const hasPDV    = !!c.pdv;
+    const hasPausal = c.pravnaForma==='Paušal';
+    const hasPlata  = !!(c.radnici && c.workers && c.workers.length>0);
+    const hasODO    = porezArr.includes('OD-O');
+
+    // PPP-PD radnici
+    const pppRadnici = hasPlata ? c.workers.filter(w=>w.pppPd!==false) : [];
+
+    html += `<tr>
+      <td class="col-klijent">${c.naziv}</td>
+      <td style="text-align:center"><span class="badge ${fb}" style="font-size:10px">${c.pravnaForma}</span></td>`;
+
+    // Zakup
+    html += stCell(hasZakup, ob[c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', c.id+'_'+pregledGodina+'_'+pregledMesec, hasZakup?zArr.filter(z=>z==='Zakup lokala'||z==='Zakup vozila').map(z=>z==='Zakup lokala'?'Lokal':'Vozilo').join('+'):'');
+
+    // Periodični izveštaj
+    html += stCell(hasFisk, ob['f_'+c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', 'f_'+c.id+'_'+pregledGodina+'_'+pregledMesec, '');
+
+    // Porez na dobit (dual)
+    html += dualCell(hasDobit,
+      ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
+      ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
+      'pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
+      'pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
+    );
+
+    // PDV
+    html += stCell(hasPDV, ob['pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', 'pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec, '');
+
+    // Paušal (dual)
+    html += dualCell(hasPausal,
+      ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
+      ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
+      'pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
+      'pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
+    );
+
+    // Plata
+    html += stCellPlata(hasPlata, ob['pl_'+c.id+'_'+pregledGodina+'_'+pregledMesec], c);
+
+    // PPP-PD — prikaži broj neurađenih radnika
+    html += stCellPPP(pppRadnici, ob, c.id, pregledGodina, pregledMesec);
+
+    // OD-O (dual)
+    html += dualCell(hasODO,
+      ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
+      ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
+      'od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
+      'od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
+    );
+
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('pregledContent').innerHTML = html;
+}
+
+function stCell(applicable, done, toggleFn, key, sublabel) {
+  if(!applicable) return '<td><span style="color:var(--brd3);font-size:16px">—</span></td>';
+  const icon = done ? '✓' : '✕';
+  const cls  = done ? 'st-done' : 'st-todo';
+  const lbl  = done ? 'Urađeno' : (sublabel||'Neurađeno');
+  return `<td><span class="${cls} st-cell" onclick="${toggleFn}('${key}')">
+    <span class="st-icon">${icon}</span>
+    <span class="st-lbl">${lbl}</span>
+  </span></td>`;
+}
+
+function stCellPlata(applicable, done, c) {
+  if(!applicable) return '<td><span style="color:var(--brd3);font-size:16px">—</span></td>';
+  const key = 'pl_'+c.id+'_'+pregledGodina+'_'+pregledMesec;
+  const icon = done ? '✓' : '✕';
+  const cls  = done ? 'st-done' : 'st-todo';
+  const lbl  = done ? 'Urađeno' : `(${c.workers.length} radnika)`;
+  return `<td><span class="${cls} st-cell" onclick="togglePregledSimple('${key}')">
+    <span class="st-icon">${icon}</span>
+    <span class="st-lbl">${lbl}</span>
+  </span></td>`;
+}
+
+function stCellPPP(radnici, ob, clientId, god, mes) {
+  if(!radnici||radnici.length===0) return '<td><span style="color:var(--brd3);font-size:16px">—</span></td>';
+  // Prikaži svakog radnika kao mini redak
+  let inner = '<td style="padding:4px 6px"><div style="display:flex;flex-direction:column;gap:3px;align-items:center">';
+  radnici.forEach((w, wi) => {
+    const key = 'ppp_'+clientId+'_w'+wi+'_'+god+'_'+mes; // note: workerId format
+    // Find correct workerId (index in full workers array)
+    const fullWorkers = clients.find(c=>c.id===clientId)?.workers||[];
+    const fullIdx = fullWorkers.indexOf(w);
+    const workerId = clientId+'_w'+fullIdx;
+    const realKey = 'ppp_'+workerId+'_'+god+'_'+mes;
+    const done = !!ob[realKey];
+    const icon = done ? '✓' : '✕';
+    const cls  = done ? 'st-done' : 'st-todo';
+    const name = w.ime ? w.ime.split(' ')[0] : 'Radnik';
+    inner += `<span class="${cls} dual-row" onclick="togglePregledSimple('${realKey}')" style="min-width:64px;justify-content:flex-start;gap:5px">
+      <span style="font-size:12px;font-weight:700">${icon}</span>
+      <span style="font-size:10px;font-weight:600">${name}</span>
+    </span>`;
+  });
+  inner += '</div></td>';
+  return inner;
+}
+
+function dualCell(applicable, doneA, doneB, keyA, keyB) {
+  if(!applicable) {
+    return '<td><span style="color:var(--brd3);font-size:16px">—</span></td><td><span style="color:var(--brd3);font-size:16px">—</span></td>';
+  }
+  const mkCell = (done, key, clsDone, lbl) => {
+    const icon = done ? '✓' : '✕';
+    const cls  = done ? clsDone : 'dual-todo';
+    return `<td><span class="${cls} dual-row" onclick="togglePregledSimple('${key}')">
+      <span class="dual-icon">${icon}</span>
+      <span class="dual-lbl">${lbl}</span>
+    </span></td>`;
+  };
+  return mkCell(doneA, keyA, 'dual-done-blue', 'Poslato') + mkCell(doneB, keyB, 'dual-done-green', 'Plaćeno');
+}
+
+function togglePregledSimple(key) {
+  const ob = getObaveze();
+  ob[key] = !ob[key];
+  saveObaveze(ob);
+  save();
+  // Partial re-render only the cell
+  renderPregled();
+}
+
+function countNeuradjenoPregled(ob, god, mes) {
+  let n = 0;
+  clients.forEach(c => {
+    const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
+    const zArr = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
+    if(zArr.some(z=>z==='Zakup lokala'||z==='Zakup vozila') && !ob[c.id+'_'+god+'_'+mes]) n++;
+    if(c.fiskalna && !ob['f_'+c.id+'_'+god+'_'+mes]) n++;
+    if(porezArr.includes('Porez na dobit')) {
+      if(!ob['pd_'+c.id+'_'+god+'_'+mes+'_poslat']) n++;
+      if(!ob['pd_'+c.id+'_'+god+'_'+mes+'_placen']) n++;
+    }
+    if(c.pdv && !ob['pdv_'+c.id+'_'+god+'_'+mes]) n++;
+    if(c.pravnaForma==='Paušal') {
+      if(!ob['pau_'+c.id+'_'+god+'_'+mes+'_poslat']) n++;
+      if(!ob['pau_'+c.id+'_'+god+'_'+mes+'_placen']) n++;
+    }
+    if(c.radnici && c.workers && c.workers.length>0 && !ob['pl_'+c.id+'_'+god+'_'+mes]) n++;
+    if(porezArr.includes('OD-O')) {
+      if(!ob['od_'+c.id+'_'+god+'_'+mes+'_poslat']) n++;
+      if(!ob['od_'+c.id+'_'+god+'_'+mes+'_placen']) n++;
+    }
+    if(c.radnici && c.workers) {
+      c.workers.forEach((w,wi)=>{
+        if(w.pppPd!==false) {
+          const workerId = c.id+'_w'+wi;
+          if(!ob['ppp_'+workerId+'_'+god+'_'+mes]) n++;
+        }
+      });
+    }
+  });
+  return n;
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
