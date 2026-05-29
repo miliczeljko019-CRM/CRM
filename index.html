@@ -212,55 +212,8 @@ select{cursor:pointer}
 .modal-body{padding:1.25rem}
 .modal-footer{display:flex;gap:10px;padding:1rem 1.25rem;border-top:0.5px solid var(--brd2);flex-wrap:wrap}
 
-/* ── Krediti ── */
-.kr-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem}
-.kr-selector{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px 16px;margin-bottom:1.25rem}
-.kr-selector label{font-size:13px;color:var(--txt2);margin-right:8px}
-.kr-selector select{font-size:13px;padding:6px 10px;min-width:220px}
-.kr-upload-zone{border:2px dashed var(--brd2);border-radius:var(--rad);padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);margin-bottom:1rem}
-.kr-upload-zone:hover,.kr-upload-zone.drag{border-color:#3d7eff;background:rgba(61,126,255,.05)}
-.kr-upload-zone.loaded{border-color:#1E8C50;border-style:solid}
-.kr-upload-zone i{font-size:28px;display:block;margin-bottom:8px}
-.kr-upload-zone p{font-size:13px;color:var(--txt2)}
-.kr-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:1rem}
-.kr-card{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px}
-.kr-card .lbl{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.kr-card .val{font-size:16px;font-weight:600}
-.kr-card .val.g{color:#1E8C50}.kr-card .val.r{color:#D32F2F}.kr-card .val.w{color:#E07B00}.kr-card .val.b{color:#3d7eff}
-.kr-prog{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:12px 14px;margin-bottom:1rem}
-.kr-prog-top{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);margin-bottom:6px}
-.kr-prog-bg{height:8px;background:var(--brd2);border-radius:4px;overflow:hidden}
-.kr-prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#3d7eff,#1E8C50);transition:width .4s}
-.kr-alert{padding:9px 13px;border-radius:var(--rad);margin-bottom:10px;font-size:13px;display:flex;align-items:center;gap:8px}
-.kr-alert.red{background:rgba(211,47,47,.1);border:0.5px solid rgba(211,47,47,.3);color:#D32F2F}
-.kr-alert.green{background:rgba(30,140,80,.1);border:0.5px solid rgba(30,140,80,.3);color:#1E8C50}
-.kr-alert.warn{background:rgba(224,123,0,.1);border:0.5px solid rgba(224,123,0,.3);color:#E07B00}
-.kr-tbl{width:100%;border-collapse:collapse;font-size:13px}
-.kr-tbl th{text-align:left;padding:8px 10px;font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--brd2);white-space:nowrap}
-.kr-tbl td{padding:9px 10px;border-bottom:0.5px solid var(--brd2);vertical-align:middle;white-space:nowrap}
-.kr-tbl tr:last-child td{border-bottom:none}
-.kr-tbl tr:hover td{background:var(--bg2)}
-.kr-tbl tr.kr-paid td{background:rgba(30,140,80,.04);color:var(--txt2)}
-.kr-tbl tr.kr-over td{background:rgba(211,47,47,.04)}
-.kr-tbl tr.kr-soon td{background:rgba(224,123,0,.05)}
-.kr-tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
-.kr-cb{width:16px;height:16px;cursor:pointer;accent-color:#1E8C50}
-.kr-idate{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);color:var(--txt);padding:4px 8px;font-size:12px;width:118px}
-.kr-idate:focus{outline:none;border-color:#3d7eff}
-.kr-idate:disabled{opacity:.3;cursor:default}
-.kr-inote{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);color:var(--txt);padding:4px 8px;font-size:12px;width:150px}
-.kr-inote:focus{outline:none;border-color:#3d7eff}
-.kr-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600}
-.kb-paid{background:rgba(30,140,80,.15);color:#1E8C50}
-.kb-over{background:rgba(211,47,47,.15);color:#D32F2F}
-.kb-soon{background:rgba(224,123,0,.15);color:#E07B00}
-.kb-pend{background:rgba(136,146,170,.1);color:var(--txt2)}
-.kr-mismatch{font-size:10px;color:#D32F2F;display:flex;align-items:center;gap:3px;margin-top:2px}
-.kr-sum-row td{background:var(--bg2)!important;font-weight:600;border-top:0.5px solid var(--brd2)!important;color:var(--txt)}
-.kr-empty{text-align:center;padding:3rem;color:var(--txt2)}
-.kr-empty i{font-size:36px;display:block;margin-bottom:10px;opacity:.3}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{animation:spin 1s linear infinite;display:inline-block}
+
+
 .obaveze-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:12px}
 .obaveze-header h2{font-size:15px;font-weight:600}
 .godina-nav{display:flex;align-items:center;gap:8px}
@@ -412,7 +365,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
   <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
   <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
-  <button class="tab" onclick="showTab('krediti')"><i class="ti ti-credit-card"></i> Krediti</button>
+
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -591,10 +544,6 @@ select{cursor:pointer}
   <div id="ciljeviContent"></div>
 </div>
 
-<!-- ═══ KREDITI ═══ -->
-<div class="page" id="page-krediti">
-  <div id="kreditiContent"></div>
-</div>
 
 </div><!-- /app -->
 
