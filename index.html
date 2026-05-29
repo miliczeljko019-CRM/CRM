@@ -55,17 +55,149 @@ input,select,button{font-family:inherit;font-size:inherit;color:var(--txt);backg
 input:focus,select:focus{border-color:var(--brd3)}
 select{cursor:pointer}
 
-.app{max-width:980px;margin:0 auto;padding:1.5rem 1rem}
-.app-header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--brd2)}
-.app-header h1{font-size:17px;font-weight:600}
-.app-header p{font-size:12px;color:var(--txt2)}
+/* ── Top nav bar (full width, Apple-style) ── */
+.top-nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  height:44px;
+  background:rgba(22,22,23,.92);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;
+}
+.top-nav-inner{
+  width:100%;display:flex;align-items:center;
+  padding:0 0;
+}
+.nav-logo-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:0 18px;height:44px;
+  flex-shrink:0;text-decoration:none;
+  border-right:1px solid rgba(255,255,255,.08);
+}
+.nav-logo-btn .logo-icon{
+  width:26px;height:26px;background:var(--txt);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.nav-logo-btn .logo-icon i{color:var(--bg);font-size:14px}
+.nav-logo-btn span{font-size:13px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap}
+.nav-tabs{
+  display:flex;align-items:stretch;
+  flex:1;overflow-x:auto;scrollbar-width:none;
+}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{
+  flex:1;min-width:0;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  height:44px;padding:0 10px;
+  font-size:12px;font-weight:500;
+  color:rgba(255,255,255,.5);
+  border:none;background:none;cursor:pointer;
+  border-right:1px solid rgba(255,255,255,.06);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:color .15s,background .15s;
+  letter-spacing:-.01em;
+}
+.nav-tab:last-child{border-right:none}
+.nav-tab i{font-size:13px;flex-shrink:0}
+.nav-tab:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.05)}
+.nav-tab.active{
+  color:#fff;
+  background:rgba(255,255,255,.1);
+  border-bottom:2px solid rgba(255,255,255,.7);
+}
+.nav-right{
+  display:flex;align-items:center;gap:0;
+  border-left:1px solid rgba(255,255,255,.08);
+  flex-shrink:0;
+}
+.nav-sync{
+  display:flex;align-items:center;gap:6px;
+  padding:0 14px;height:44px;
+  font-size:11px;color:rgba(255,255,255,.4);
+  border-right:1px solid rgba(255,255,255,.08);
+  white-space:nowrap;
+}
+.nav-sync .sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.nav-sync .sync-dot.ok{background:#34c759}
+.nav-sync .sync-dot.saving{background:#ff9f0a;animation:pulse .8s infinite}
+.nav-sync .sync-dot.error{background:#ff453a}
+.nav-sync .sync-dot.offline{background:#888}
+.nav-user{
+  display:flex;align-items:center;gap:7px;
+  padding:0 14px;height:44px;cursor:pointer;
+  font-size:11px;color:rgba(255,255,255,.4);
+  transition:color .15s;
+}
+.nav-user:hover{color:rgba(255,255,255,.7)}
+.nav-user .user-avatar{width:22px;height:22px;border-radius:50%;object-fit:cover}
+.nav-user .user-avatar-placeholder{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(255,255,255,.15);color:#fff;
+  font-size:10px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Klijenti statusna traka ── */
+.clients-statusbar{
+  position:fixed;top:44px;left:0;right:0;z-index:400;
+  height:36px;
+  background:rgba(29,29,31,.97);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;
+  overflow:hidden;
+}
+.csb-inner{
+  display:flex;align-items:center;
+  padding:0 16px;gap:0;
+  overflow-x:auto;scrollbar-width:none;
+  flex:1;
+}
+.csb-inner::-webkit-scrollbar{display:none}
+.csb-label{
+  font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:rgba(255,255,255,.25);padding-right:14px;border-right:1px solid rgba(255,255,255,.08);
+  margin-right:12px;flex-shrink:0;white-space:nowrap;
+}
+.csb-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:100px;
+  font-size:11px;font-weight:500;
+  color:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.1);
+  margin-right:6px;flex-shrink:0;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+  background:rgba(255,255,255,.04);
+  text-decoration:none;
+}
+.csb-chip:hover{color:#fff;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.1)}
+.csb-chip .csb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.csb-chip.doo .csb-dot{background:#a78bfa}
+.csb-chip.pr  .csb-dot{background:#34d399}
+.csb-chip.pau .csb-dot{background:#fbbf24}
+.csb-right{
+  display:flex;align-items:center;gap:12px;
+  padding:0 14px;flex-shrink:0;
+  border-left:1px solid rgba(255,255,255,.07);
+  font-size:11px;color:rgba(255,255,255,.3);
+}
+.csb-right strong{color:rgba(255,255,255,.6);font-weight:600}
+
+/* ── App body (offset for fixed nav+statusbar) ── */
+.app{
+  max-width:980px;margin:0 auto;
+  padding:1.5rem 1rem;
+  padding-top:calc(44px + 36px + 1.5rem);
+}
 .logo-icon{width:36px;height:36px;background:var(--txt);border-radius:var(--rad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-icon i{color:var(--bg);font-size:20px}
 
-.tabs{display:flex;margin-bottom:1.5rem;border-bottom:0.5px solid var(--brd2)}
-.tab{padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--txt2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.tab.active{color:var(--txt);border-bottom-color:var(--txt)}
-.tab:hover:not(.active){color:var(--txt)}
+/* ── Old tabs/sync-bar hidden (replaced by top-nav) ── */
+.tabs{display:none}
+.sync-bar{display:none}
+.app-header{display:none}
 .page{display:none;padding:0}.page.active{display:block}
 
 .section-title{font-size:11px;font-weight:500;color:var(--txt2);letter-spacing:.06em;text-transform:uppercase;margin:1.25rem 0 .5rem}
@@ -344,28 +476,66 @@ select{cursor:pointer}
 
 <div class="app" id="mainApp" style="display:none">
 
-<div class="app-header">
-  <div class="logo-icon"><i class="ti ti-report-money"></i></div>
-  <div><h1>Knjigovodstvo CRM</h1><p>Upravljanje klijentima, radnicima i cenama usluga</p></div>
-</div>
-<div class="sync-bar" id="syncBar">
-  <span class="sync-dot ok" id="syncDot"></span>
-  <span id="syncMsg">Sinhronizovano sa Google Drive</span>
-  <div class="user-chip" id="userChip" onclick="signOut()">
-    <div class="user-avatar-placeholder" id="userInitial">?</div>
-    <span id="userEmail" style="font-size:12px"></span>
-    <i class="ti ti-logout" style="font-size:12px;color:var(--txt2)"></i>
+<!-- ══ TOP NAV ══ -->
+<div class="top-nav">
+  <div class="top-nav-inner">
+    <a href="#" class="nav-logo-btn">
+      <div class="logo-icon"><i class="ti ti-report-money"></i></div>
+      <span>Knjigovodstvo CRM</span>
+    </a>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('form')"><i class="ti ti-user-plus"></i> Novi klijent</button>
+      <button class="nav-tab" onclick="showTab('dash')"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+      <button class="nav-tab" onclick="showTab('pregled')"><i class="ti ti-table"></i> Pregled obaveza</button>
+      <button class="nav-tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
+      <button class="nav-tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
+      <button class="nav-tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
+    </div>
+    <div class="nav-right">
+      <div class="nav-sync" id="syncBar">
+        <span class="sync-dot ok" id="syncDot"></span>
+        <span id="syncMsg">Sinhronizovano</span>
+      </div>
+      <div class="nav-user" id="userChip" onclick="signOut()">
+        <div class="user-avatar-placeholder" id="userInitial">?</div>
+        <span id="userEmail"></span>
+        <i class="ti ti-logout" style="font-size:11px;opacity:.5"></i>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="tabs">
-  <button class="tab active" onclick="showTab('form')"><i class="ti ti-user-plus"></i> Novi klijent</button>
-  <button class="tab" onclick="showTab('dash')"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
-  <button class="tab" onclick="showTab('pregled')"><i class="ti ti-table"></i> Pregled obaveza</button>
-  <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
-  <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
-  <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
+<!-- ══ CLIENTS STATUS BAR ══ -->
+<div class="clients-statusbar" id="clientsStatusBar">
+  <div class="csb-inner" id="csbInner">
+    <span class="csb-label">Klijenti</span>
+    <span style="font-size:11px;color:rgba(255,255,255,.25);padding:0 8px">Učitavam...</span>
+  </div>
+  <div class="csb-right">
+    <span id="csbTotal">0 klijenata</span>
+    <span>·</span>
+    <strong id="csbPrihod">€0/mes</strong>
+  </div>
+</div>
 
+<!-- hidden legacy sync-bar so JS doesn't break -->
+<div id="syncBarLegacy" style="display:none">
+  <span class="sync-dot ok" id="syncDotLegacy"></span>
+  <span id="syncMsgLegacy"></span>
+  <div id="userChipLegacy" style="display:none">
+    <div id="userInitialLegacy"></div>
+    <span id="userEmailLegacy"></span>
+  </div>
+</div>
+
+<!-- hidden legacy tabs -->
+<div class="tabs" style="display:none">
+  <button class="tab active" onclick="showTab('form')"></button>
+  <button class="tab" onclick="showTab('dash')"></button>
+  <button class="tab" onclick="showTab('pregled')"></button>
+  <button class="tab" onclick="showTab('obaveze')"></button>
+  <button class="tab" onclick="showTab('cene')"></button>
+  <button class="tab" onclick="showTab('ciljevi')"></button>
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -716,12 +886,15 @@ async function getUserInfo() {
     const r = await driveRequest('https://www.googleapis.com/oauth2/v2/userinfo');
     const d = await r.json();
     userInfo = d;
-    document.getElementById('userEmail').textContent = d.email || '';
+    const emailEl = document.getElementById('userEmail');
+    if(emailEl) emailEl.textContent = d.email || '';
     const init = document.getElementById('userInitial');
-    if(d.picture) {
-      init.outerHTML = `<img src="${d.picture}" class="user-avatar" id="userInitial">`;
-    } else {
-      init.textContent = (d.name||d.email||'?')[0].toUpperCase();
+    if(init) {
+      if(d.picture) {
+        init.outerHTML = `<img src="${d.picture}" class="user-avatar" id="userInitial" style="width:22px;height:22px;border-radius:50%;object-fit:cover">`;
+      } else {
+        init.textContent = (d.name||d.email||'?')[0].toUpperCase();
+      }
     }
   } catch(e){}
 }
@@ -777,7 +950,6 @@ async function writeFile(fileId, data) {
   );
 }
 
-// ── Sync status UI ──
 function setSyncStatus(status, msg) {
   const dot = document.getElementById('syncDot');
   const msgEl = document.getElementById('syncMsg');
@@ -854,6 +1026,7 @@ async function initApp() {
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
   updateCenaPreview();
+  renderClientsStatusBar();
 }
 
 // ── Data variables (populated by loadFromDrive) ──
@@ -876,13 +1049,14 @@ function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'
 // ── Tabs ──
 function showTab(t) {
   const names=['form','dash','pregled','obaveze','cene','ciljevi'];
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
+  document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
   if(t==='dash'){renderDash();renderPodsetnici();}
   if(t==='pregled') renderPregled();
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
+  renderClientsStatusBar();
 }
 
 // ── Forma ──
@@ -1163,6 +1337,7 @@ function saveClient() {
     datum:new Date().toLocaleDateString('en-GB')
   });
   save(); showToast('Klijent "'+naziv+'" sačuvan!'); resetForm();
+  renderClientsStatusBar();
   setTimeout(()=>showTab('dash'),600);
 }
 
@@ -1321,8 +1496,7 @@ function saveEdit() {
     cenaMesecna:parseFloat(document.getElementById('e_cenaMesecna').value)||0
   };
   save(); closeModal();
-  // Sačekaj da se podaci ažuriraju pa osvježi
-  setTimeout(()=>{ renderDash(); renderPodsetnici(); }, 100);
+  setTimeout(()=>{ renderDash(); renderPodsetnici(); renderClientsStatusBar(); }, 100);
   showToast('Podaci klijenta "'+naziv+'" su ažurirani!');
 }
 
@@ -1331,7 +1505,7 @@ function deleteFromModal() {
   if(!c) return;
   if(!confirm('Obrisati klijenta "'+c.naziv+'"?')) return;
   clients=clients.filter(x=>x.id!==editingId);
-  save(); closeModal(); renderDash(); renderPodsetnici();
+  save(); closeModal(); renderDash(); renderPodsetnici(); renderClientsStatusBar();
   showToast('Klijent obrisan.');
 }
 
@@ -2520,7 +2694,7 @@ function deleteClient(id) {
   const c=clients.find(x=>x.id===id);
   if(!c||!confirm('Obrisati klijenta "'+c.naziv+'"?')) return;
   clients=clients.filter(x=>x.id!==id);
-  save(); renderDash(); renderPodsetnici();
+  save(); renderDash(); renderPodsetnici(); renderClientsStatusBar();
   showToast('Klijent obrisan.');
 }
 
@@ -3014,6 +3188,35 @@ function countNeuradjenoPregled(ob, god, mes) {
     }
   });
   return n;
+}
+
+// ── Clients status bar ──
+function renderClientsStatusBar() {
+  const inner = document.getElementById('csbInner');
+  const total = document.getElementById('csbTotal');
+  const prihod = document.getElementById('csbPrihod');
+  if(!inner) return;
+
+  const ukupnoCena = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
+  if(total) total.textContent = clients.length + (clients.length===1?' klijent':clients.length>=2&&clients.length<=4?' klijenta':' klijenata');
+  if(prihod) prihod.textContent = eur(ukupnoCena)+'/mes';
+
+  if(!clients.length) {
+    inner.innerHTML = '<span class="csb-label">Klijenti</span><span style="font-size:11px;color:rgba(255,255,255,.25)">Nema unetih klijenata</span>';
+    return;
+  }
+
+  let html = '<span class="csb-label">Klijenti</span>';
+  clients.forEach(c => {
+    const tipCls = c.pravnaForma==='DOO'?'doo':c.pravnaForma==='PR'?'pr':'pau';
+    const dotColor = c.pravnaForma==='DOO'?'#a78bfa':c.pravnaForma==='PR'?'#34d399':'#fbbf24';
+    const pdvBadge = c.pdv ? '<span style="font-size:9px;opacity:.5;margin-left:2px">PDV</span>' : '';
+    html += `<span class="csb-chip ${tipCls}" onclick="openEdit(${c.id})" title="${c.naziv} · ${c.pravnaForma}${c.pdv?' · PDV':''}${c.cenaMesecna?' · '+eur(c.cenaMesecna)+'/mes':''}">
+      <span class="csb-dot" style="background:${dotColor}"></span>
+      ${c.naziv}${pdvBadge}
+    </span>`;
+  });
+  inner.innerHTML = html;
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
