@@ -56,7 +56,7 @@ input:focus,select:focus{border-color:var(--brd3)}
 select{cursor:pointer}
 
 .app{max-width:980px;margin:0 auto;padding:1.5rem 1rem}
-.app-header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--brd2)}
+.app-header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--brd2);flex-wrap:wrap}
 .app-header h1{font-size:17px;font-weight:600}
 .app-header p{font-size:12px;color:var(--txt2)}
 .logo-icon{width:36px;height:36px;background:var(--txt);border-radius:var(--rad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -359,15 +359,15 @@ select{cursor:pointer}
 
 <div class="app-header">
   <div class="logo-icon"><i class="ti ti-report-money"></i></div>
-  <div><h1>Knjigovodstvo CRM</h1><p>Upravljanje klijentima, radnicima i cenama usluga</p></div>
-</div>
-<div class="sync-bar" id="syncBar">
-  <span class="sync-dot ok" id="syncDot"></span>
-  <span id="syncMsg">Sinhronizovano sa Google Drive</span>
-  <div class="user-chip" id="userChip" onclick="signOut()">
-    <div class="user-avatar-placeholder" id="userInitial">?</div>
-    <span id="userEmail" style="font-size:12px"></span>
-    <i class="ti ti-logout" style="font-size:12px;color:var(--txt2)"></i>
+  <div style="flex:1"><h1>Knjigovodstvo CRM</h1><p>Upravljanje klijentima, radnicima i cenama usluga</p></div>
+  <div class="sync-bar" id="syncBar" style="margin-bottom:0;background:none;border:none;padding:0">
+    <span class="sync-dot ok" id="syncDot"></span>
+    <span id="syncMsg" style="white-space:nowrap">Sinhronizovano sa Google Drive</span>
+    <div class="user-chip" id="userChip" onclick="signOut()">
+      <div class="user-avatar-placeholder" id="userInitial">?</div>
+      <span id="userEmail" style="font-size:12px"></span>
+      <i class="ti ti-logout" style="font-size:12px;color:var(--txt2)"></i>
+    </div>
   </div>
 </div>
 
@@ -377,7 +377,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
   <button class="tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene usluga</button>
   <button class="tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
-  <button class="tab" onclick="showTab('krediti')"><i class="ti ti-credit-card"></i> Krediti</button>
+
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -552,9 +552,9 @@ select{cursor:pointer}
 </div>
 
 <!-- ═══ KREDITI ═══ -->
-<div class="page" id="page-krediti">
-  <div id="kreditiContent"></div>
-</div>
+
+
+
 
 </div><!-- /app -->
 
