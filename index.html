@@ -153,8 +153,8 @@ select{cursor:pointer}
 
 /* ── App body (offset for fixed nav) ── */
 .app{
-  max-width:980px;margin:0 auto;
-  padding:1.5rem 1rem;
+  max-width:100%;margin:0;
+  padding:1.5rem 1.5rem;
   padding-top:calc(48px + 1.5rem);
 }
 .logo-icon{width:36px;height:36px;background:var(--blue-dark);border-radius:var(--rad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -165,6 +165,8 @@ select{cursor:pointer}
 .sync-bar{display:none}
 .app-header{display:none}
 .page{display:none;padding:0}.page.active{display:block;background:var(--page-bg)}
+/* Narrow pages get a max-width container */
+#page-form .form-inner,#page-cene .cene-inner,#page-ciljevi .ciljevi-inner{max-width:980px;margin:0 auto}
 
 .section-title{font-size:11px;font-weight:500;color:var(--blue-mid);letter-spacing:.06em;text-transform:uppercase;margin:1.25rem 0 .5rem;padding-bottom:4px;border-bottom:1px solid var(--brd2)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
@@ -199,7 +201,7 @@ select{cursor:pointer}
 .add-worker-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border:0.5px dashed var(--brd);border-radius:var(--rad);background:none;color:var(--txt2);cursor:pointer;font-size:13px;transition:all .15s;margin-top:6px}
 .add-worker-btn:hover{border-color:var(--brd3);color:var(--txt)}
 
-.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem;width:100%}
 .stat-card{background:var(--bg);border-radius:var(--rad);padding:14px 16px;border:0.5px solid var(--brd2);border-top:2.5px solid var(--blue-light)}
 .stat-label{font-size:12px;color:var(--txt2);margin-bottom:4px}
 .stat-val{font-size:22px;font-weight:500}
@@ -214,7 +216,7 @@ select{cursor:pointer}
 .client-table td{padding:9px 10px;border-bottom:0.5px solid var(--brd2);vertical-align:middle}
 .client-table tr:last-child td{border-bottom:none}
 .client-table tr:hover td{background:#e8f2fb}
-.table-wrap{overflow-x:auto}
+.table-wrap{overflow-x:auto;width:100%}
 
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:500;white-space:nowrap}
 .b-doo{background:#CECBF6;color:#3C3489}.b-pr{background:#9FE1CB;color:#085041}.b-pausal{background:#FAC775;color:#633806}
@@ -232,7 +234,7 @@ select{cursor:pointer}
 .empty-state i{font-size:36px;display:block;margin-bottom:10px;opacity:.4}
 
 /* Cene */
-.cene-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:1.5rem}
+.cene-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:1.5rem}
 .cena-card{background:var(--bg);border:0.5px solid var(--brd2);border-radius:var(--rad-lg);padding:1.1rem 1.25rem;position:relative}
 .cena-card.featured{border:1.5px solid #534AB7}
 .cena-badge-top{position:absolute;top:-10px;left:1rem;background:#534AB7;color:#fff;font-size:11px;font-weight:500;padding:2px 10px;border-radius:100px}
@@ -495,7 +497,7 @@ select{cursor:pointer}
 </div>
 
 <!-- ═══ FORMA ═══ -->
-<div class="page active" id="page-form">
+<div class="page active" id="page-form"><div style="max-width:960px;margin:0 auto">
   <div class="section-title">Osnovni podaci</div>
   <div class="form-row">
     <div class="form-group"><label>Naziv firme / preduzetnika</label><input type="text" id="naziv" placeholder="npr. Firma d.o.o."></div>
@@ -570,7 +572,7 @@ select{cursor:pointer}
     <button class="btn-primary" onclick="saveClient()"><i class="ti ti-device-floppy"></i> Sačuvaj klijenta</button>
     <button class="btn-secondary" onclick="resetForm()"><i class="ti ti-refresh"></i> Poništi</button>
   </div>
-</div>
+</div></div>
 
 <!-- ═══ DASHBOARD ═══ -->
 <div class="page" id="page-dash">
@@ -629,7 +631,7 @@ select{cursor:pointer}
 </div>
 
 <!-- ═══ CENE ═══ -->
-<div class="page" id="page-cene">
+<div class="page" id="page-cene"><div style="max-width:1200px;margin:0 auto">
   <div class="ukupno-bar" style="flex-wrap:wrap;gap:0;padding:0;overflow:hidden;margin-left:0;margin-right:0">
     <div style="padding:14px 16px;border-right:0.5px solid var(--brd2);flex:1;min-width:140px">
       <div class="ukupno-label">Mesečni prihod</div>
@@ -654,7 +656,7 @@ select{cursor:pointer}
   </div>
 
   <div class="section-title" style="margin-top:1.25rem">Mesečni rashodi</div>
-  <div id="rashodiWrap" style="max-width:680px">
+  <div id="rashodiWrap" style="max-width:760px">
     <div id="rashodiList"></div>
     <button class="add-worker-btn" id="addRashodBtn" onclick="addRashod()" style="margin-top:4px">
       <i class="ti ti-plus"></i> Dodaj stavku rashoda
@@ -662,13 +664,11 @@ select{cursor:pointer}
   </div>
 
   <div class="section-title" style="margin-top:1.5rem">Pregled cena po klijentima</div>
-  <div class="table-wrap" style="max-width:860px"><div id="ceneKlijenti"></div></div>
-</div>
+  <div class="table-wrap"><div id="ceneKlijenti"></div></div>
+</div></div>
 
 <!-- ═══ CILJEVI ═══ -->
-<div class="page" id="page-ciljevi">
-  <div id="ciljeviContent"></div>
-</div>
+<div class="page" id="page-ciljevi"><div style="max-width:1100px;margin:0 auto"><div id="ciljeviContent"></div></div></div>
 
 
 </div><!-- /app -->
@@ -2871,7 +2871,7 @@ function renderCiljevi() {
       <div style="font-size:13px;color:var(--txt2)">Postavi ciljeve i prati napredak u realnom vremenu</div>
     </div>
 
-    <div class="table-wrap" style="max-width:860px">
+    <div class="table-wrap">
     <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">
       <thead>
         <tr style="border-bottom:0.5px solid var(--brd2)">
