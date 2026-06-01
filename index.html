@@ -371,7 +371,7 @@ select{cursor:pointer}
 .pregled-info-bar i{font-size:16px;color:var(--txt2)}
 .pregled-info-bar strong{color:#D32F2F}
 .pregled-table{width:100%;border-collapse:collapse;font-size:12px}
-.pregled-table th{text-align:center;padding:7px 6px;color:var(--blue-mid);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--brd2);white-space:nowrap;background:var(--blue-ghost)}
+.pregled-table th{text-align:center;padding:7px 6px;color:var(--blue-mid);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--brd2);white-space:nowrap;background:var(--blue-ghost)}.pregled-table th.sortable{cursor:pointer;user-select:none}.pregled-table th.sortable:hover{background:#d6e8f8;color:var(--blue-dark)}.sort-arrow{font-style:normal;font-size:10px;margin-left:3px;opacity:0.4}.sortable.sort-active .sort-arrow{opacity:1;color:var(--blue-dark)}
 .pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2}
 .pregled-table th.col-tip{min-width:56px}
 .pregled-table td{padding:9px 6px;border-bottom:0.5px solid var(--brd2);text-align:center;vertical-align:middle}
@@ -2907,6 +2907,14 @@ function updateCilj(key, val) {
 // ── Pregled mesečnih obaveza (tabela sa X/kvačica) ──
 let pregledGodina = new Date().getFullYear();
 let pregledMesec  = new Date().getMonth();
+let pregledSortCol = null;
+let pregledSortAsc = true;
+
+function pregledSort(col) {
+  if(pregledSortCol === col) pregledSortAsc = !pregledSortAsc;
+  else { pregledSortCol = col; pregledSortAsc = true; }
+  renderPregled();
+}
 
 function renderPregled() {
   const ob = getObaveze();
@@ -2964,11 +2972,15 @@ function renderPregled() {
     return;
   }
 
+  const sortColClass = (key) => 'sortable' + (pregledSortCol===key?' sort-active':'');
+  const arrow = (key) => `<i class="sort-arrow">${pregledSortCol===key?(pregledSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i>`;
   html += '<div class="table-wrap"><table class="pregled-table"><thead><tr>';
-  html += '<th class="col-klijent">Klijent</th><th class="col-tip">Tip</th>';
+  html += `<th class="col-klijent ${sortColClass('naziv')}" onclick="pregledSort('naziv')">Klijent ${arrow('naziv')}</th>`;
+  html += `<th class="col-tip ${sortColClass('pravnaForma')}" onclick="pregledSort('pravnaForma')">Tip ${arrow('pravnaForma')}</th>`;
   cols.forEach(c => {
-    if(c.dual) html += `<th colspan="2">${c.label}</th>`;
-    else html += `<th>${c.label}</th>`;
+    const k = c.id;
+    if(c.dual) html += `<th colspan="2" class="${sortColClass(k)}" onclick="pregledSort('${k}')">${c.label} ${arrow(k)}</th>`;
+    else html += `<th class="${sortColClass(k)}" onclick="pregledSort('${k}')">${c.label} ${arrow(k)}</th>`;
   });
   html += '</tr>';
 
@@ -2985,7 +2997,37 @@ function renderPregled() {
   });
   html += '</tr></thead><tbody>';
 
-  clients.forEach(c => {
+  // Sort
+  const sortedClients = [...clients].sort((a,b) => {
+    if(!pregledSortCol) return 0;
+    let va, vb;
+    if(pregledSortCol==='naziv'||pregledSortCol==='pravnaForma') {
+      va = (a[pregledSortCol]||''). toLowerCase();
+      vb = (b[pregledSortCol]||''). toLowerCase();
+    } else {
+      const colId = pregledSortCol;
+      const rank = (c) => {
+        const pArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
+        const zA = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
+        let applicable=false, done=false;
+        if(colId==='zakup'){applicable=zA.some(z=>z==='Zakup lokala'||z==='Zakup vozila');done=!!ob[c.id+'_'+pregledGodina+'_'+pregledMesec];}
+        else if(colId==='fisk'){applicable=!!c.fiskalna;done=!!ob['f_'+c.id+'_'+pregledGodina+'_'+pregledMesec];}
+        else if(colId==='pdobit'){applicable=pArr.includes('Porez na dobit');done=!!ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
+        else if(colId==='pdv'){applicable=!!c.pdv;done=!!ob['pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec];}
+        else if(colId==='pausal'){applicable=c.pravnaForma==='Pašal';done=!!ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
+        else if(colId==='plata'){applicable=!!(c.radnici&&c.workers&&c.workers.length>0);done=!!ob['pl_'+c.id+'_'+pregledGodina+'_'+pregledMesec];}
+        else if(colId==='pppPd'){applicable=!!(c.radnici&&c.workers&&c.workers.filter(w=>w.pppPd!==false).length>0);done=applicable&&c.workers.filter(w=>w.pppPd!==false).every((w,wi)=>!!ob['ppp_'+c.id+'_w'+wi+'_'+pregledGodina+'_'+pregledMesec]);}
+        else if(colId==='odo'){applicable=pArr.includes('OD-O');done=!!ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
+        if(!applicable) return 2;
+        return done ? 0 : 1;
+      };
+      va = rank(a); vb = rank(b);
+    }
+    if(va < vb) return pregledSortAsc ? -1 : 1;
+    if(va > vb) return pregledSortAsc ? 1 : -1;
+    return 0;
+  });
+  sortedClients.forEach(c => {
     const fb = c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
     const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
 
