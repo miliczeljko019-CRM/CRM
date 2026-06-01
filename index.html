@@ -2166,14 +2166,14 @@ function updatePausalSummary(godina, ob, klijenti) {
   }
   const el=document.getElementById('obavezeSummary');
   if(el) el.innerHTML=`
-    <div class="obs-card"><div class="obs-label">Paušalaca</div><div class="obs-val">${uk}</div></div>
-    <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+    <div class="obs-card" style="border-top-color:#0A4A6E"><div class="obs-label">Paušalaca</div><div class="obs-val">${uk}</div></div>
+    <div class="obs-card" style="border-top-color:#0A4A6E"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%"></div></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%;background:#0A4A6E"></div></div>
     </div>
-    <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+    <div class="obs-card" style="border-top-color:#0A4A6E"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%;background:#0A4A6E"></div></div>
     </div>`;
 }
 
