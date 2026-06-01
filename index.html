@@ -2916,6 +2916,7 @@ function renderPregled() {
 
   // Izračunaj neurađene za tekući mesec
   let neuradjenoBroj = countNeuradjenoPregled(ob, pregledGodina, pregledMesec);
+  let uradjenoBroj = countUradjenoPregled(ob, pregledGodina, pregledMesec);
 
   // Kolone: Zakup | Periodični | Porez na dobit (P+Pl) | PDV | Paušal (P+Pl) | Plata | PPP-PD | OD-O (P+Pl)
   const cols = [
@@ -2945,8 +2946,10 @@ function renderPregled() {
     <i class="ti ti-calendar-stats"></i>
     <span>Pregled za <strong>${mesNazivi[pregledMesec]} ${pregledGodina}.</strong></span>
     <span style="width:1px;height:16px;background:var(--brd2);display:inline-block;margin:0 4px"></span>
+    <span style="color:#1E8C50;font-weight:600"><i class="ti ti-circle-check" style="margin-right:3px"></i>Urađeno: <strong>${uradjenoBroj}</strong></span>
+    <span style="width:1px;height:16px;background:var(--brd2);display:inline-block;margin:0 4px"></span>
     ${neuradjenoBroj > 0
-      ? `<span>Ukupno preostalo: <strong>${neuradjenoBroj} neurađenih obaveza.</strong></span>`
+      ? `<span>Preostalo: <strong>${neuradjenoBroj} neurađenih</strong></span>`
       : `<span style="color:#1E8C50;font-weight:500"><i class="ti ti-circle-check"></i> Sve obaveze završene! 🎉</span>`}
     <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
       <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#1E8C50;font-weight:600"><span style="font-size:13px">✓</span> Urađeno</span>
@@ -3118,6 +3121,39 @@ function togglePregledSimple(key) {
   save();
   // Partial re-render only the cell
   renderPregled();
+}
+
+function countUradjenoPregled(ob, god, mes) {
+  let u = 0;
+  clients.forEach(c => {
+    const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
+    const zArr = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
+    if(zArr.some(z=>z==='Zakup lokala'||z==='Zakup vozila') && ob[c.id+'_'+god+'_'+mes]) u++;
+    if(c.fiskalna && ob['f_'+c.id+'_'+god+'_'+mes]) u++;
+    if(porezArr.includes('Porez na dobit')) {
+      if(ob['pd_'+c.id+'_'+god+'_'+mes+'_poslat']) u++;
+      if(ob['pd_'+c.id+'_'+god+'_'+mes+'_placen']) u++;
+    }
+    if(c.pdv && ob['pdv_'+c.id+'_'+god+'_'+mes]) u++;
+    if(c.pravnaForma==='Pašal') {
+      if(ob['pau_'+c.id+'_'+god+'_'+mes+'_poslat']) u++;
+      if(ob['pau_'+c.id+'_'+god+'_'+mes+'_placen']) u++;
+    }
+    if(c.radnici && c.workers && c.workers.length>0 && ob['pl_'+c.id+'_'+god+'_'+mes]) u++;
+    if(porezArr.includes('OD-O')) {
+      if(ob['od_'+c.id+'_'+god+'_'+mes+'_poslat']) u++;
+      if(ob['od_'+c.id+'_'+god+'_'+mes+'_placen']) u++;
+    }
+    if(c.radnici && c.workers) {
+      c.workers.forEach((w,wi)=>{
+        if(w.pppPd!==false) {
+          const workerId = c.id+'_w'+wi;
+          if(ob['ppp_'+workerId+'_'+god+'_'+mes]) u++;
+        }
+      });
+    }
+  });
+  return u;
 }
 
 function countNeuradjenoPregled(ob, god, mes) {
