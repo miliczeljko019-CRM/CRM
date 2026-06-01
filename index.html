@@ -2946,7 +2946,7 @@ function renderPregled() {
     <i class="ti ti-calendar-stats"></i>
     <span>Pregled za <strong>${mesNazivi[pregledMesec]} ${pregledGodina}.</strong></span>
     <span style="width:1px;height:16px;background:var(--brd2);display:inline-block;margin:0 4px"></span>
-    <span style="color:#1E8C50;font-weight:600"><i class="ti ti-circle-check" style="margin-right:3px"></i>Urađeno: <strong>${uradjenoBroj}</strong></span>
+    <span style="font-weight:600"><i class="ti ti-circle-check" style="margin-right:3px;color:#1E8C50"></i>Urađeno: <strong style="color:#1E8C50">${uradjenoBroj}</strong></span>
     <span style="width:1px;height:16px;background:var(--brd2);display:inline-block;margin:0 4px"></span>
     ${neuradjenoBroj > 0
       ? `<span>Preostalo: <strong>${neuradjenoBroj} neurađenih</strong></span>`
