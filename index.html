@@ -6,6 +6,7 @@
 <title>Knjigovodstvo CRM — Google Drive</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.19.0/webfont/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 :root {
@@ -2910,6 +2911,111 @@ let pregledMesec  = new Date().getMonth();
 let pregledSortCol = null;
 let pregledSortAsc = true;
 
+function exportPregledPDF() {
+  const { jsPDF } = window.jspdf;
+  const ob = getObaveze();
+  const mesNazivi = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
+  const mesLabel = mesNazivi[pregledMesec] + ' ' + pregledGodina + '. godine';
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, marginL = 15, marginR = 15, usable = W - marginL - marginR;
+
+  doc.setFillColor(12, 68, 124);
+  doc.rect(0, 0, 210, 22, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(255,255,255);
+  doc.text('Pregled neuradjenih obaveza', marginL, 10);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(mesLabel, marginL, 17);
+
+  let y = 30;
+  const colLabels = {
+    zakup: 'Zakup', fisk: 'Periodicni izvestaj',
+    pdobit_poslat: 'Porez na dobit - Poslat', pdobit_placen: 'Porez na dobit - Placen',
+    pdv: 'PDV',
+    pausal_poslat: 'Pausal - Poslat', pausal_placen: 'Pausal - Placen',
+    plata: 'Plata', pppPd: 'PPP-PD',
+    odo_poslat: 'OD-O - Poslat', odo_placen: 'OD-O - Placen'
+  };
+
+  let hasAny = false;
+  clients.forEach(c => {
+    const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
+    const zA = Array.isArray(c.zakup)?c.zakup:(c.zakup&&c.zakup!=='Nije odabrano'?[c.zakup]:[]);
+    const g = pregledGodina, m = pregledMesec;
+    const neuradjene = [];
+    if(zA.some(z=>z==='Zakup lokala'||z==='Zakup vozila') && !ob[c.id+'_'+g+'_'+m]) neuradjene.push(colLabels.zakup);
+    if(c.fiskalna && !ob['f_'+c.id+'_'+g+'_'+m]) neuradjene.push(colLabels.fisk);
+    if(porezArr.includes('Porez na dobit')) {
+      if(!ob['pd_'+c.id+'_'+g+'_'+m+'_poslat']) neuradjene.push(colLabels.pdobit_poslat);
+      if(!ob['pd_'+c.id+'_'+g+'_'+m+'_placen']) neuradjene.push(colLabels.pdobit_placen);
+    }
+    if(c.pdv && !ob['pdv_'+c.id+'_'+g+'_'+m]) neuradjene.push(colLabels.pdv);
+    if(c.pravnaForma==='Пашал') {
+      if(!ob['pau_'+c.id+'_'+g+'_'+m+'_poslat']) neuradjene.push(colLabels.pausal_poslat);
+      if(!ob['pau_'+c.id+'_'+g+'_'+m+'_placen']) neuradjene.push(colLabels.pausal_placen);
+    }
+    if(c.radnici&&c.workers&&c.workers.length>0&&!ob['pl_'+c.id+'_'+g+'_'+m]) neuradjene.push(colLabels.plata);
+    if(porezArr.includes('OD-O')) {
+      if(!ob['od_'+c.id+'_'+g+'_'+m+'_poslat']) neuradjene.push(colLabels.odo_poslat);
+      if(!ob['od_'+c.id+'_'+g+'_'+m+'_placen']) neuradjene.push(colLabels.odo_placen);
+    }
+    if(c.radnici&&c.workers) {
+      c.workers.forEach((w,wi)=>{
+        if(w.pppPd!==false&&!ob['ppp_'+c.id+'_w'+wi+'_'+g+'_'+m])
+          neuradjene.push('PPP-PD: '+(w.ime||'Radnik '+(wi+1)));
+      });
+    }
+    if(neuradjene.length === 0) return;
+    hasAny = true;
+    if(y + 8 + neuradjene.length * 6 + 6 > 280) { doc.addPage(); y = 15; }
+    doc.setFillColor(230, 241, 251);
+    doc.rect(marginL, y, usable, 7, 'F');
+    doc.setDrawColor(138, 180, 216);
+    doc.rect(marginL, y, usable, 7, 'S');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(13, 30, 53);
+    doc.text(c.naziv + '  [' + c.pravnaForma + ']', marginL + 3, y + 5);
+    y += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    neuradjene.forEach((item, i) => {
+      if(y > 280) { doc.addPage(); y = 15; }
+      doc.setFillColor(i%2===0?252:246, 241, i%2===0?241:246);
+      doc.rect(marginL, y, usable, 6, 'F');
+      doc.setDrawColor(200, 210, 220);
+      doc.rect(marginL, y, usable, 6, 'S');
+      doc.setTextColor(180, 0, 0);
+      doc.text('x', marginL + 3, y + 4.2);
+      doc.setTextColor(50, 50, 50);
+      doc.text(item, marginL + 8, y + 4.2);
+      y += 6;
+    });
+    y += 4;
+  });
+
+  if(!hasAny) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(30, 140, 80);
+    doc.text('Sve obaveze su uradjene!', marginL, y);
+  }
+
+  const pages = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(150,150,150);
+    doc.text('Strana '+i+' / '+pages, W - marginR, 290, {align:'right'});
+    doc.text('Generisano: '+new Date().toLocaleDateString('sr-RS'), marginL, 290);
+  }
+
+  doc.save('Neuradjene_obaveze_'+mesNazivi[pregledMesec]+'_'+pregledGodina+'.pdf');
+}
+
 function pregledSort(col) {
   if(pregledSortCol === col) pregledSortAsc = !pregledSortAsc;
   else { pregledSortCol = col; pregledSortAsc = true; }
@@ -2947,6 +3053,7 @@ function renderPregled() {
       <button onclick="pregledMesec=pregledMesec===0?(pregledGodina--,11):pregledMesec-1;renderPregled()" style="background:none;border:0.5px solid var(--brd);border-radius:var(--rad);padding:5px 10px;cursor:pointer;color:var(--txt);font-size:13px"><i class="ti ti-chevron-left"></i></button>
       <span style="font-size:14px;font-weight:600;min-width:160px;text-align:center">${mesNazivi[pregledMesec]} ${pregledGodina}.</span>
       <button onclick="pregledMesec=pregledMesec===11?(pregledGodina++,0):pregledMesec+1;renderPregled()" style="background:none;border:0.5px solid var(--brd);border-radius:var(--rad);padding:5px 10px;cursor:pointer;color:var(--txt);font-size:13px"><i class="ti ti-chevron-right"></i></button>
+      <button onclick="exportPregledPDF()" style="display:inline-flex;align-items:center;gap:5px;background:#D32F2F;color:#fff;border:none;border-radius:var(--rad);padding:6px 12px;cursor:pointer;font-size:12px;font-weight:600"><i class="ti ti-file-type-pdf"></i> PDF</button>
     </div>
   </div>
 
