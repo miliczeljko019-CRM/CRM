@@ -3089,8 +3089,8 @@ function renderPregled() {
   html += '<th class="col-klijent" style="border-bottom:none"></th><th class="col-tip" style="border-bottom:none"></th>';
   cols.forEach(c => {
     if(c.dual) {
-      html += `<th style="font-size:9px;color:#0C447C;padding:2px 4px;background:var(--bg2);border-bottom:none">${c.lblA}</th>`;
-      html += `<th style="font-size:9px;color:#27500A;padding:2px 4px;background:var(--bg2);border-bottom:none">${c.lblB}</th>`;
+      html += `<th style="font-size:9px;color:#0C447C;padding:2px 4px;background:var(--bg2);border-bottom:none;text-align:center">${c.lblA}</th>`;
+      html += `<th style="font-size:9px;color:#27500A;padding:2px 4px;background:var(--bg2);border-bottom:none;text-align:center">${c.lblB}</th>`;
     } else {
       html += '<th style="background:var(--bg2);border-bottom:none"></th>';
     }
