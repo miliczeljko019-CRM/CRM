@@ -191,8 +191,6 @@ select{cursor:pointer}
 .btn-excel:hover{opacity:.85}
 .btn-excel-outline{padding:9px 18px;background:none;border:0.5px solid #1D6F42;color:#1D6F42;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn-excel-outline:hover{background:#1D6F4215}
-.btn-import{padding:9px 18px;background:#0C447C;color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.btn-import:hover{opacity:.85}
 .remove-small{height:26px;padding:0 10px;font-size:11px;color:var(--danger);border:0.5px solid var(--brd-danger);border-radius:var(--rad);cursor:pointer;background:none}
 
 .workers-section{border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px;background:var(--bg);border-top:2px solid var(--blue-light)}
@@ -378,7 +376,7 @@ select{cursor:pointer}
 .pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2}
 .pregled-table th.col-tip{min-width:56px}
 .pregled-table td{padding:9px 6px;border:0.5px solid var(--brd3);text-align:center;vertical-align:middle}
-.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:#ffffff;z-index:1}
+.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:normal;word-break:break-word;max-width:260px;position:sticky;left:0;background:#ffffff;z-index:1}
 .pregled-table tr:hover td{background:#FFF3CD;transition:background .1s}.pregled-table tr:hover td.col-klijent{background:#FFF3CD}
 
 .pregled-table tr:last-child td{border-bottom:none}
@@ -593,8 +591,6 @@ select{cursor:pointer}
     <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
-      <button class="btn-import" onclick="document.getElementById('uvozInput').click()"><i class="ti ti-file-upload"></i> Uvezi Excel</button>
-      <input type="file" id="uvozInput" accept=".xlsx,.xls" style="display:none" onchange="uvozIzExcela(this)">
     </div>
   </div>
   <div class="table-wrap"><div id="dashContent"></div></div>
@@ -3320,79 +3316,6 @@ function countNeuradjenoPregled(ob, god, mes) {
 
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-
-// -- Uvoz klijenata iz Excel fajla --
-function uvozIzExcela(input) {
-  const file = input.files[0];
-  if (!file) return;
-  input.value = '';
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-      if (!rows.length) { showToast('Fajl je prazan!'); return; }
-      const findCol = (row, keys) => {
-        for (const k of keys) {
-          if (row[k] !== undefined && String(row[k]).trim() !== '') return String(row[k]).trim();
-        }
-        return '';
-      };
-      const mapForma = tip => {
-        const t = (tip||'').toUpperCase();
-        if (t.includes('PRAVNO') || t.includes('DOO') || t.includes('D.O.O')) return 'DOO';
-        if (t.includes('PAUS')) return 'Paušal';
-        return 'PR';
-      };
-      let dodati=0, preskoceni=0;
-      const exPib = new Set(clients.map(c=>c.pib).filter(Boolean));
-      const exNaz = new Set(clients.map(c=>(c.naziv||'').toLowerCase()));
-      rows.forEach(row => {
-        const naziv = findCol(row,['Pun naziv firme','naziv','Naziv firme','Naziv']);
-        if (!naziv) return;
-        const pib = findCol(row,['PIB','pib']);
-        if (pib && exPib.has(pib)) { preskoceni++; return; }
-        if (!pib && exNaz.has(naziv.toLowerCase())) { preskoceni++; return; }
-        const forma = mapForma(findCol(row,['Tip klijenta','Tip','tip klijenta']));
-        const pdvRaw = findCol(row,['PDV','pdv']);
-        const pdv = pdvRaw==='TRUE'||pdvRaw==='true'||pdvRaw==='1'||pdvRaw.toLowerCase()==='da';
-        const porez = forma==='X_UNUSED' ? [] : forma==='Paušal' ? ['Paušalno oporezivanje'] : forma==='DOO' ? ['Porez na dobit'] : [];
-        clients.push({
-          id: Date.now()+Math.random(),
-          naziv, pib,
-          mb:           findCol(row,['Matični broj','Maticni broj','MB','mb']),
-          email:        findCol(row,['email','Email','E-mail']),
-          telefon:      findCol(row,['Telefon','telefon']),
-          adresa:       findCol(row,['Adresa firme','Adresa','adresa']),
-          grad:         findCol(row,['Mesto','Grad','grad','mesto']),
-          kontaktOsoba: findCol(row,['Vlasnik','Kontakt osoba','kontakt']),
-          pinLicnaKarta:'', rodjendan:'',
-          pravnaForma: forma, porez, pdv,
-          radnici:false, workers:[], fiskalna:false, recenzija:false,
-          zakup:[], cenaMesecna:0,
-          datum: new Date().toLocaleDateString('en-GB'),
-          _uvezen: true
-        });
-        if(pib) exPib.add(pib);
-        exNaz.add(naziv.toLowerCase());
-        dodati++;
-      });
-      if(dodati>0){
-        save(); renderDash();
-        showToast('Uvezeno '+dodati+' klijenata'+(preskoceni?' ('+preskoceni+' duplikata preskoceno)':'')+'!');
-      } else if(preskoceni>0){
-        showToast('Svi klijenti vec postoje ('+preskoceni+' duplikata).');
-      } else {
-        showToast('Nije pronadjen nijedan klijent u fajlu.');
-      }
-    } catch(err){
-      console.error(err);
-      showToast('Greska pri citanju fajla: '+err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
 
 // ── Start ──
 initApp();
