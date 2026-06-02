@@ -514,7 +514,7 @@ select{cursor:pointer}
   </div>
   <div class="form-row">
     <div class="form-group"><label>Datum rođendana vlasnika</label><div id="rodjendan-wrap"></div></div>
-    <div class="form-group"><label>Privremena odjava — datum od</label><div id="privOdjava-wrap"></div></div>
+    <div class="form-group"></div>
   </div>
 
   <div class="section-title">Pravna forma</div>
@@ -684,7 +684,7 @@ select{cursor:pointer}
     </div>
     <div class="form-row">
       <div class="form-group"><label>Datum rođendana vlasnika</label><div id="e_rodjendan-wrap"></div></div>
-      <div class="form-group"><label>Privremena odjava — datum od</label><div id="e_privOdjava-wrap"></div></div>
+      <div class="form-group"></div>
     </div>
 
     <div class="section-title">Pravna forma</div>
@@ -969,6 +969,8 @@ async function initApp() {
   // Init split date inputs
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
+  const pw=document.getElementById('privOdjava-wrap');
+  if(pw) pw.innerHTML=dateInputHtml('privOdjava','',false);
   updateCenaPreview();
 }
 
@@ -1275,7 +1277,6 @@ function saveClient() {
     telefon:document.getElementById('telefon').value.trim(),
     pinLicnaKarta:document.getElementById('pinLicnaKarta').value.trim(),
     rodjendan:getDateVal('rodjendan'),
-    privOdjava:getDateVal('privOdjava'),
     pravnaForma:getRadio('pravnaForma'),
     porez:getPorezArr(''),
     pdv:document.getElementById('pdvBtn').classList.contains('checked'),
@@ -1294,8 +1295,6 @@ function resetForm() {
   ['naziv','pib','mb','email','telefon','pinLicnaKarta'].forEach(id=>document.getElementById(id).value='');
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
-  const pw=document.getElementById('privOdjava-wrap');
-  if(pw) pw.innerHTML=dateInputHtml('privOdjava','',false);
   document.querySelectorAll('#pravnaForma .radio-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   ['porezDobitBtn','porezNePlakaBtn','porezPausalBtn','porezOdoBtn'].forEach(id=>document.getElementById(id)?.classList.remove('checked'));
   document.getElementById('pdvBtn').classList.add('checked');
@@ -1324,8 +1323,6 @@ function openEdit(id) {
   document.getElementById('e_pinLicnaKarta').value=c.pinLicnaKarta||'';
   const erw=document.getElementById('e_rodjendan-wrap');
   if(erw) erw.innerHTML=dateInputHtml('e_rodjendan',c.rodjendan||'',false);
-  const epw=document.getElementById('e_privOdjava-wrap');
-  if(epw) epw.innerHTML=dateInputHtml('e_privOdjava',c.privOdjava||'',false);
   document.getElementById('e_cenaMesecna').value=c.cenaMesecna||0;
 
   // radio pravna forma
@@ -1442,7 +1439,6 @@ function saveEdit() {
     telefon:document.getElementById('e_telefon').value.trim(),
     pinLicnaKarta:document.getElementById('e_pinLicnaKarta').value.trim(),
     rodjendan:getDateVal('e_rodjendan'),
-    privOdjava:getDateVal('e_privOdjava'),
     pravnaForma:getRadio('e_pravnaForma'),
     porez:getPorezArr('e_'),
     pdv:document.getElementById('e_pdvBtn').classList.contains('checked'),
