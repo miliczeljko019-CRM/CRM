@@ -376,7 +376,7 @@ select{cursor:pointer}
 .pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2}
 .pregled-table th.col-tip{min-width:56px}
 .pregled-table td{padding:9px 6px;border:0.5px solid var(--brd3);text-align:center;vertical-align:middle}
-.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:normal;word-break:break-word;max-width:260px;position:sticky;left:0;background:#ffffff;z-index:1}
+.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:#ffffff;z-index:1}
 .pregled-table tr:hover td{background:#FFF3CD;transition:background .1s}.pregled-table tr:hover td.col-klijent{background:#FFF3CD}
 
 .pregled-table tr:last-child td{border-bottom:none}
@@ -514,7 +514,7 @@ select{cursor:pointer}
   </div>
   <div class="form-row">
     <div class="form-group"><label>Datum rođendana vlasnika</label><div id="rodjendan-wrap"></div></div>
-    <div class="form-group"></div>
+    <div class="form-group"><label>Privremena odjava — datum od</label><div id="privOdjava-wrap"></div></div>
   </div>
 
   <div class="section-title">Pravna forma</div>
@@ -684,7 +684,7 @@ select{cursor:pointer}
     </div>
     <div class="form-row">
       <div class="form-group"><label>Datum rođendana vlasnika</label><div id="e_rodjendan-wrap"></div></div>
-      <div class="form-group"></div>
+      <div class="form-group"><label>Privremena odjava — datum od</label><div id="e_privOdjava-wrap"></div></div>
     </div>
 
     <div class="section-title">Pravna forma</div>
@@ -1275,6 +1275,7 @@ function saveClient() {
     telefon:document.getElementById('telefon').value.trim(),
     pinLicnaKarta:document.getElementById('pinLicnaKarta').value.trim(),
     rodjendan:getDateVal('rodjendan'),
+    privOdjava:getDateVal('privOdjava'),
     pravnaForma:getRadio('pravnaForma'),
     porez:getPorezArr(''),
     pdv:document.getElementById('pdvBtn').classList.contains('checked'),
@@ -1293,6 +1294,8 @@ function resetForm() {
   ['naziv','pib','mb','email','telefon','pinLicnaKarta'].forEach(id=>document.getElementById(id).value='');
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
+  const pw=document.getElementById('privOdjava-wrap');
+  if(pw) pw.innerHTML=dateInputHtml('privOdjava','',false);
   document.querySelectorAll('#pravnaForma .radio-btn').forEach((b,i)=>b.classList.toggle('selected',i===0));
   ['porezDobitBtn','porezNePlakaBtn','porezPausalBtn','porezOdoBtn'].forEach(id=>document.getElementById(id)?.classList.remove('checked'));
   document.getElementById('pdvBtn').classList.add('checked');
@@ -1321,6 +1324,8 @@ function openEdit(id) {
   document.getElementById('e_pinLicnaKarta').value=c.pinLicnaKarta||'';
   const erw=document.getElementById('e_rodjendan-wrap');
   if(erw) erw.innerHTML=dateInputHtml('e_rodjendan',c.rodjendan||'',false);
+  const epw=document.getElementById('e_privOdjava-wrap');
+  if(epw) epw.innerHTML=dateInputHtml('e_privOdjava',c.privOdjava||'',false);
   document.getElementById('e_cenaMesecna').value=c.cenaMesecna||0;
 
   // radio pravna forma
@@ -1437,6 +1442,7 @@ function saveEdit() {
     telefon:document.getElementById('e_telefon').value.trim(),
     pinLicnaKarta:document.getElementById('e_pinLicnaKarta').value.trim(),
     rodjendan:getDateVal('e_rodjendan'),
+    privOdjava:getDateVal('e_privOdjava'),
     pravnaForma:getRadio('e_pravnaForma'),
     porez:getPorezArr('e_'),
     pdv:document.getElementById('e_pdvBtn').classList.contains('checked'),
