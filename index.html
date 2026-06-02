@@ -1723,10 +1723,6 @@ function getMesFilterBarHtml(showPoslatPlacen) {
     html += `<button class="mes-filter-chip${obavezeFilter==='placeno'?' active':''}" onclick="toggleMesFilter('placeno')">
       <span class="mes-filter-dot" style="background:#E8F8E8;border:1px solid #27500A"></span>
       Plaćeno</button>`;
-  } else {
-    html += `<button class="mes-filter-chip${obavezeFilter==='uradjeno'?' active':''}" onclick="toggleMesFilter('uradjeno')">
-      <span class="mes-filter-dot" style="background:#E8F8E8;border:1px solid #27500A"></span>
-      Uradjeno</button>`;
   }
   html += '</div>';
   return html;
@@ -1736,7 +1732,7 @@ function shouldShowMonth(m, godina, ob, clientId, prefix, isPoslatPlacen) {
   const danas = new Date();
   const tekGod = danas.getFullYear();
   const tekMes = danas.getMonth();
-  if(obavezeFilter === 'sve') return true;
+  if(obavezeFilter === 'sve' || obavezeFilter === 'uradjeno') return true;
   if(obavezeFilter === 'tekuci') return godina === tekGod && m === tekMes;
   if(!isPoslatPlacen) {
     const key = (prefix||'') + clientId + '_' + godina + '_' + m;
