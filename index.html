@@ -3248,7 +3248,7 @@ function dualCell(applicable, doneA, doneB, keyA, keyB) {
   const mkCell = (done, key, clsDone, lbl) => {
     const icon = done ? '✓' : '✕';
     const cls  = done ? clsDone : 'dual-todo';
-    return `<td><span class="${cls} dual-row" onclick="togglePregledSimple('${key}')">
+    return `<td style="text-align:center"><span class="${cls} dual-row" onclick="togglePregledSimple('${key}')" style="justify-content:center">
       <span class="dual-icon">${icon}</span>
       <span class="dual-lbl">${lbl}</span>
     </span></td>`;
