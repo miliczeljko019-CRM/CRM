@@ -591,6 +591,8 @@ select{cursor:pointer}
     <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
+      <button class="btn-excel-outline" onclick="triggerUvozExcel()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-file-import"></i> Uvezi XLS</button>
+      <input type="file" id="uvozExcelInput" accept=".xlsx,.xls" style="display:none" onchange="uvozExcel(this)">
     </div>
   </div>
   <div class="table-wrap"><div id="dashContent"></div></div>
@@ -2795,6 +2797,145 @@ let ciljevi = JSON.parse(localStorage.getItem('knjg_crm_ciljevi') || '{}');
 function saveCiljevi() {
   localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(ciljevi));
   save();
+}
+
+function triggerUvozExcel() {
+  document.getElementById('uvozExcelInput').value = '';
+  document.getElementById('uvozExcelInput').click();
+}
+
+function uvozExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type: 'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+      if (rows.length < 2) { showToast('Fajl je prazan!'); return; }
+
+      // Detect header row
+      const header = rows[0].map(h => String(h).trim().toLowerCase());
+      const col = (names) => {
+        for (const n of names) {
+          const i = header.findIndex(h => h.includes(n));
+          if (i !== -1) return i;
+        }
+        return -1;
+      };
+
+      const iNaziv   = col(['naziv', 'pun naziv', 'firma', 'ime']);
+      const iTip     = col(['tip kli', 'tip', 'vrsta']);
+      const iPdv     = col(['pdv']);
+      const iPib     = col(['pib']);
+      const iMb      = col(['mati\u010dni', 'mb']);
+      const iEmail   = col(['email', 'internet', 'mail', '@']);
+      const iVlasnik = col(['vlasnik', 'kontakt']);
+      const iMesto   = col(['mesto', 'grad']);
+      const iAdresa  = col(['adresa']);
+      const iPtt     = col(['po\u0161t', 'ptt', 'po\u0161tanski']);
+
+      if (iNaziv === -1) { showToast('Nije prona\u0111ena kolona "Naziv"!'); return; }
+
+      let uvezeno = 0, preskoceno = 0;
+      const noviKlijenti = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        const naziv = String(r[iNaziv] || '').trim();
+        if (!naziv) { preskoceno++; continue; }
+
+        // Skip if already exists by PIB or naziv
+        const pib = iPib !== -1 ? String(r[iPib] || '').trim() : '';
+        const mb  = iMb  !== -1 ? String(r[iMb]  || '').trim().replace(/\s+/g,'') : '';
+        const already = clients.some(c =>
+          (pib && c.pib === pib) || c.naziv.toLowerCase() === naziv.toLowerCase()
+        );
+        if (already) { preskoceno++; continue; }
+
+        // Map tip klijenta -> pravnaForma
+        const tipRaw = iTip !== -1 ? String(r[iTip] || '').trim().toUpperCase() : '';
+        let pravnaForma = 'PR';
+        if (tipRaw.includes('PRAVNO') || tipRaw.includes('DOO') || tipRaw.includes('D.O.O')) {
+          // Detect DOO from naziv
+          pravnaForma = naziv.toUpperCase().includes('DOO') || naziv.toUpperCase().includes('D.O.O') ? 'DOO' : 'DOO';
+        } else if (tipRaw.includes('PREDUZETNIK') || tipRaw.includes('PR')) {
+          pravnaForma = 'PR';
+        }
+
+        // PDV
+        const pdvRaw = iPdv !== -1 ? String(r[iPdv] || '').trim().toLowerCase() : '';
+        const pdv = pdvRaw === 'true' || pdvRaw === 'da' || pdvRaw === '1' || pdvRaw === 'yes';
+
+        // Email - prefer email col, fallback internet
+        const email = iEmail !== -1 ? String(r[iEmail] || '').trim() : '';
+
+        // Adresa
+        const mesto  = iMesto  !== -1 ? String(r[iMesto]  || '').trim() : '';
+        const adresa = iAdresa !== -1 ? String(r[iAdresa] || '').trim() : '';
+        const ptt    = iPtt    !== -1 ? String(r[iPtt]    || '').trim() : '';
+
+        // Vlasnik (store as telefon field for now, or skip)
+        const vlasnik = iVlasnik !== -1 ? String(r[iVlasnik] || '').trim() : '';
+
+        // Porez default by type
+        let porez = [];
+        if (pravnaForma === 'DOO') porez = ['Porez na dobit'];
+        else if (pravnaForma === 'PR') porez = ['OD-O'];
+
+        const noviKlijent = {
+          id: Date.now() + i,
+          naziv,
+          pib,
+          mb,
+          email: email.includes('@') ? email : '',
+          telefon: '',
+          pinLicnaKarta: '',
+          rodjendan: '',
+          pravnaForma,
+          porez,
+          pdv,
+          radnici: false,
+          workers: [],
+          fiskalna: false,
+          recenzija: false,
+          zakup: [],
+          cenaMesecna: 0,
+          datum: new Date().toLocaleDateString('en-GB'),
+          adresa: adresa + (mesto ? (adresa ? ', ' : '') + mesto : '') + (ptt ? ' ' + ptt : ''),
+          vlasnik
+        };
+
+        noviKlijenti.push(noviKlijent);
+        uvezeno++;
+      }
+
+      if (noviKlijenti.length === 0) {
+        showToast('Svi klijenti ve\u0107 postoje ili fajl je prazan!');
+        return;
+      }
+
+      // Show confirmation modal
+      const poruka = `Uvoz iz Excel fajla:
+\u2022 ${uvezeno} novih klijenata
+\u2022 ${preskoceno} preskoceno (ve\u0107 postoje)
+
+Dodati u CRM?`;
+      if (confirm(poruka)) {
+        clients.push(...noviKlijenti);
+        save();
+        renderDash();
+        showToast('\u2705 Uvezeno ' + uvezeno + ' klijenata!');
+        showTab('dash');
+      }
+    } catch(err) {
+      console.error(err);
+      showToast('Gre\u0161ka pri uvozi: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function renderCiljevi() {
