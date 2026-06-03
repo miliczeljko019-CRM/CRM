@@ -1742,6 +1742,26 @@ function updateObavezeSummary(godina) {
         <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
         <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%;background:#0A4A6E"></div></div>
       </div>`;
+  } else if(obavezeAktivniTab === 'odo') {
+    const klijenti = clients.filter(c=>{const arr=Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);return arr.includes('OD-O');});
+    let poslatoTek=0, placanoTek=0, uk=klijenti.length;
+    if(godina===tekGod){
+      klijenti.forEach(c=>{
+        if(ob['od_'+c.id+'_'+godina+'_'+tekMes+'_poslat']) poslatoTek++;
+        if(ob['od_'+c.id+'_'+godina+'_'+tekMes+'_placen']) placanoTek++;
+      });
+    }
+    const elO=document.getElementById('obavezeSummary');
+    if(elO) elO.innerHTML=`
+      <div class="obs-card"><div class="obs-label">Klijenata — OD-O</div><div class="obs-val">${klijenti.length}</div></div>
+      <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+        <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+      </div>
+      <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
+        <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+      </div>`;
   } else if(obavezeAktivniTab === 'plata') {
     const klijenti = clients.filter(c=>c.radnici&&c.workers&&c.workers.length>0);
     let uradjenoTek=0, ukupnoTek=klijenti.length;
