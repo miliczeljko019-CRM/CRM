@@ -219,7 +219,7 @@ select{cursor:pointer}
 .client-table td{padding:9px 10px;border:0.5px solid var(--brd3);vertical-align:middle;text-align:center}
 .client-table td:first-child{text-align:left}
 .client-table tr:last-child td{border-bottom:0.5px solid var(--brd3)}
-.client-table tr:hover td{background:#e8f2fb}
+.client-table tr:hover td{background:#FFF3CD}
 .client-table td:first-child{max-width:200px;white-space:normal;word-break:break-word;line-height:1.4}
 .client-table th:first-child{max-width:200px}
 .table-wrap{overflow-x:auto;width:100%}
@@ -3017,8 +3017,6 @@ function exportPregledPDF() {
       const rowH = 7;
       const neededH = rowH + neuradjene.length * rowH + 4;
       if(y + neededH > 280) { doc.addPage(); y = 15; }
-
-      // Client header row
       doc.setFillColor(230, 241, 251);
       doc.rect(marginL, y, usable, rowH, 'F');
       doc.setDrawColor(12, 68, 124);
@@ -3031,22 +3029,18 @@ function exportPregledPDF() {
       doc.setTextColor(12, 68, 124);
       doc.text('[' + (c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
       y += rowH;
-
-      // Each unfinished obligation as a red row
       neuradjene.forEach((item, i) => {
         if(y > 278) { doc.addPage(); y = 15; }
         doc.setFillColor(i%2===0 ? 255 : 253, i%2===0 ? 245 : 238, i%2===0 ? 245 : 238);
         doc.rect(marginL, y, usable, rowH, 'F');
         doc.setDrawColor(220, 180, 180);
         doc.rect(marginL, y, usable, rowH, 'S');
-        // Red filled circle with X
         doc.setFillColor(200, 30, 30);
         doc.circle(marginL + 4.5, y + 3.5, 2.2, 'F');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6.5);
         doc.setTextColor(255, 255, 255);
         doc.text('X', marginL + 3.6, y + 4.4);
-        // Item label in dark red
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(140, 0, 0);
