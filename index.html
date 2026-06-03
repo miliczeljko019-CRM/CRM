@@ -2358,7 +2358,7 @@ function renderODO() {
   const danas = new Date();
   const tekGod = danas.getFullYear();
   const tekMes = danas.getMonth();
-  const klijenti = clients.filter(c => c.porez === 'OD-O');
+  const klijenti = clients.filter(c => { const arr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]); return arr.includes('OD-O'); });
 
   const visibleMonths = obavezeFilter==='sve' ? Array.from({length:12},(_,i)=>i)
     : obavezeFilter==='tekuci' ? (obavezeGodina===tekGod?[tekMes]:[])
