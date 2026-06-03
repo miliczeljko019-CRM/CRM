@@ -61,11 +61,11 @@ select{cursor:pointer}
 /* ── Top nav bar ── */
 .top-nav{
   position:fixed;top:0;left:0;right:0;z-index:500;
-  height:48px;
-  background:#0a1628;
-  border-bottom:1px solid rgba(55,138,221,.18);
+  height:52px;
+  background:#ffffff;
+  border-bottom:1.5px solid #d0e4f5;
   display:flex;align-items:center;
-  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  box-shadow:0 2px 8px rgba(55,138,221,.10);
 }
 .top-nav-inner{
   width:100%;display:flex;align-items:center;
@@ -73,19 +73,19 @@ select{cursor:pointer}
 }
 .nav-logo-btn{
   display:flex;align-items:center;gap:10px;
-  padding:0 20px;height:48px;
+  padding:0 22px;height:52px;
   flex-shrink:0;text-decoration:none;
-  border-right:1px solid rgba(55,138,221,.15);
+  border-right:1.5px solid #d0e4f5;
 }
 .nav-logo-btn .logo-icon{
-  width:28px;height:28px;
+  width:30px;height:30px;
   background:linear-gradient(135deg,#185FA5,#378ADD);
-  border-radius:6px;
+  border-radius:7px;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  box-shadow:0 1px 4px rgba(55,138,221,.4);
+  box-shadow:0 2px 6px rgba(55,138,221,.35);
 }
 .nav-logo-btn .logo-icon i{color:#fff;font-size:15px}
-.nav-logo-btn span{font-size:13px;font-weight:600;color:rgba(255,255,255,.92);white-space:nowrap;letter-spacing:-.01em}
+.nav-logo-btn span{font-size:13px;font-weight:700;color:#0d1e35;white-space:nowrap;letter-spacing:-.02em}
 .nav-tabs{
   display:flex;align-items:stretch;
   flex:1;overflow-x:auto;scrollbar-width:none;
@@ -94,69 +94,70 @@ select{cursor:pointer}
 .nav-tab{
   flex:1;min-width:0;
   display:flex;align-items:center;justify-content:center;gap:5px;
-  height:48px;padding:0 12px;
+  height:52px;padding:0 14px;
   font-size:12px;font-weight:500;
-  color:rgba(255,255,255,.45);
+  color:#6b8cae;
   border:none;background:none;cursor:pointer;
-  border-right:1px solid rgba(55,138,221,.1);
-  border-bottom:2px solid transparent;
+  border-right:1px solid #e4eef8;
+  border-bottom:2.5px solid transparent;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   transition:color .15s,background .15s,border-color .15s;
   letter-spacing:-.01em;
 }
 .nav-tab:last-child{border-right:none}
 .nav-tab i{font-size:13px;flex-shrink:0}
-.nav-tab:hover{color:rgba(255,255,255,.8);background:rgba(55,138,221,.08)}
+.nav-tab:hover{color:#185FA5;background:#f0f7ff}
 .nav-tab.active{
-  color:#fff;font-weight:600;
-  background:rgba(55,138,221,.14);
-  border-bottom:2px solid #378ADD;
+  color:#185FA5;font-weight:700;
+  background:#f0f7ff;
+  border-bottom:2.5px solid #378ADD;
 }
 .nav-right{
   display:flex;align-items:center;gap:0;
-  border-left:1px solid rgba(55,138,221,.15);
+  border-left:1.5px solid #d0e4f5;
   flex-shrink:0;
 }
 .nav-sync{
   display:flex;align-items:center;gap:6px;
-  padding:0 14px;height:48px;
-  font-size:11px;color:rgba(255,255,255,.4);
-  border-right:1px solid rgba(55,138,221,.12);
+  padding:0 16px;height:52px;
+  font-size:11px;color:#8aa8c4;
+  border-right:1px solid #e4eef8;
   white-space:nowrap;
 }
 .nav-sync .sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.nav-sync .sync-dot.ok{background:#34c759}
+.nav-sync .sync-dot.ok{background:#28a745}
 .nav-sync .sync-dot.saving{background:#ff9f0a;animation:pulse .8s infinite}
-.nav-sync .sync-dot.error{background:#ff453a}
-.nav-sync .sync-dot.offline{background:#888}
+.nav-sync .sync-dot.error{background:#dc3545}
+.nav-sync .sync-dot.offline{background:#aaa}
 .nav-user{
-  display:flex;align-items:center;gap:7px;
-  padding:0 14px;height:48px;cursor:pointer;
-  font-size:11px;color:rgba(255,255,255,.4);
+  display:flex;align-items:center;gap:8px;
+  padding:0 16px;height:52px;cursor:pointer;
+  font-size:11px;color:#6b8cae;
   transition:color .15s;
 }
-.nav-user:hover{color:rgba(255,255,255,.7)}
-.nav-user .user-avatar{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.nav-user:hover{color:#185FA5}
+.nav-user .user-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover}
 .nav-user .user-avatar-placeholder{
-  width:24px;height:24px;border-radius:50%;
-  background:rgba(55,138,221,.25);color:#7ab8e8;
-  font-size:10px;font-weight:600;border:1px solid rgba(55,138,221,.3);
+  width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,#378ADD,#185FA5);color:#fff;
+  font-size:11px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 4px rgba(55,138,221,.3);
 }
 .nav-more-btn{
   display:flex;align-items:center;justify-content:center;
-  width:36px;height:36px;border-radius:8px;
-  background:rgba(55,138,221,.12);border:1px solid rgba(55,138,221,.2);
-  color:rgba(255,255,255,.6);cursor:pointer;margin-right:4px;
-  font-size:16px;transition:background .15s;
+  width:34px;height:34px;border-radius:7px;
+  background:#f0f7ff;border:1px solid #c2d9ef;
+  color:#6b8cae;cursor:pointer;margin-right:6px;
+  font-size:15px;transition:background .15s,color .15s;
 }
-.nav-more-btn:hover{background:rgba(55,138,221,.22)}
+.nav-more-btn:hover{background:#deeeff;color:#185FA5}
 
 /* ── App body (offset for fixed nav) ── */
 .app{
   max-width:100%;margin:0;
   padding:1.5rem 1.5rem;
-  padding-top:calc(48px + 1.5rem);
+  padding-top:calc(52px + 1.5rem);
 }
 .logo-icon{width:36px;height:36px;background:var(--blue-dark);border-radius:var(--rad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo-icon i{color:var(--bg);font-size:20px}
