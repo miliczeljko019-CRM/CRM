@@ -191,8 +191,6 @@ select{cursor:pointer}
 .btn-excel:hover{opacity:.85}
 .btn-excel-outline{padding:9px 18px;background:none;border:0.5px solid #1D6F42;color:#1D6F42;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn-excel-outline:hover{background:#1D6F4215}
-.btn-import{padding:9px 18px;background:#0C447C;color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.btn-import:hover{opacity:.85}
 .remove-small{height:26px;padding:0 10px;font-size:11px;color:var(--danger);border:0.5px solid var(--brd-danger);border-radius:var(--rad);cursor:pointer;background:none}
 
 .workers-section{border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px;background:var(--bg);border-top:2px solid var(--blue-light)}
@@ -332,7 +330,7 @@ select{cursor:pointer}
 .obaveze-table th{text-align:center;padding:6px 4px;color:var(--blue-mid);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.04em;border-bottom:0.5px solid var(--brd2);white-space:nowrap;background:var(--blue-ghost)}
 .obaveze-table th.col-naziv{text-align:left;padding-left:10px;min-width:160px}
 .obaveze-table td{padding:6px 4px;border-bottom:0.5px solid var(--brd2);text-align:center;vertical-align:middle}
-.obaveze-table td.col-naziv{text-align:left;padding-left:10px;font-size:13px;white-space:nowrap}
+.obaveze-table td.col-naziv{text-align:left;padding-left:10px;font-size:13px;white-space:normal;word-break:break-word;max-width:200px;line-height:1.35}
 .obaveze-table tr:hover td{background:var(--bg2)}
 .obaveze-table tr:last-child td{border-bottom:none}
 .mes-cell{width:36px;height:30px;display:flex;align-items:center;justify-content:center;margin:0 auto}
@@ -378,7 +376,7 @@ select{cursor:pointer}
 .pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2}
 .pregled-table th.col-tip{min-width:56px}
 .pregled-table td{padding:9px 6px;border:0.5px solid var(--brd3);text-align:center;vertical-align:middle}
-.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:#ffffff;z-index:1}
+.pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:normal;word-break:break-word;max-width:220px;line-height:1.35;position:sticky;left:0;background:#ffffff;z-index:1}
 .pregled-table tr:hover td{background:#FFF3CD;transition:background .1s}.pregled-table tr:hover td.col-klijent{background:#FFF3CD}
 
 .pregled-table tr:last-child td{border-bottom:none}
@@ -593,8 +591,6 @@ select{cursor:pointer}
     <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
-      <button class="btn-import" onclick="document.getElementById('uvozInput').click()" title="Uvezi klijente iz Excel fajla"><i class="ti ti-file-upload"></i> Uvezi Excel</button>
-      <input type="file" id="uvozInput" accept=".xlsx,.xls" style="display:none" onchange="uvozIzExcela(this)">
     </div>
   </div>
   <div class="table-wrap"><div id="dashContent"></div></div>
@@ -973,6 +969,8 @@ async function initApp() {
   // Init split date inputs
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
+  const pw=document.getElementById('privOdjava-wrap');
+  if(pw) pw.innerHTML=dateInputHtml('privOdjava','',false);
   updateCenaPreview();
 }
 
@@ -2615,7 +2613,7 @@ function renderDash() {
       :'<span style="color:var(--txt2);font-size:12px">—</span>';
     const rodjStr=c.rodjendan?`<div style="font-size:11px;color:var(--txt2);margin-top:2px"><i class="ti ti-cake" style="font-size:10px"></i> ${fmt(c.rodjendan)}</div>`:'';
     html+=`<tr>
-      <td style="max-width:280px;width:280px"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px" title="${c.naziv}">${c.naziv}</div>${c.pib?'<div style="font-size:11px;color:var(--txt2)">PIB: '+c.pib+'</div>':''}${rodjStr}</td>
+      <td><div style="font-weight:500">${c.naziv}</div>${c.pib?'<div style="font-size:11px;color:var(--txt2)">PIB: '+c.pib+'</div>':''}${rodjStr}</td>
       <td><span class="badge ${fb}">${c.pravnaForma}</span></td>
       <td><span class="badge ${pb}" style="font-size:10px">${porezLabel}</span></td>
       <td><span class="badge ${c.pdv?'b-yes':'b-no'}">${c.pdv?'Da':'Ne'}</span></td>
@@ -3320,88 +3318,6 @@ function countNeuradjenoPregled(ob, god, mes) {
 
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-
-
-// ── Uvoz klijenata iz Excel fajla ──
-function uvozIzExcela(input) {
-  const file = input.files[0];
-  if (!file) return;
-  input.value = '';
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-      if (!rows.length) { showToast('Fajl je prazan!'); return; }
-
-      const findCol = (row, keys) => {
-        for (const k of keys) {
-          if (row[k] !== undefined && String(row[k]).trim() !== '') return String(row[k]).trim();
-        }
-        return '';
-      };
-      const mapForma = tip => {
-        const t = (tip||'').toUpperCase();
-        if (t.includes('PRAVNO') || t.includes('DOO') || t.includes('D.O.O')) return 'DOO';
-        if (t.includes('PAUS')) return 'Pausal';
-        return 'PR';
-      };
-
-      let dodati=0, preskoceni=0;
-      const exPib = new Set(clients.map(c=>c.pib).filter(Boolean));
-      const exNaz = new Set(clients.map(c=>(c.naziv||'').toLowerCase()));
-
-      rows.forEach(row => {
-        const naziv = findCol(row,['Pun naziv firme','naziv','Naziv firme','Naziv']);
-        if (!naziv) return;
-        const pib = findCol(row,['PIB','pib']);
-        if (pib && exPib.has(pib)) { preskoceni++; return; }
-        if (!pib && exNaz.has(naziv.toLowerCase())) { preskoceni++; return; }
-
-        const forma = mapForma(findCol(row,['Tip klijenta','Tip','tip klijenta']));
-        const pdvRaw = findCol(row,['PDV','pdv']);
-        const pdv = pdvRaw==='TRUE'||pdvRaw==='true'||pdvRaw==='1'||pdvRaw.toLowerCase()==='da';
-        const porez = forma==='Pausal' ? ['Pausalno oporezivanje'] : forma==='DOO' ? ['Porez na dobit'] : [];
-
-        clients.push({
-          id: Date.now()+Math.random(),
-          naziv,
-          pib,
-          mb:           findCol(row,['Matricni broj','Matični broj','MB','mb']),
-          email:        findCol(row,['email','Email','E-mail']),
-          telefon:      findCol(row,['Telefon','telefon']),
-          adresa:       findCol(row,['Adresa firme','Adresa','adresa']),
-          grad:         findCol(row,['Mesto','Grad','grad','mesto']),
-          kontaktOsoba: findCol(row,['Vlasnik','Kontakt osoba','kontakt']),
-          pinLicnaKarta:'', rodjendan:'',
-          pravnaForma: forma, porez, pdv,
-          radnici:false, workers:[], fiskalna:false, recenzija:false,
-          zakup:[], cenaMesecna:0,
-          datum: new Date().toLocaleDateString('en-GB'),
-          _uvezen: true
-        });
-        if(pib) exPib.add(pib);
-        exNaz.add(naziv.toLowerCase());
-        dodati++;
-      });
-
-      if(dodati>0){
-        save(); renderDash();
-        const msg = 'Uvezeno '+dodati+' klijenata'+(preskoceni?' (· '+preskoceni+' duplikata preskočeno)':'')+'!';
-        showToast(msg);
-      } else if(preskoceni>0){
-        showToast('Svi klijenti već postoje ('+preskoceni+' duplikata).');
-      } else {
-        showToast('Nije pronađen nijedan klijent u fajlu.');
-      }
-    } catch(err){
-      console.error(err);
-      showToast('Greška pri čitanju fajla: '+err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
 
 // ── Start ──
 initApp();
