@@ -3014,31 +3014,46 @@ function exportPregledPDF() {
     y += 11;
 
     clientsWithItems.forEach(({c, neuradjene}) => {
-      if(y + 8 + neuradjene.length * 6 + 6 > 280) { doc.addPage(); y = 15; }
+      const rowH = 7;
+      const neededH = rowH + neuradjene.length * rowH + 4;
+      if(y + neededH > 280) { doc.addPage(); y = 15; }
+
+      // Client header row
       doc.setFillColor(230, 241, 251);
-      doc.rect(marginL, y, usable, 7, 'F');
-      doc.setDrawColor(138, 180, 216);
-      doc.rect(marginL, y, usable, 7, 'S');
+      doc.rect(marginL, y, usable, rowH, 'F');
+      doc.setDrawColor(12, 68, 124);
+      doc.rect(marginL, y, usable, rowH, 'S');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(13, 30, 53);
-      doc.text(c.naziv + '  [' + c.pravnaForma + ']', marginL + 3, y + 5);
-      y += 8;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
+      doc.text(c.naziv, marginL + 3, y + 5);
+      doc.setFontSize(7.5);
+      doc.setTextColor(12, 68, 124);
+      doc.text('[' + (c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
+      y += rowH;
+
+      // Each unfinished obligation as a red row
       neuradjene.forEach((item, i) => {
-        if(y > 280) { doc.addPage(); y = 15; }
-        doc.setFillColor(i%2===0?252:246, 241, i%2===0?241:246);
-        doc.rect(marginL, y, usable, 6, 'F');
-        doc.setDrawColor(200, 210, 220);
-        doc.rect(marginL, y, usable, 6, 'S');
-        doc.setTextColor(180, 0, 0);
-        doc.text('x', marginL + 3, y + 4.2);
-        doc.setTextColor(50, 50, 50);
-        doc.text(item, marginL + 8, y + 4.2);
-        y += 6;
+        if(y > 278) { doc.addPage(); y = 15; }
+        doc.setFillColor(i%2===0 ? 255 : 253, i%2===0 ? 245 : 238, i%2===0 ? 245 : 238);
+        doc.rect(marginL, y, usable, rowH, 'F');
+        doc.setDrawColor(220, 180, 180);
+        doc.rect(marginL, y, usable, rowH, 'S');
+        // Red filled circle with X
+        doc.setFillColor(200, 30, 30);
+        doc.circle(marginL + 4.5, y + 3.5, 2.2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text('X', marginL + 3.6, y + 4.4);
+        // Item label in dark red
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(140, 0, 0);
+        doc.text(item, marginL + 9, y + 4.8);
+        y += rowH;
       });
-      y += 4;
+      y += 3;
     });
     y += 3;
   });
