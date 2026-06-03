@@ -1685,7 +1685,7 @@ function updateObavezeSummary(godina) {
         <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
   } else if(obavezeAktivniTab === 'porez') {
-    const klijenti = clients.filter(c=>c.porez==='Porez na dobit');
+    const klijenti = clients.filter(c=>{const arr=Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);return arr.includes('Porez na dobit');});
     let poslatoTek=0, placanoTek=0, uk=klijenti.length;
     if(godina===tekGod){
       klijenti.forEach(c=>{
