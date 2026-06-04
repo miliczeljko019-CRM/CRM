@@ -3037,6 +3037,15 @@ let pregledSortAsc = true;
 let dashSortCol = null;
 let dashSortAsc = true;
 
+function pdfTxt(s) {
+  if(!s) return '';
+  return s.replace(/\u0161/g,'s').replace(/\u0160/g,'S')
+           .replace(/\u010d/g,'c').replace(/\u010c/g,'C')
+           .replace(/\u0107/g,'c').replace(/\u0106/g,'C')
+           .replace(/\u0111/g,'dj').replace(/\u0110/g,'Dj')
+           .replace(/\u017e/g,'z').replace(/\u017d/g,'Z');
+}
+
 function exportPregledPDF() {
   const { jsPDF } = window.jspdf;
   const ob = getObaveze();
@@ -3122,7 +3131,7 @@ function exportPregledPDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
-    doc.text('Operater: ' + (op || 'Nije dodeljeno'), marginL + 3, y + 5.5);
+    doc.text('Operater: ' + pdfTxt(op || 'Nije dodeljeno'), marginL + 3, y + 5.5);
     y += 11;
 
     clientsWithItems.forEach(({c, neuradjene}) => {
@@ -3136,10 +3145,10 @@ function exportPregledPDF() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(13, 30, 53);
-      doc.text(c.naziv, marginL + 3, y + 5);
+      doc.text(pdfTxt(c.naziv), marginL + 3, y + 5);
       doc.setFontSize(7.5);
       doc.setTextColor(12, 68, 124);
-      doc.text('[' + (c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
+      doc.text('[' + pdfTxt(c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
       y += rowH;
       neuradjene.forEach((item, i) => {
         if(y > 278) { doc.addPage(); y = 15; }
@@ -3156,7 +3165,7 @@ function exportPregledPDF() {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(140, 0, 0);
-        doc.text(item, marginL + 9, y + 4.8);
+        doc.text(pdfTxt(item), marginL + 9, y + 4.8);
         y += rowH;
       });
       y += 3;
