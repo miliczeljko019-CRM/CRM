@@ -3122,25 +3122,29 @@ function exportPregledPDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
-    doc.text('Operater: ' + (op || 'Nije dodeljeno'), marginL + 3, y + 5.5);
+    doc.text('Operater: ' + pdfTxt(op || 'Nije dodeljeno'), marginL + 3, y + 5.5);
     y += 11;
 
     clientsWithItems.forEach(({c, neuradjene}) => {
       const rowH = 7;
-      const neededH = rowH + neuradjene.length * rowH + 4;
-      if(y + neededH > 280) { doc.addPage(); y = 15; }
-      doc.setFillColor(230, 241, 251);
-      doc.rect(marginL, y, usable, rowH, 'F');
-      doc.setDrawColor(12, 68, 124);
-      doc.rect(marginL, y, usable, rowH, 'S');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
+      const nazivMaxW = usable - 22;
+      const nazivLines = doc.splitTextToSize(pdfTxt(c.naziv), nazivMaxW);
+      const headerH = Math.max(rowH, nazivLines.length * 5 + 3);
+      const neededH = headerH + neuradjene.length * rowH + 4;
+      if(y + neededH > 280) { doc.addPage(); y = 15; }
+      doc.setFillColor(230, 241, 251);
+      doc.rect(marginL, y, usable, headerH, 'F');
+      doc.setDrawColor(12, 68, 124);
+      doc.rect(marginL, y, usable, headerH, 'S');
       doc.setTextColor(13, 30, 53);
-      doc.text(c.naziv, marginL + 3, y + 5);
+      const nazivStartY = y + (headerH - (nazivLines.length - 1) * 5) / 2 + 1;
+      doc.text(nazivLines, marginL + 3, nazivStartY);
       doc.setFontSize(7.5);
       doc.setTextColor(12, 68, 124);
-      doc.text('[' + (c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
-      y += rowH;
+      doc.text('[' + pdfTxt(c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
+      y += headerH;
       neuradjene.forEach((item, i) => {
         if(y > 278) { doc.addPage(); y = 15; }
         doc.setFillColor(i%2===0 ? 255 : 253, i%2===0 ? 245 : 238, i%2===0 ? 245 : 238);
@@ -3156,7 +3160,7 @@ function exportPregledPDF() {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(140, 0, 0);
-        doc.text(item, marginL + 9, y + 4.8);
+        doc.text(pdfTxt(item), marginL + 9, y + 4.8);
         y += rowH;
       });
       y += 3;
