@@ -3037,9 +3037,19 @@ let pregledSortAsc = true;
 let dashSortCol = null;
 let dashSortAsc = true;
 
+function pdfTxt(s) {
+  if(!s) return '';
+  return s.replace(/\u0161/g,'s').replace(/\u0160/g,'S')
+           .replace(/\u010d/g,'c').replace(/\u010c/g,'C')
+           .replace(/\u0107/g,'c').replace(/\u0106/g,'C')
+           .replace(/\u0111/g,'dj').replace(/\u0110/g,'Dj')
+           .replace(/\u017e/g,'z').replace(/\u017d/g,'Z');
+}
+
 function exportPregledPDF() {
+  try {
   const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-  if(!jsPDF) { showToast('PDF biblioteka nije učitana. Pokušajte ponovo.'); return; }
+  if(!jsPDF) { showToast('PDF biblioteka nije ucitana!'); return; }
   const ob = getObaveze();
   const mesNazivi = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
   const mesLabel = mesNazivi[pregledMesec] + ' ' + pregledGodina + '. godine';
@@ -3187,6 +3197,10 @@ function exportPregledPDF() {
   }
 
   doc.save('Neuradjene_obaveze_'+mesNazivi[pregledMesec]+'_'+pregledGodina+'.pdf');
+  } catch(err) {
+    showToast('Greska: ' + err.message);
+    console.error('PDF greska:', err);
+  }
 }
 
 function pregledSort(col) {
