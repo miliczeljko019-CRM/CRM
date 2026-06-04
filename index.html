@@ -3038,7 +3038,8 @@ let dashSortCol = null;
 let dashSortAsc = true;
 
 function exportPregledPDF() {
-  const { jsPDF } = window.jspdf;
+  const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  if(!jsPDF) { showToast('PDF biblioteka nije učitana. Pokušajte ponovo.'); return; }
   const ob = getObaveze();
   const mesNazivi = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
   const mesLabel = mesNazivi[pregledMesec] + ' ' + pregledGodina + '. godine';
