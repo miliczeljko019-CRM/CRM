@@ -3136,20 +3136,27 @@ function exportPregledPDF() {
 
     clientsWithItems.forEach(({c, neuradjene}) => {
       const rowH = 7;
-      const neededH = rowH + neuradjene.length * rowH + 4;
-      if(y + neededH > 280) { doc.addPage(); y = 15; }
-      doc.setFillColor(230, 241, 251);
-      doc.rect(marginL, y, usable, rowH, 'F');
-      doc.setDrawColor(12, 68, 124);
-      doc.rect(marginL, y, usable, rowH, 'S');
+      // Naziv se lomi na vise redova - max sirina je usable minus prostor za pravnu formu desno
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
+      const nazivMaxW = usable - 22; // ostavimo 22mm za [DOO] desno
+      const nazivLines = doc.splitTextToSize(pdfTxt(c.naziv), nazivMaxW);
+      const headerH = Math.max(rowH, nazivLines.length * 5 + 3);
+      const neededH = headerH + neuradjene.length * rowH + 4;
+      if(y + neededH > 280) { doc.addPage(); y = 15; }
+      doc.setFillColor(230, 241, 251);
+      doc.rect(marginL, y, usable, headerH, 'F');
+      doc.setDrawColor(12, 68, 124);
+      doc.rect(marginL, y, usable, headerH, 'S');
       doc.setTextColor(13, 30, 53);
-      doc.text(pdfTxt(c.naziv), marginL + 3, y + 5);
+      // Vertikalno centrirani naziv (vise redova)
+      const nazivStartY = y + (headerH - (nazivLines.length - 1) * 5) / 2 + 1;
+      doc.text(nazivLines, marginL + 3, nazivStartY);
+      // Pravna forma u gornjem desnom uglu
       doc.setFontSize(7.5);
       doc.setTextColor(12, 68, 124);
       doc.text('[' + pdfTxt(c.pravnaForma||'') + ']', marginL + usable - 18, y + 5);
-      y += rowH;
+      y += headerH;
       neuradjene.forEach((item, i) => {
         if(y > 278) { doc.addPage(); y = 15; }
         doc.setFillColor(i%2===0 ? 255 : 253, i%2===0 ? 245 : 238, i%2===0 ? 245 : 238);
