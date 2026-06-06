@@ -3186,6 +3186,7 @@ function exportPregledPDF() {
     const opClients = byOperater[op];
     if(!opClients || opClients.length === 0) return;
     const clientsWithItems = opClients
+      .filter(c => !c.privremenaOdjava)
       .map(c => ({c, neuradjene: getNeuradjeneForClient(c)}))
       .filter(x => x.neuradjene.length > 0);
     if(clientsWithItems.length === 0) return;
@@ -3408,48 +3409,61 @@ function renderPregled() {
     // PPP-PD radnici
     const pppRadnici = hasPlata ? c.workers.filter(w=>w.pppPd!==false) : [];
 
-    html += `<tr>
-      <td class="col-klijent">${c.naziv}</td>
+    const isOdj = !!c.privremenaOdjava;
+    const odjDatumStr = isOdj && c.privremenaOdjavaDatum ? ' od ' + fmtDate(c.privremenaOdjavaDatum) : '';
+    const dashCell = '<td style="text-align:center"><span style="color:#c0392b;font-size:12px;font-weight:600">—</span></td>';
+    const dashDual = dashCell + dashCell;
+
+    html += `<tr${isOdj?' style="background:rgba(192,57,43,0.07)"':''}>
+      <td class="col-klijent">
+        <div style="font-weight:500;${isOdj?'color:#c0392b':''}">${c.naziv}</div>
+        ${isOdj?`<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border-radius:4px;padding:2px 7px;margin-top:2px"><i class="ti ti-pause" style="font-size:9px"></i> Privremena odjava${odjDatumStr}</span>`:''}
+      </td>
       <td style="text-align:center"><span class="badge ${fb}" style="font-size:10px">${c.pravnaForma}</span></td>`;
 
-    // Zakup
-    html += stCell(hasZakup, ob[c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', c.id+'_'+pregledGodina+'_'+pregledMesec, hasZakup?zArr.filter(z=>z==='Zakup lokala'||z==='Zakup vozila').map(z=>z==='Zakup lokala'?'Lokal':'Vozilo').join('+'):'');
+    if(isOdj) {
+      // Sve ćelije — crtice
+      html += dashCell + dashCell + dashDual + dashCell + dashDual + dashCell + dashCell + dashDual;
+    } else {
+      // Zakup
+      html += stCell(hasZakup, ob[c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', c.id+'_'+pregledGodina+'_'+pregledMesec, hasZakup?zArr.filter(z=>z==='Zakup lokala'||z==='Zakup vozila').map(z=>z==='Zakup lokala'?'Lokal':'Vozilo').join('+'):'');
 
-    // Periodični izveštaj
-    html += stCell(hasFisk, ob['f_'+c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', 'f_'+c.id+'_'+pregledGodina+'_'+pregledMesec, '');
+      // Periodični izveštaj
+      html += stCell(hasFisk, ob['f_'+c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', 'f_'+c.id+'_'+pregledGodina+'_'+pregledMesec, '');
 
-    // Porez na dobit (dual)
-    html += dualCell(hasDobit,
-      ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
-      ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
-      'pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
-      'pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
-    );
+      // Porez na dobit (dual)
+      html += dualCell(hasDobit,
+        ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
+        ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
+        'pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
+        'pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
+      );
 
-    // PDV
-    html += stCell(hasPDV, ob['pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', 'pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec, '');
+      // PDV
+      html += stCell(hasPDV, ob['pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec], 'togglePregledSimple', 'pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec, '');
 
-    // Paušal (dual)
-    html += dualCell(hasPausal,
-      ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
-      ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
-      'pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
-      'pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
-    );
+      // Paušal (dual)
+      html += dualCell(hasPausal,
+        ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
+        ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
+        'pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
+        'pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
+      );
 
-    // Plata
-    html += stCellPlata(hasPlata, ob['pl_'+c.id+'_'+pregledGodina+'_'+pregledMesec], c);
+      // Plata
+      html += stCellPlata(hasPlata, ob['pl_'+c.id+'_'+pregledGodina+'_'+pregledMesec], c);
 
-    // PPP-PD — prikaži broj neurađenih radnika
-    html += stCellPPP(pppRadnici, ob, c.id, pregledGodina, pregledMesec);
+      // PPP-PD — prikaži broj neurađenih radnika
+      html += stCellPPP(pppRadnici, ob, c.id, pregledGodina, pregledMesec);
 
-    // OD-O (dual)
-    html += dualCell(hasODO,
-      ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
-      ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
-      'od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
-      'od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
-    );
+      // OD-O (dual)
+      html += dualCell(hasODO,
+        ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat'],
+        ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'],
+        'od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat',
+        'od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'
+      );
+    }
 
     html += '</tr>';
   });
