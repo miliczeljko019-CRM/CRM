@@ -338,7 +338,9 @@ select{cursor:pointer}
 .obaveze-table td.col-naziv{text-align:left;padding-left:10px;font-size:13px;white-space:normal;word-break:break-word;max-width:200px;line-height:1.35}
 .obaveze-table tr:hover td{background:var(--bg2)}
 .obaveze-table tr:last-child td{border-bottom:none}
-.mes-cell{width:36px;height:30px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+
+.obaveze-table tr.odjava-row td{background:rgba(192,57,43,0.07)}
+.obaveze-table tr.odjava-row:hover td{background:rgba(192,57,43,0.13)!important}.mes-cell{width:36px;height:30px;display:flex;align-items:center;justify-content:center;margin:0 auto}
 .mes-cb{width:16px;height:16px;cursor:pointer;accent-color:#1E8C50}
 .mes-done{background:#E8F8E8;border-radius:3px}
 .mes-done-blue{background:#DCEEFF;border-radius:3px}
@@ -560,6 +562,18 @@ select{cursor:pointer}
       <div style="font-size:13px;font-weight:500;margin-bottom:10px">Radnici</div>
       <div id="workersList"></div>
       <button class="add-worker-btn" onclick="addWorker()"><i class="ti ti-plus"></i> Dodaj radnika</button>
+    </div>
+  </div>
+
+  <div class="section-title">Privremena odjava</div>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt)">
+      <input type="checkbox" id="privremenaOdjava" onchange="togglePrivremenaOdjava('')" style="width:16px;height:16px;cursor:pointer">
+      Klijent je u privremenoj odjavi
+    </label>
+    <div id="privremenaOdjavaDatumWrap" style="display:none;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--txt2)">Od:</span>
+      <div id="privremenaOdjavaDatum-wrap"></div>
     </div>
   </div>
 
@@ -1017,6 +1031,12 @@ let collapsedGroups = {};
 let editingId = null;
 
 function eur(v) { return '€' + parseFloat(v||0).toLocaleString('de-DE',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+function fmtDate(iso) {
+  if(!iso) return '';
+  const p = iso.split('-');
+  return (p[2]||'')+'.'+(p[1]||'')+'.'+(p[0]||'');
+}
+
 function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 
 // ── Tabs ──
@@ -1289,6 +1309,20 @@ function collectWorkers(prefix, listId) {
     });
   });
   return workers;
+}
+
+function togglePrivremenaOdjava(prefix) {
+  const cb = document.getElementById(prefix+'privremenaOdjava');
+  const wrap = document.getElementById(prefix+'privremenaOdjavaDatumWrap');
+  const dw = document.getElementById(prefix+'privremenaOdjavaDatum-wrap');
+  if(!cb || !wrap) return;
+  if(cb.checked) {
+    wrap.style.display = 'flex';
+    if(dw && !dw.innerHTML) dw.innerHTML = dateInputHtml(prefix+'privremenaOdjavaDatum','',false);
+  } else {
+    wrap.style.display = 'none';
+    if(dw) dw.innerHTML = '';
+  }
 }
 
 function saveClient() {
@@ -2207,9 +2241,11 @@ function renderPausal() {
       if(ob['pau_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUk++;
       if(ob['pau_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']) placenoUk++;
     }
-    html += `<tr><td class="col-naziv">
-      <div style="font-weight:500;font-size:13px">${c.naziv}</div>
-      <span class="badge b-pausal" style="font-size:10px;margin-top:2px"><i class="ti ti-receipt" style="font-size:9px"></i> Paušal</span>
+    const isOdjavljen_pau = !!c.privremenaOdjava;
+    const odjavaTag_pau = isOdjavljen_pau ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border-radius:4px;padding:2px 7px;margin-top:3px"><i class="ti ti-pause" style="font-size:9px"></i> Privremena odjava${c.privremenaOdjavaDatum?' od '+fmtDate(c.privremenaOdjavaDatum):''}</span>` : '';
+    html += `<tr${isOdjavljen_pau?' style="background:rgba(192,57,43,0.07)"':''}><td class="col-naziv">
+      <div style="font-weight:500;font-size:13px;${isOdjavljen_pau?'color:#c0392b':''}">${c.naziv}</div>
+      <span class="badge b-pausal" style="font-size:10px;margin-top:2px"><i class="ti ti-receipt" style="font-size:9px"></i> Paušal</span>${odjavaTag_pau}
     </td>`;
     visibleMonths.forEach(m => {
       const kPoslat = 'pau_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat';
@@ -2281,7 +2317,9 @@ function renderPPPPD() {
             clientNaziv: c.naziv,
             pravnaForma: c.pravnaForma,
             workerIme: w.ime,
-            workerId: c.id + '_w' + wi
+            workerId: c.id + '_w' + wi,
+            privremenaOdjava: !!c.privremenaOdjava,
+            privremenaOdjavaDatum: c.privremenaOdjavaDatum||''
           });
         }
       });
@@ -2335,10 +2373,12 @@ function renderPPPPD() {
     let uradjeno = 0;
     for(let m=0;m<12;m++) { if(ob['ppp_'+s.workerId+'_'+obavezeGodina+'_'+m]) uradjeno++; }
 
-    html += `<tr>
+    const isOdj_ppp = !!s.privremenaOdjava;
+    const odjTag_ppp = isOdj_ppp ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border-radius:4px;padding:2px 7px;margin-top:3px"><i class="ti ti-pause" style="font-size:9px"></i> Privremena odjava${s.privremenaOdjavaDatum?' od '+fmtDate(s.privremenaOdjavaDatum):''}</span>` : '';
+    html += `<tr${isOdj_ppp?' style="background:rgba(192,57,43,0.07)"':''}>
       <td class="col-naziv">
-        <div style="font-weight:500;font-size:13px">${s.clientNaziv}</div>
-        <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${s.pravnaForma}</span>
+        <div style="font-weight:500;font-size:13px;${isOdj_ppp?'color:#c0392b':''}">${s.clientNaziv}</div>
+        <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${s.pravnaForma}</span>${odjTag_ppp}
       </td>
       <td style="padding:10px;font-size:13px;font-weight:500;color:var(--txt)">${s.workerIme}</td>`;
 
@@ -2490,9 +2530,11 @@ function renderODO() {
       if(ob['od_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUk++;
       if(ob['od_'+c.id+'_'+obavezeGodina+'_'+m+'_placen']) placenoUk++;
     }
-    html += `<tr><td class="col-naziv">
-      <div style="font-weight:500;font-size:13px">${c.naziv}</div>
-      <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${c.pravnaForma}</span>
+    const isOdjavljen_od = !!c.privremenaOdjava;
+    const odjavaTag_od = isOdjavljen_od ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border-radius:4px;padding:2px 7px;margin-top:3px"><i class="ti ti-pause" style="font-size:9px"></i> Privremena odjava${c.privremenaOdjavaDatum?' od '+fmtDate(c.privremenaOdjavaDatum):''}</span>` : '';
+    html += `<tr${isOdjavljen_od?' style="background:rgba(192,57,43,0.07)"':''}><td class="col-naziv">
+      <div style="font-weight:500;font-size:13px;${isOdjavljen_od?'color:#c0392b':''}">${c.naziv}</div>
+      <span class="badge ${fb}" style="font-size:10px;margin-top:2px">${c.pravnaForma}</span>${odjavaTag_od}
     </td>`;
     visibleMonths.forEach(m => {
       const kPoslat = 'od_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat';
