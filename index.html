@@ -761,6 +761,18 @@ select{cursor:pointer}
       </div>
     </div>
 
+    <div class="section-title">Privremena odjava</div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:4px 0">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt)">
+        <input type="checkbox" id="e_privremenaOdjava" onchange="togglePrivremenaOdjava('e_')" style="width:16px;height:16px;cursor:pointer">
+        Klijent je u privremenoj odjavi
+      </label>
+      <div id="e_privremenaOdjavaDatumWrap" style="display:none;align-items:center;gap:6px">
+        <span style="font-size:12px;color:var(--txt2)">Od:</span>
+        <div id="e_privremenaOdjavaDatum-wrap"></div>
+      </div>
+    </div>
+
     <div class="section-title">Zakup</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <div class="check-btn" id="e_zakupLokalBtn" onclick="this.classList.toggle('checked')"><i class="ti ti-building-store"></i> Zakup lokala</div>
@@ -1428,6 +1440,14 @@ function openEdit(id) {
     c.workers.forEach(w=>addEditWorker(w));
   }
   document.getElementById('e_workersSection').style.display=c.radnici?'block':'none';
+
+  // Privremena odjava
+  const ePoCb = document.getElementById('e_privremenaOdjava');
+  const ePoWrap = document.getElementById('e_privremenaOdjavaDatumWrap');
+  const ePoDW = document.getElementById('e_privremenaOdjavaDatum-wrap');
+  if(ePoCb) ePoCb.checked = !!c.privremenaOdjava;
+  if(ePoWrap) ePoWrap.style.display = c.privremenaOdjava ? 'flex' : 'none';
+  if(ePoDW) ePoDW.innerHTML = dateInputHtml('e_privremenaOdjavaDatum', c.privremenaOdjavaDatum||'', false);
 
   document.getElementById('editModal').classList.remove('hidden');
   document.body.style.overflow='hidden';
