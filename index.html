@@ -1532,7 +1532,9 @@ function saveEdit() {
     zakup:getZakup('e_'),
     radnici:hasW, workers,
     cenaMesecna:parseFloat(document.getElementById('e_cenaMesecna').value)||0,
-    operater:document.getElementById('e_operater').value
+    operater:document.getElementById('e_operater').value,
+    privremenaOdjava:document.getElementById('e_privremenaOdjava')?.checked||false,
+    privremenaOdjavaDatum:document.getElementById('e_privremenaOdjava')?.checked?getDateVal('e_privremenaOdjavaDatum'):''
   };
   save(); closeModal();
   setTimeout(()=>{ renderDash(); renderPodsetnici(); }, 100);
