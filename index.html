@@ -2475,8 +2475,8 @@ function updatePPPPDSummary(godina, ob, stavke) {
     stavke.forEach(s => { if(ob['ppp_'+s.workerId+'_'+godina+'_'+tekMes]) uradjenoTek++; });
   }
   let uradjenoGod = 0;
-  for(let m=0;m<12;m++) stavke.forEach(s=>{ if(ob['ppp_'+s.workerId+'_'+godina+'_'+m]) uradjenoGod++; });
-  const ukGod = uk * 12;
+  stavke.forEach(s=>{let svi=true;for(let m=0;m<12;m++){if(!ob['ppp_'+s.workerId+'_'+godina+'_'+m]){svi=false;break;}}if(svi&&uk>0)uradjenoGod++;});
+  const ukGod = uk;
   const pct = ukGod > 0 ? Math.round(uradjenoGod/ukGod*100) : 0;
   const el = document.getElementById('obavezeSummary');
   if(el) el.innerHTML=`
