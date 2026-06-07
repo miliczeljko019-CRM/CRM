@@ -1764,8 +1764,8 @@ function updateObavezeSummary(godina) {
     const klijenti = clients.filter(c=>c.pdv);
     let uradjenoTek=0, ukupnoTek=klijenti.length;
     if(godina===tekGod) klijenti.forEach(c=>{if(ob['pdv_'+c.id+'_'+godina+'_'+tekMes])uradjenoTek++;});
-    let uradjenoGod=0, ukupnoGod=klijenti.length*12;
-    for(let m=0;m<12;m++) klijenti.forEach(c=>{if(ob['pdv_'+c.id+'_'+godina+'_'+m])uradjenoGod++;});
+    let uradjenoGod=0, ukupnoGod=klijenti.length;
+    klijenti.forEach(c=>{let sviMeseci=true;for(let m=0;m<12;m++){if(!ob['pdv_'+c.id+'_'+godina+'_'+m]){sviMeseci=false;break;}}if(sviMeseci&&klijenti.length>0)uradjenoGod++;});
     const pct=ukupnoGod>0?Math.round(uradjenoGod/ukupnoGod*100):0;
     const el=document.getElementById('obavezeSummary');
     if(el) el.innerHTML=`
