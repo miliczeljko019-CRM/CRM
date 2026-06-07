@@ -210,6 +210,7 @@ select{cursor:pointer}
 
 .filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
 .filter-chip{padding:5px 13px;border:0.5px solid var(--brd);border-radius:100px;font-size:12px;cursor:pointer;background:none;color:var(--txt2);transition:all .15s}
+.filter-chip-odjava{border-color:#D32F2F!important;color:#D32F2F!important}.filter-chip-odjava.active{background:#D32F2F!important;color:#fff!important;border-color:#D32F2F!important}
 .filter-chip.active{background:var(--blue-dark);color:#fff;border-color:var(--blue-dark)}
 .export-bar{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
 
@@ -621,6 +622,7 @@ select{cursor:pointer}
     <button class="filter-chip" onclick="setFilter('op_Sandra Ć',this)">Sandra Ć</button>
     <button class="filter-chip" onclick="setFilter('op_Bokica',this)">Bokica</button>
     <button class="filter-chip" onclick="setFilter('op_Marica',this)">Marica</button>
+    <button class="filter-chip filter-chip-odjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
     <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
@@ -2744,6 +2746,7 @@ function filtered() {
   if(currentFilter==='radnici') return clients.filter(c=>c.radnici);
   if(currentFilter==='fiskalna') return clients.filter(c=>c.fiskalna);
   if(currentFilter==='recenzija') return clients.filter(c=>c.recenzija);
+  if(currentFilter==='privOdjava') return clients.filter(c=>c.privremenaOdjava);
   if(currentFilter.startsWith('op_')){ const op=currentFilter.slice(3); return clients.filter(c=>c.operater===op); }
   return clients.filter(c=>c.pravnaForma===currentFilter);
 }
