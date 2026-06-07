@@ -192,8 +192,6 @@ select{cursor:pointer}
 .btn-excel:hover{opacity:.85}
 .btn-excel-outline{padding:9px 18px;background:none;border:0.5px solid #1D6F42;color:#1D6F42;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn-excel-outline:hover{background:#1D6F4215}
-.btn-xls-import{padding:9px 18px;background:#185FA5;color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.btn-xls-import:hover{background:#0C447C}
 .remove-small{height:26px;padding:0 10px;font-size:11px;color:var(--danger);border:0.5px solid var(--brd-danger);border-radius:var(--rad);cursor:pointer;background:none}
 
 .workers-section{border:0.5px solid var(--brd2);border-radius:var(--rad);padding:14px;background:var(--bg);border-top:2px solid var(--blue-light)}
@@ -626,8 +624,6 @@ select{cursor:pointer}
     <button class="filter-chip" onclick="setFilter('op_Marica',this)">Marica</button>
     <button class="filter-chip filter-chip-odjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
     <div class="export-bar">
-      <button class="btn-xls-import" onclick="triggerXlsImport()"><i class="ti ti-file-import"></i> Uvezi klijente (XLS)</button>
-      <input type="file" id="xlsImportInput" accept=".xls,.xlsx" style="display:none" onchange="handleXlsImport(this)">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
     </div>
@@ -826,21 +822,28 @@ function getClientId() {
   return stored || '';
 }
 
-// ── OAuth login ──
+// ── OAuth login (GIS popup) ──
 function startLogin() {
   const cid = getClientId();
   if(!cid || !cid.includes('.apps.googleusercontent.com')) {
     alert('Unesite ispravan Google OAuth Client ID.\nFormat: xxxxxxxx.apps.googleusercontent.com');
     return;
   }
-  const params = new URLSearchParams({
+  const client = google.accounts.oauth2.initTokenClient({
     client_id: cid,
-    redirect_uri: location.href.split('?')[0].split('#')[0],
-    response_type: 'token',
     scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-    prompt: 'select_account'
+    callback: (resp) => {
+      if(resp.error) { alert('Greška pri prijavi: ' + resp.error); return; }
+      accessToken = resp.access_token;
+      const exp = Date.now() + (resp.expires_in || 3600)*1000 - 60000;
+      localStorage.setItem('knjg_access_token', accessToken);
+      localStorage.setItem('knjg_token_expires', exp);
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainApp').style.display = 'block';
+      getUserInfo().then(() => loadFromDrive());
+    }
   });
-  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  client.requestAccessToken({ prompt: '' });
 }
 
 function signOut() {
@@ -1015,7 +1018,7 @@ function saveObaveze(ob) {
 
 // ── Init: check token → load data → show app ──
 async function initApp() {
-  const hasToken = parseToken() || loadStoredToken();
+  const hasToken = loadStoredToken();
   if(!hasToken) {
     const stored = localStorage.getItem('knjg_oauth_client_id');
     if(stored) document.getElementById('clientIdInput').value = stored;
@@ -3623,176 +3626,6 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 
 // ── Start ──
 initApp();
-
-// ════════════════════════════════════
-// XLS IMPORT
-// ════════════════════════════════════
-function triggerXlsImport() {
-  document.getElementById('xlsImportInput').value = '';
-  document.getElementById('xlsImportInput').click();
-}
-function closeXlsImportModal() {
-  document.getElementById('xlsImportModal').style.display = 'none';
-}
-function handleXlsImport(input) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, {type: 'array'});
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {defval: ''});
-      processXlsRows(rows);
-    } catch(err) {
-      showToast('Greska pri citanju fajla: ' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-const XLS_COL_MAP = {
-  'Pun naziv firme':'naziv','Naziv firme':'naziv','Naziv':'naziv',
-  'Tip klijenta':'tipKlijenta','PDV':'pdvXls',
-  'Post.broj':'postBroj','Post. broj':'postBroj',
-  'Mesto':'mesto','Adresa firme':'adresa','Adresa':'adresa',
-  'PIB':'pib','Maticni broj':'mb','Matični broj':'mb','MB':'mb',
-  'Vlasnik':'vlasnik','Email':'email','email':'email',
-  'Telefon':'telefon','Cena':'cenaMesecna','Mesecna cena':'cenaMesecna'
-};
-function mapXlsRow(row) {
-  const m = {};
-  for (const [k, v] of Object.entries(XLS_COL_MAP)) {
-    if (row[k] !== undefined && row[k] !== '') m[v] = String(row[k]).trim().replace(/\t/g,'');
-  }
-  // Also try key 'Pošt.broj' directly
-  if (row['P\u00f6t.broj'] !== undefined) m['postBroj'] = String(row['P\u00f6t.broj']).trim();
-  if (row['Po\u0161t.broj'] !== undefined) m['postBroj'] = String(row['Po\u0161t.broj']).trim();
-  return m;
-}
-function inferPravnaForma(tip, naziv) {
-  const t = (tip||'').toUpperCase();
-  const n = (naziv||'').toUpperCase();
-  if (t.includes('PRAVNO') || n.startsWith('DOO ') || n.includes(' DOO') || n.startsWith('DOO\n')) return 'DOO';
-  if (t.includes('PREDUZETNIK') || n.includes(' PR ') || n.startsWith('PR ')) return 'PR';
-  if (t.includes('PREDUZETNIK')) return 'PR';
-  return 'DOO';
-}
-function processXlsRows(rows) {
-  if (!rows || rows.length === 0) { showToast('Fajl ne sadrzi podatke!'); return; }
-  const toImport = [];
-  const duplicates = [];
-  const exPibs = new Set(clients.map(c => c.pib).filter(Boolean));
-  const exNazivi = new Set(clients.map(c => (c.naziv||'').toLowerCase().trim()));
-  rows.forEach((row, idx) => {
-    const m = mapXlsRow(row);
-    if (!m.naziv) return;
-    const naziv = m.naziv.replace(/\s+/g,' ').trim();
-    const pib = (m.pib||'').trim();
-    if (pib && exPibs.has(pib)) { duplicates.push({naziv, pib, reason:'PIB vec postoji'}); return; }
-    if (exNazivi.has(naziv.toLowerCase())) { duplicates.push({naziv, pib, reason:'Naziv vec postoji'}); return; }
-    const pravnaForma = inferPravnaForma(m.tipKlijenta, naziv);
-    const pdv = (String(m.pdvXls||'')).toUpperCase() === 'TRUE' || m.pdvXls === true || m.pdvXls === '1';
-    const porez = pravnaForma === 'Pausal' ? ['Pausalno oporezivanje'] : ['Porez na dobit'];
-    toImport.push({
-      id: Date.now() + idx,
-      naziv, pib,
-      mb: (m.mb||'').replace(/\.0$/,''),
-      email: m.email||'',
-      telefon: m.telefon||'',
-      pinLicnaKarta:'',
-      rodjendan:'',
-      pravnaForma, porez, pdv,
-      radnici:false, workers:[],
-      fiskalna:false, recenzija:false, zakup:[],
-      cenaMesecna: parseFloat(m.cenaMesecna)||0,
-      operater:'',
-      datum: new Date().toLocaleDateString('en-GB'),
-      adresa: m.adresa||'',
-      mesto: m.mesto||'',
-      postBroj: m.postBroj||'',
-      vlasnikIme: m.vlasnik||''
-    });
-  });
-  showXlsImportPreview(toImport, duplicates);
-}
-function showXlsImportPreview(toImport, duplicates) {
-  const modal = document.getElementById('xlsImportModal');
-  const body = document.getElementById('xlsImportBody');
-  let html = '';
-  html += `<div style="display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap">
-    <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 16px;font-size:13px">
-      <strong style="color:#2e7d32">${toImport.length}</strong> <span style="color:#388e3c">klijenata za uvoz</span></div>
-    ${duplicates.length>0?`<div style="background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;padding:10px 16px;font-size:13px">
-      <strong style="color:#e65100">${duplicates.length}</strong> <span style="color:#f57c00">duplikata (preskoceno)</span></div>`:''}
-  </div>`;
-  if (toImport.length > 0) {
-    html += `<div style="max-height:300px;overflow-y:auto;border:1px solid var(--brd2);border-radius:6px;margin-bottom:1rem">
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr style="background:var(--blue-ghost);position:sticky;top:0">
-          <th style="padding:6px 10px;text-align:left;color:var(--blue-mid)">#</th>
-          <th style="padding:6px 10px;text-align:left;color:var(--blue-mid)">Naziv</th>
-          <th style="padding:6px 10px;text-align:left;color:var(--blue-mid)">PIB</th>
-          <th style="padding:6px 10px;text-align:left;color:var(--blue-mid)">Forma</th>
-          <th style="padding:6px 10px;text-align:left;color:var(--blue-mid)">PDV</th>
-          <th style="padding:6px 10px;text-align:left;color:var(--blue-mid)">Mesto</th>
-        </tr></thead><tbody>`;
-    toImport.forEach((c,i)=>{
-      html += `<tr style="border-top:1px solid var(--brd2);${i%2===1?'background:#fafcff':''}">
-        <td style="padding:5px 10px;color:var(--txt2)">${i+1}</td>
-        <td style="padding:5px 10px;font-weight:500;max-width:240px;word-break:break-word">${c.naziv}</td>
-        <td style="padding:5px 10px;font-family:monospace">${c.pib||'—'}</td>
-        <td style="padding:5px 10px">${c.pravnaForma}</td>
-        <td style="padding:5px 10px">${c.pdv?'<span style="color:#1D6F42;font-weight:600">DA</span>':'<span style="color:var(--txt2)">NE</span>'}</td>
-        <td style="padding:5px 10px;color:var(--txt2)">${c.mesto||'—'}</td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-  }
-  if (duplicates.length > 0) {
-    html += `<details style="margin-bottom:1rem"><summary style="cursor:pointer;font-size:13px;color:var(--txt2)">Duplikati (${duplicates.length})</summary>
-      <div style="max-height:140px;overflow-y:auto;border:1px solid #ffcc80;border-radius:6px;margin-top:4px">
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:#fff3e0"><th style="padding:5px 10px;text-align:left">Naziv</th><th style="padding:5px 10px">PIB</th><th style="padding:5px 10px">Razlog</th></tr></thead><tbody>`;
-    duplicates.forEach(d=>{
-      html+=`<tr style="border-top:1px solid #ffe0b2"><td style="padding:4px 10px">${d.naziv}</td><td style="padding:4px 10px;font-family:monospace">${d.pib||'—'}</td><td style="padding:4px 10px;color:#e65100">${d.reason}</td></tr>`;
-    });
-    html += `</tbody></table></div></details>`;
-  }
-  if (toImport.length > 0) {
-    html += `<div style="display:flex;gap:10px;margin-top:.5rem">
-      <button class="btn-primary" onclick="confirmXlsImport()"><i class="ti ti-check"></i> Uvezi ${toImport.length} klijenata</button>
-      <button class="btn-secondary" onclick="closeXlsImportModal()">Otkazi</button>
-    </div>`;
-  } else {
-    html += `<button class="btn-secondary" onclick="closeXlsImportModal()">Zatvori</button>`;
-  }
-  window._xlsPendingImport = toImport;
-  body.innerHTML = html;
-  modal.style.display = 'flex';
-}
-function confirmXlsImport() {
-  const toImport = window._xlsPendingImport || [];
-  if (!toImport.length) return;
-  toImport.forEach(c => clients.push(c));
-  save();
-  closeXlsImportModal();
-  showToast('Uvezeno ' + toImport.length + ' klijenata!');
-  window._xlsPendingImport = [];
-  setTimeout(() => showTab('dash'), 400);
-}
-
 </script>
-
-<!-- XLS IMPORT MODAL -->
-<div id="xlsImportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:10px;padding:2rem;max-width:680px;width:94%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.25)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
-      <div style="font-size:16px;font-weight:600;color:var(--navy2)"><i class="ti ti-file-import" style="color:var(--blue-mid)"></i> Uvoz klijenata iz XLS</div>
-      <button onclick="closeXlsImportModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--txt2)"><i class="ti ti-x"></i></button>
-    </div>
-    <div id="xlsImportBody"></div>
-  </div>
-</div>
 </body>
 </html>
