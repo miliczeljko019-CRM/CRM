@@ -829,9 +829,11 @@ function startLogin() {
     alert('Unesite ispravan Google OAuth Client ID.\nFormat: xxxxxxxx.apps.googleusercontent.com');
     return;
   }
+  const hint = localStorage.getItem('knjg_login_hint') || '';
   const client = google.accounts.oauth2.initTokenClient({
     client_id: cid,
     scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+    hint: hint,
     callback: (resp) => {
       if(resp.error) { alert('Greška pri prijavi: ' + resp.error); return; }
       accessToken = resp.access_token;
@@ -840,10 +842,13 @@ function startLogin() {
       localStorage.setItem('knjg_token_expires', exp);
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('mainApp').style.display = 'block';
-      getUserInfo().then(() => loadFromDrive());
+      getUserInfo().then(info => {
+        if(info && info.email) localStorage.setItem('knjg_login_hint', info.email);
+        loadFromDrive();
+      });
     }
   });
-  client.requestAccessToken({ prompt: '' });
+  client.requestAccessToken({ prompt: hint ? '' : 'select_account' });
 }
 
 function signOut() {
@@ -893,6 +898,7 @@ async function getUserInfo() {
     const r = await driveRequest('https://www.googleapis.com/oauth2/v2/userinfo');
     const d = await r.json();
     userInfo = d;
+    return d;
     const emailEl = document.getElementById('userEmail');
     if(emailEl) emailEl.textContent = d.email || '';
     const init = document.getElementById('userInitial');
