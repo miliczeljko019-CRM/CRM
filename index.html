@@ -2840,7 +2840,7 @@ function renderDash() {
     const isOdj_dash = !!c.privremenaOdjava;
     const odjDatumStr_dash = isOdj_dash && c.privremenaOdjavaDatum ? ' od ' + fmtDate(c.privremenaOdjavaDatum) : '';
     html+=`<tr${isOdj_dash?' style="background:rgba(192,57,43,0.07)"':''}>
-      <td><div style="font-weight:500;${isOdj_dash?'color:#c0392b':''}">${c.naziv}</div>${c.pib?'<div style="font-size:11px;color:var(--txt2)">PIB: '+c.pib+'</div>':''}${rodjStr}${isOdj_dash?`<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border-radius:4px;padding:2px 7px;margin-top:2px"><i class="ti ti-pause" style="font-size:9px"></i> Privremena odjava${odjDatumStr_dash}</span>`:''}</td>
+      <td><div style="font-weight:500;${isOdj_dash?'color:#c0392b':''}">${c.naziv}</div>${c.pib?'<div style="font-size:11px;color:var(--txt2)">PIB: '+c.pib+'</div>':''}${c.mb?'<div style="font-size:11px;color:var(--txt2)">MB: '+c.mb+'</div>':''}${rodjStr}${isOdj_dash?`<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#fff;background:#c0392b;border-radius:4px;padding:2px 7px;margin-top:2px"><i class="ti ti-pause" style="font-size:9px"></i> Privremena odjava${odjDatumStr_dash}</span>`:''}</td>
       <td>${opHtml}</td>
       <td><span class="badge ${fb}">${c.pravnaForma}</span></td>
       <td><span class="badge ${pb}" style="font-size:10px">${porezLabel}</span></td>
