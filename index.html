@@ -90,7 +90,7 @@ select{cursor:pointer}
 .nav-tabs{
   display:flex;align-items:flex-end;
   flex:1;overflow-x:auto;scrollbar-width:none;
-  height:52px;padding:8px 0 0;
+  height:52px;padding:0;
 }
 .nav-tabs::-webkit-scrollbar{display:none}
 .nav-tab{
@@ -100,7 +100,6 @@ select{cursor:pointer}
   font-size:12px;font-weight:500;
   color:#777;
   border:none;background:transparent;cursor:pointer;
-  border-right:1px solid #e4eef8;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   letter-spacing:-.01em;
   border-radius:10px 10px 0 0;
@@ -112,9 +111,11 @@ select{cursor:pointer}
 .nav-tab.active{
   color:#185FA5;font-weight:700;
   background:#e8f2fd;
-  height:44px;
+  height:52px;
   border:1.5px solid #d0e4f5;
   border-bottom:none;
+  border-top-left-radius:10px;
+  border-top-right-radius:10px;
   z-index:10;
   box-shadow:0 -2px 8px rgba(55,138,221,.10);
 }
