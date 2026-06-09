@@ -117,6 +117,28 @@ select{cursor:pointer}
   position:relative;
   margin-bottom:-1.5px;
   box-shadow:0 -2px 8px rgba(55,138,221,.10);
+  overflow:visible;
+}
+.nav-tab.active::before,
+.nav-tab.active::after{
+  content:'';
+  position:absolute;
+  bottom:0;
+  width:12px;
+  height:12px;
+  background:transparent;
+  pointer-events:none;
+  z-index:11;
+}
+.nav-tab.active::before{
+  left:-12px;
+  border-bottom-right-radius:10px;
+  box-shadow:3px 0 0 1.5px #d0e4f5, 6px 0 0 0 #e8f2fd;
+}
+.nav-tab.active::after{
+  right:-12px;
+  border-bottom-left-radius:10px;
+  box-shadow:-3px 0 0 1.5px #d0e4f5, -6px 0 0 0 #e8f2fd;
 }
 .nav-right{
   display:flex;align-items:center;gap:0;
