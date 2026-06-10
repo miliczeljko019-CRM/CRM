@@ -65,6 +65,7 @@ select{cursor:pointer}
   background:#ffffff;
   display:flex;align-items:flex-end;
   box-shadow:0 2px 8px rgba(55,138,221,.10);
+  border-bottom:1.5px solid #d0e4f5;
 }
 .top-nav-inner{
   width:100%;display:flex;align-items:center;
@@ -94,51 +95,25 @@ select{cursor:pointer}
 .nav-tab{
   flex:1;min-width:0;
   display:flex;align-items:center;justify-content:center;gap:5px;
-  height:36px;padding:0 14px;
+  height:34px;padding:0 14px;
   font-size:12px;font-weight:500;
   color:#777;
   border:none;background:transparent;cursor:pointer;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   letter-spacing:-.01em;
-  border-radius:10px 10px 0 0;
-  margin:0 1px;
   align-self:flex-end;
+  position:relative;
+  z-index:60;
 }
 .nav-tab:last-child{border-right:none}
 .nav-tab i{font-size:13px;flex-shrink:0}
 .nav-tab.active{
   color:#185FA5;font-weight:700;
-  background:#e8f2fd;
-  height:52px;
-  border:1.5px solid #d0e4f5;
-  border-bottom:none;
-  border-radius:10px 10px 0 0;
-  z-index:10;
-  position:relative;
-  margin-bottom:-1.5px;
-  box-shadow:0 -2px 8px rgba(55,138,221,.10);
-  overflow:visible;
-}
-.nav-tab.active::before,
-.nav-tab.active::after{
-  content:'';
-  position:absolute;
-  bottom:0;
-  width:12px;
-  height:12px;
+  height:46px;
   background:transparent;
-  pointer-events:none;
-  z-index:11;
-}
-.nav-tab.active::before{
-  left:-12px;
-  border-bottom-right-radius:10px;
-  box-shadow:3px 0 0 1.5px #d0e4f5, 6px 0 0 0 #e8f2fd;
-}
-.nav-tab.active::after{
-  right:-12px;
-  border-bottom-left-radius:10px;
-  box-shadow:-3px 0 0 1.5px #d0e4f5, -6px 0 0 0 #e8f2fd;
+  border:none;
+  z-index:60;
+  position:relative;
 }
 .nav-right{
   display:flex;align-items:center;gap:0;
@@ -498,6 +473,7 @@ select{cursor:pointer}
       <button class="nav-tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene</button>
       <button class="nav-tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
     </div>
+    <svg id="tabOverlay" style="position:absolute;top:0;left:0;pointer-events:none;z-index:55;" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="nav-right">
       <div class="nav-sync" id="syncBar">
         <span class="sync-dot ok" id="syncDot"></span>
@@ -1094,6 +1070,39 @@ function fmtDate(iso) {
 function fmt(d) { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 
 // ── Tabs ──
+function drawTabOverlay() {
+  const nav = document.querySelector('.top-nav');
+  const active = document.querySelector('.nav-tab.active');
+  const svg = document.getElementById('tabOverlay');
+  if (!nav || !active || !svg) return;
+  const navRect = nav.getBoundingClientRect();
+  const tabRect = active.getBoundingClientRect();
+  const W = navRect.width;
+  const H = navRect.height;
+  const x = tabRect.left - navRect.left;
+  const w = tabRect.width;
+  const r = 10, cr = 10, border = 1.5;
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H + border);
+  svg.style.width = W + 'px';
+  svg.style.height = (H + border) + 'px';
+  const tabPath = [
+    'M ' + (x - cr) + ',' + (H + border),
+    'Q ' + x + ',' + (H + border) + ' ' + x + ',' + (H - cr),
+    'L ' + x + ',' + r,
+    'Q ' + x + ',0 ' + (x + r) + ',0',
+    'L ' + (x + w - r) + ',0',
+    'Q ' + (x + w) + ',0 ' + (x + w) + ',' + r,
+    'L ' + (x + w) + ',' + (H - cr),
+    'Q ' + (x + w) + ',' + (H + border) + ' ' + (x + w + cr) + ',' + (H + border)
+  ].join(' ');
+  const linePath = 'M 0,' + H + ' L ' + (x - cr + 1) + ',' + H +
+    ' M ' + (x + w + cr - 1) + ',' + H + ' L ' + W + ',' + H;
+  svg.innerHTML = '<defs><clipPath id="nvc"><rect x="0" y="0" width="' + W + '" height="' + (H + border + 2) + '"/></clipPath></defs>' +
+    '<path d="' + tabPath + '" fill="#e8f2fd" stroke="#d0e4f5" stroke-width="' + border + '" stroke-linejoin="round" clip-path="url(#nvc)"/>' +
+    '<path d="' + linePath + '" fill="none" stroke="#d0e4f5" stroke-width="' + border + '"/>';
+}
+
 function showTab(t) {
   const names=['form','dash','pregled','obaveze','cene','ciljevi'];
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
@@ -1103,6 +1112,7 @@ function showTab(t) {
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
+  setTimeout(drawTabOverlay, 10);
 }
 
 // ── Forma ──
@@ -3659,6 +3669,8 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 
 // ── Start ──
 initApp();
+setTimeout(drawTabOverlay, 700);
+window.addEventListener('resize', drawTabOverlay);
 </script>
 </body>
 </html>
