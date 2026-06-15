@@ -475,6 +475,10 @@ select{cursor:pointer}
     </div>
     <svg id="tabOverlay" style="position:absolute;top:0;left:0;pointer-events:none;z-index:55;" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="nav-right">
+      <button id="bellBtn" onclick="otvoriObavestenjaPopup()" style="display:none;position:relative;background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#fff;align-items:center;justify-content:center" title="Obaveštenja">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="bellBadge" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:#D32F2F;border-radius:50%;border:1.5px solid #0a1628"></span>
+      </button>
       <div class="nav-sync" id="syncBar">
         <span class="sync-dot ok" id="syncDot"></span>
         <span id="syncMsg">Sinhronizovano</span>
@@ -801,6 +805,29 @@ select{cursor:pointer}
 
 <div class="toast" id="toast"></div>
 
+<!-- OBAVESTENJA POPUP -->
+<div id="obavestenjaOverlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(10,22,40,.5);align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;box-shadow:0 12px 48px rgba(0,0,0,.22);position:relative;animation:popupSlideIn .25s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #e8ecf0;background:#f8fafd;border-radius:14px 14px 0 0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">&#x1F514;</span>
+        <span style="font-size:15px;font-weight:700;color:#0d1e35">Obaveštenja</span>
+        <span id="obavestenjaCount" style="font-size:11px;font-weight:700;background:#D32F2F;color:#fff;border-radius:100px;padding:2px 8px"></span>
+      </div>
+      <button onclick="zatvoriObavestenjaPopup()" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:#666;display:flex;align-items:center;justify-content:center" title="Zatvori">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="obavestenjaBody" style="padding:1rem 1.25rem;max-height:70vh;overflow-y:auto"></div>
+    <div style="padding:.75rem 1.25rem;border-top:1px solid #e8ecf0;display:flex;justify-content:flex-end">
+      <button onclick="zatvoriObavestenjaPopup()" style="background:#0A4A6E;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">Zatvori</button>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes popupSlideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+</style>
+
 <script>
 // ═══════════════════════════════════════════════════════
 // GOOGLE DRIVE STORAGE LAYER
@@ -992,6 +1019,7 @@ async function loadFromDrive() {
     if(data.rashodi) localStorage.setItem('knjg_crm_rashodi', JSON.stringify(data.rashodi));
     if(data.ciljevi) localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(data.ciljevi));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
+    renderDash(); renderPodsetnici(); prikaziObavestenjaAkoIma();
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
   }
@@ -1107,7 +1135,7 @@ function showTab(t) {
   const names=['form','dash','pregled','obaveze','cene','ciljevi'];
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
-  if(t==='dash'){renderDash();renderPodsetnici();}
+  if(t==='dash'){renderDash();renderPodsetnici();azurirajBell();}
   if(t==='pregled') renderPregled();
   if(t==='obaveze') renderObaveze();
   if(t==='cene') renderCene();
@@ -3668,6 +3696,72 @@ function countNeuradjenoPregled(ob, god, mes) {
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
 // ── Start ──
+// ═══ OBAVESTENJA POPUP ═══
+let obavestenjaSkrivena = false;
+
+function skupiObavestenja() {
+  const items = [];
+  clients.forEach(c => {
+    const rs = rodjendanStatus(c.rodjendan);
+    if(rs) items.push({ tip: 'rodjendan', ikona: '🎂', tekst: rs.label, firma: c.naziv, prioritet: rs.dana === 0 ? 0 : 1 });
+  });
+  clients.forEach(c => {
+    if(c.radnici && c.workers) c.workers.forEach(w => {
+      if(w.neodredjeno) return;
+      const st = ugovorStatus(w.do_);
+      if(!st) return;
+      items.push({ tip: st.tip, ikona: st.tip === 'istekao' ? '🚨' : '⏰', tekst: st.label, radnik: w.ime, firma: c.naziv, prioritet: st.tip === 'istekao' ? 2 : 3 });
+    });
+  });
+  items.sort((a, b) => a.prioritet - b.prioritet);
+  return items;
+}
+
+function renderObavestenjaBody(items) {
+  if(!items.length) return '<div style="text-align:center;padding:2rem;color:#888;font-size:13px">Nema obaveštenja 🎉</div>';
+  let html = '';
+  items.forEach(it => {
+    const boja = it.tip === 'rodjendan' ? '#C0186A' : it.tip === 'istekao' ? '#D32F2F' : '#E07B00';
+    const bgBoja = it.tip === 'rodjendan' ? '#FFF0FA' : it.tip === 'istekao' ? '#FFF5F5' : '#FFFBF0';
+    html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:8px;background:'+bgBoja+';border-radius:8px;border-left:3px solid '+boja+'">';
+    html += '<span style="font-size:18px;line-height:1.4">'+it.ikona+'</span>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:13px;font-weight:600;color:#1a1a18">'+(it.radnik ? it.radnik+' · ' : '')+it.firma+'</div>';
+    html += '<div style="font-size:12px;color:#555;margin-top:2px">'+it.tekst+'</div>';
+    html += '</div></div>';
+  });
+  return html;
+}
+
+function otvoriObavestenjaPopup() {
+  const items = skupiObavestenja();
+  document.getElementById('obavestenjaBody').innerHTML = renderObavestenjaBody(items);
+  const n = items.length;
+  document.getElementById('obavestenjaCount').textContent = n + (n === 1 ? ' novo' : ' novih');
+  const ov = document.getElementById('obavestenjaOverlay');
+  ov.style.display = 'flex';
+}
+
+function zatvoriObavestenjaPopup() {
+  document.getElementById('obavestenjaOverlay').style.display = 'none';
+  obavestenjaSkrivena = true;
+}
+
+function azurirajBell() {
+  const items = skupiObavestenja();
+  const btn = document.getElementById('bellBtn');
+  const badge = document.getElementById('bellBadge');
+  if(!btn) return;
+  if(items.length > 0) { btn.style.display = 'flex'; badge.style.display = 'block'; }
+  else { btn.style.display = 'none'; badge.style.display = 'none'; }
+}
+
+function prikaziObavestenjaAkoIma() {
+  azurirajBell();
+  const items = skupiObavestenja();
+  if(items.length > 0 && !obavestenjaSkrivena) otvoriObavestenjaPopup();
+}
+
 initApp();
 setTimeout(drawTabOverlay, 700);
 window.addEventListener('resize', drawTabOverlay);
