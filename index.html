@@ -874,7 +874,7 @@ function startLogin() {
       document.getElementById('mainApp').style.display = 'block';
       getUserInfo().then(info => {
         if(info && info.email) localStorage.setItem('knjg_login_hint', info.email);
-        loadFromDrive();
+        loadFromDrive().then(prikaziObavestenjaAkoIma);
       });
     }
   });
@@ -1019,7 +1019,7 @@ async function loadFromDrive() {
     if(data.rashodi) localStorage.setItem('knjg_crm_rashodi', JSON.stringify(data.rashodi));
     if(data.ciljevi) localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(data.ciljevi));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
-    renderDash(); renderPodsetnici(); prikaziObavestenjaAkoIma();
+    renderDash(); renderPodsetnici();
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
   }
@@ -1066,6 +1066,7 @@ async function initApp() {
   document.getElementById('mainApp').style.display = 'block';
   await getUserInfo();
   await loadFromDrive();
+  prikaziObavestenjaAkoIma();
   // Init split date inputs
   const rw=document.getElementById('rodjendan-wrap');
   if(rw) rw.innerHTML=dateInputHtml('rodjendan','',false);
