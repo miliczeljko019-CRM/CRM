@@ -873,6 +873,7 @@ function startLogin() {
       document.getElementById('mainApp').style.display = 'block';
       getUserInfo().then(info => {
         if(info && info.email) localStorage.setItem('knjg_login_hint', info.email);
+        sessionStorage.removeItem('knjg_popup_skriveno');
         loadFromDrive();
       });
     }
@@ -1064,6 +1065,7 @@ async function initApp() {
   }
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainApp').style.display = 'block';
+  sessionStorage.removeItem('knjg_popup_skriveno');
   await getUserInfo();
   await loadFromDrive();
   // Init split date inputs
@@ -3697,8 +3699,7 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 
 // ── Start ──
 // ═══ OBAVESTENJA POPUP ═══
-let obavestenjaSkrivena = false;
-
+// obavestenjaSkrivena se cuva u sessionStorage - reset pri svakom novom prozoru/tabu
 function skupiObavestenja() {
   const items = [];
   clients.forEach(c => {
@@ -3744,7 +3745,7 @@ function otvoriObavestenjaPopup() {
 
 function zatvoriObavestenjaPopup() {
   document.getElementById('obavestenjaOverlay').style.display = 'none';
-  obavestenjaSkrivena = true;
+  sessionStorage.setItem('knjg_popup_skriveno', '1');
 }
 
 function azurirajBell() {
@@ -3759,7 +3760,8 @@ function azurirajBell() {
 function prikaziObavestenjaAkoIma() {
   azurirajBell();
   const items = skupiObavestenja();
-  if(items.length > 0 && !obavestenjaSkrivena) otvoriObavestenjaPopup();
+  const skriveno = sessionStorage.getItem('knjg_popup_skriveno') === '1';
+  if(items.length > 0 && !skriveno) otvoriObavestenjaPopup();
 }
 
 initApp();
