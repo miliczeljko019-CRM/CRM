@@ -634,6 +634,8 @@ select{cursor:pointer}
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
       <button class="btn-excel-outline" onclick="document.getElementById('importFileInput').click()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-file-upload"></i> Uvezi klijente</button>
       <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importKlijente(this)">
+      <button class="btn-excel-outline" onclick="document.getElementById('importRadniciInput').click()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-user-plus"></i> Uvezi radnike</button>
+      <input type="file" id="importRadniciInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importRadnike(this)">
     </div>
   </div>
   <div class="table-wrap"><div id="dashContent"></div></div>
@@ -3085,7 +3087,7 @@ function importKlijente(input) {
         v = String(v).trim();
         if (!v || v==='-') return '';
         let m;
-        if ((m=v.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/))) return m[1].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[3];
+        if ((m=v.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})\.?$/))) return m[1].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[3];
         if ((m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return m[3]+'/'+m[2]+'/'+m[1];
         return v;
       }
@@ -3144,6 +3146,102 @@ function importKlijente(input) {
         setTimeout(() => {
           const lista = duplikati.length<=5 ? duplikati.join('\n') : duplikati.slice(0,5).join('\n')+'\n...';
           alert('Preskočeni duplikati:\n'+lista);
+        }, 300);
+      }
+    } catch(err) {
+      showToast('Greška pri čitanju fajla!');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function importRadnike(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      if (!rows.length) { showToast('Fajl je prazan!'); return; }
+
+      function col(row, ...names) {
+        for (const n of names) {
+          for (const k of Object.keys(row)) {
+            if (k.trim().toLowerCase() === n.toLowerCase()) return String(row[k]||'').trim();
+          }
+        }
+        return '';
+      }
+      function parseBool(v, def) {
+        v = String(v||'').toLowerCase().trim();
+        if (!v) return def;
+        return v==='da'||v==='yes'||v==='1'||v==='true';
+      }
+      function parseDateISO(v) {
+        if (!v) return '';
+        if (v instanceof Date) {
+          const y=v.getFullYear(), m=String(v.getMonth()+1).padStart(2,'0'), d=String(v.getDate()).padStart(2,'0');
+          return y+'-'+m+'-'+d;
+        }
+        v = String(v).trim();
+        if (!v || v==='-') return '';
+        let m;
+        if ((m=v.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})\.?$/))) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+        if ((m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+        return '';
+      }
+
+      let dodatRadnika=0, neNadjenaFirma=[], firmiBezNaziva=0;
+      const dotaknuteFirme = new Set();
+
+      rows.forEach(row => {
+        const firmaNaziv = col(row,'Naziv firme','Firma','Naziv','Klijent','Company');
+        const ime = col(row,'Ime i prezime','Radnik','Ime','Name');
+        if (!firmaNaziv || !ime) { if(!firmaNaziv) firmiBezNaziva++; return; }
+
+        const c = clients.find(cl => cl.naziv.toLowerCase().trim() === firmaNaziv.toLowerCase().trim());
+        if (!c) { neNadjenaFirma.push(firmaNaziv); return; }
+
+        // Preskoči ako radnik sa istim imenom (ili JMBG) već postoji kod tog klijenta
+        const jmbg = col(row,'JMBG','Jmbg');
+        const vecPostoji = (c.workers||[]).some(w =>
+          (jmbg && w.jmbg && w.jmbg===jmbg) ||
+          w.ime.toLowerCase().trim()===ime.toLowerCase().trim()
+        );
+        if (vecPostoji) return;
+
+        const neodredjeno = parseBool(col(row,'Neodređeno','Neodredjeno','Ugovor na neodređeno'), false);
+        const pppPd = parseBool(col(row,'PPP-PD','PPPPD','PPP PD'), true);
+        const od = parseDateISO(col(row,'Prijavljen od','Datum prijave','Od'));
+        const do_ = neodredjeno ? '' : parseDateISO(col(row,'Ugovor do','Datum isteka','Do'));
+
+        if (!c.workers) c.workers = [];
+        c.workers.push({
+          ime,
+          jmbg,
+          od,
+          do_,
+          neodredjeno,
+          pppPd
+        });
+        c.radnici = true;
+        dotaknuteFirme.add(c.naziv);
+        dodatRadnika++;
+      });
+
+      save();
+      renderDash();
+      let msg = dodatRadnika + ' radnik(a) uvezeno kod ' + dotaknuteFirme.size + ' klijenata!';
+      showToast(msg);
+      if (neNadjenaFirma.length) {
+        setTimeout(() => {
+          const unique = [...new Set(neNadjenaFirma)];
+          const lista = unique.length<=8 ? unique.join('\n') : unique.slice(0,8).join('\n')+'\n...';
+          alert('Nije pronađen klijent za sledeće firme (proverite da li naziv tačno odgovara klijentu u CRM-u):\n'+lista);
         }, 300);
       }
     } catch(err) {
