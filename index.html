@@ -3195,7 +3195,7 @@ function importRadnike(input) {
         return '';
       }
 
-      let dodatRadnika=0, neNadjenaFirma=[], firmiBezNaziva=0;
+      let dodatRadnika=0, neNadjenaFirma=[], firmiBezNaziva=0, preskoceniRadnici=[];
       const dotaknuteFirme = new Set();
 
       rows.forEach(row => {
@@ -3208,11 +3208,14 @@ function importRadnike(input) {
 
         // Preskoči ako radnik sa istim imenom (ili JMBG) već postoji kod tog klijenta
         const jmbg = col(row,'JMBG','Jmbg');
-        const vecPostoji = (c.workers||[]).some(w =>
+        const postojeciDup = (c.workers||[]).find(w =>
           (jmbg && w.jmbg && w.jmbg===jmbg) ||
           w.ime.toLowerCase().trim()===ime.toLowerCase().trim()
         );
-        if (vecPostoji) return;
+        if (postojeciDup) {
+          preskoceniRadnici.push(ime + ' (' + firmaNaziv + ') — već postoji kao "' + postojeciDup.ime + '"' + (postojeciDup.jmbg ? ', JMBG ' + postojeciDup.jmbg : ''));
+          return;
+        }
 
         const neodredjeno = parseBool(col(row,'Neodređeno','Neodredjeno','Ugovor na neodređeno'), false);
         const pppPd = parseBool(col(row,'PPP-PD','PPPPD','PPP PD'), true);
@@ -3236,12 +3239,22 @@ function importRadnike(input) {
       save();
       renderDash();
       let msg = dodatRadnika + ' radnik(a) uvezeno kod ' + dotaknuteFirme.size + ' klijenata!';
+      if (preskoceniRadnici.length) msg += ' ' + preskoceniRadnici.length + ' preskočeno (duplikat).';
       showToast(msg);
-      if (neNadjenaFirma.length) {
+      if (neNadjenaFirma.length || preskoceniRadnici.length) {
         setTimeout(() => {
-          const unique = [...new Set(neNadjenaFirma)];
-          const lista = unique.length<=8 ? unique.join('\n') : unique.slice(0,8).join('\n')+'\n...';
-          alert('Nije pronađen klijent za sledeće firme (proverite da li naziv tačno odgovara klijentu u CRM-u):\n'+lista);
+          let poruka = '';
+          if (neNadjenaFirma.length) {
+            const unique = [...new Set(neNadjenaFirma)];
+            const lista = unique.length<=8 ? unique.join('\n') : unique.slice(0,8).join('\n')+'\n...';
+            poruka += 'Nije pronađen klijent za sledeće firme (proverite da li naziv tačno odgovara klijentu u CRM-u):\n'+lista;
+          }
+          if (preskoceniRadnici.length) {
+            if (poruka) poruka += '\n\n';
+            const lista2 = preskoceniRadnici.length<=8 ? preskoceniRadnici.join('\n') : preskoceniRadnici.slice(0,8).join('\n')+'\n...';
+            poruka += 'Preskočeni radnici (već postoje kod klijenta):\n'+lista2;
+          }
+          alert(poruka);
         }, 300);
       }
     } catch(err) {
