@@ -3094,7 +3094,7 @@ function renderKadrovska() {
                 : w.status==='istice'  ? 'style="color:#854F0B;font-weight:500"' : '';
     const doPrikaz = w.neodredjeno ? '—' : fmtD(w.do_);
     const rowStyle = w.status==='istice'||w.status==='isteklo' ? 'style="background:#fffbe6"' : '';
-    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td><button class="action-btn" onclick="openEdit('${w.clientId}')"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
+    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td><button class="action-btn" onclick="openEdit(${w.clientId})"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
   }).join('');
   const chips = [
     {k:'svi', lbl:'Svi ('+ukupno+')'},
