@@ -3062,6 +3062,22 @@ function renderKadrovska() {
     (w.ime||''). toLowerCase().includes(srch)||
     (w.firma||''). toLowerCase().includes(srch)||
     (w.jmbg||''). includes(srch));
+  // Sort
+  if(kadSortCol) {
+    filtered.sort((a,b)=>{
+      let va,vb;
+      if(kadSortCol==='firma'||kadSortCol==='ime'||kadSortCol==='jmbg') {
+        va=(a[kadSortCol]||'').toLowerCase(); vb=(b[kadSortCol]||'').toLowerCase();
+      } else if(kadSortCol==='od'||kadSortCol==='do_') {
+        va=a[kadSortCol]||''; vb=b[kadSortCol]||'';
+      } else if(kadSortCol==='ugovor') {
+        va=a.neodredjeno?1:0; vb=b.neodredjeno?1:0;
+      }
+      if(va<vb) return kadSortAsc?-1:1;
+      if(va>vb) return kadSortAsc?1:-1;
+      return 0;
+    });
+  }
   function fmtD(d){if(!d)return '—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
   const rows = filtered.map(w=>{
     const ugovorBadge = w.neodredjeno
@@ -3101,7 +3117,15 @@ function renderKadrovska() {
   </div>
   <div class="table-wrap">
   <table class="client-table">
-    <thead><tr><th>Firma</th><th>Radnik</th><th>Ugovor</th><th>Datum od</th><th>Datum do</th><th>JMBG</th><th>Akcija</th></tr></thead>
+    <thead><tr>
+      <th class="sortable${kadSortCol==='firma'?' sort-active':''}" onclick="kadSort('firma')">Firma <i class="sort-arrow">${kadSortCol==='firma'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th class="sortable${kadSortCol==='ime'?' sort-active':''}" onclick="kadSort('ime')">Radnik <i class="sort-arrow">${kadSortCol==='ime'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th class="sortable${kadSortCol==='ugovor'?' sort-active':''}" onclick="kadSort('ugovor')">Ugovor <i class="sort-arrow">${kadSortCol==='ugovor'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th class="sortable${kadSortCol==='od'?' sort-active':''}" onclick="kadSort('od')">Datum od <i class="sort-arrow">${kadSortCol==='od'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th class="sortable${kadSortCol==='do_'?' sort-active':''}" onclick="kadSort('do_')">Datum do <i class="sort-arrow">${kadSortCol==='do_'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th class="sortable${kadSortCol==='jmbg'?' sort-active':''}" onclick="kadSort('jmbg')">JMBG <i class="sort-arrow">${kadSortCol==='jmbg'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th>Akcija</th>
+    </tr></thead>
     <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
   </table></div>`;
 }
@@ -3492,6 +3516,8 @@ let pregledSortCol = null;
 let pregledSortAsc = true;
 let dashSortCol = null;
 let dashSortAsc = true;
+let kadSortCol = null;
+let kadSortAsc = true;
 
 function pdfTxt(s) {
   if(!s) return '';
@@ -3670,6 +3696,12 @@ function dashSort(col) {
   if(dashSortCol === col) dashSortAsc = !dashSortAsc;
   else { dashSortCol = col; dashSortAsc = true; }
   renderDash();
+}
+
+function kadSort(col) {
+  if(kadSortCol === col) kadSortAsc = !kadSortAsc;
+  else { kadSortCol = col; kadSortAsc = true; }
+  renderKadrovska();
 }
 
 function renderPregled() {
