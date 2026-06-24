@@ -3033,6 +3033,9 @@ function renderRashodiSummary() {
 function renderKadrovska() {
   const wrap = document.getElementById('kadrovskaContent');
   if(!wrap) return;
+  const _srchActive = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.kadInput;
+  const _srchVal = _srchActive ? document.activeElement.value : null;
+  const _srchPos = _srchActive ? document.activeElement.selectionStart : null;
   const danas = new Date(); danas.setHours(0,0,0,0);
   const za30 = new Date(danas); za30.setDate(za30.getDate()+30);
   let sviRadnici = [];
@@ -3062,6 +3065,10 @@ function renderKadrovska() {
     (w.ime||''). toLowerCase().includes(srch)||
     (w.firma||''). toLowerCase().includes(srch)||
     (w.jmbg||''). includes(srch));
+  // Focus restore after re-render
+  const _restoreFocus = _srchActive;
+  const _restoreVal = _srchVal;
+  const _restorePos = _srchPos;
   // Sort
   if(kadSortCol) {
     filtered.sort((a,b)=>{
@@ -3108,7 +3115,7 @@ function renderKadrovska() {
   </div>
   <div class="filter-bar">${chips}
     <div style="margin-left:auto">
-      <input type="text" placeholder="Pretraži ime, firmu, JMBG…" value="${srch}" oninput="document.getElementById('kadrovskaContent').dataset.kadSearch=this.value;renderKadrovska()" style="padding:5px 10px;font-size:13px;border:0.5px solid var(--brd2);border-radius:var(--rad);background:var(--bg);color:var(--txt);width:220px">
+      <input type="text" placeholder="Pretraži ime, firmu, JMBG…" value="${srch}" data-kad-input="1" oninput="document.getElementById('kadrovskaContent').dataset.kadSearch=this.value;renderKadrovska()" style="padding:5px 10px;font-size:13px;border:0.5px solid var(--brd2);border-radius:var(--rad);background:var(--bg);color:var(--txt);width:220px">
     </div>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -3128,6 +3135,11 @@ function renderKadrovska() {
     </tr></thead>
     <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
   </table></div>`;
+  // Restore search focus after innerHTML re-render
+  if(_restoreFocus) {
+    const inp = wrap.querySelector('[data-kad-input]');
+    if(inp) { inp.focus(); try{inp.setSelectionRange(_restorePos,_restorePos);}catch(e){} }
+  }
 }
 
 function setKadFilter(f) {
