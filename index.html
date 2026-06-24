@@ -1483,7 +1483,8 @@ function resetForm() {
 
 // ── Modal izmena ──
 function openEdit(id) {
-  const c=clients.find(x=>x.id===id); if(!c) return;
+  const c=clients.find(x=>x.id==id);
+  if(!c) { showToast('Klijent nije pronađen (id='+id+')'); return; }
   editingId=id;
 
   document.getElementById('e_naziv').value=c.naziv||'';
@@ -3033,9 +3034,9 @@ function renderRashodiSummary() {
 function renderKadrovska() {
   const wrap = document.getElementById('kadrovskaContent');
   if(!wrap) return;
-  const _srchActive = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.kadInput;
-  const _srchVal = _srchActive ? document.activeElement.value : null;
-  const _srchPos = _srchActive ? document.activeElement.selectionStart : null;
+  const _srchEl = document.querySelector('[data-kad-input]');
+  const _srchActive = document.activeElement === _srchEl;
+  const _srchPos = _srchActive && _srchEl ? _srchEl.selectionStart : null;
   const danas = new Date(); danas.setHours(0,0,0,0);
   const za30 = new Date(danas); za30.setDate(za30.getDate()+30);
   let sviRadnici = [];
@@ -3065,10 +3066,6 @@ function renderKadrovska() {
     (w.ime||''). toLowerCase().includes(srch)||
     (w.firma||''). toLowerCase().includes(srch)||
     (w.jmbg||''). includes(srch));
-  // Focus restore after re-render
-  const _restoreFocus = _srchActive;
-  const _restoreVal = _srchVal;
-  const _restorePos = _srchPos;
   // Sort
   if(kadSortCol) {
     filtered.sort((a,b)=>{
@@ -3136,9 +3133,9 @@ function renderKadrovska() {
     <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
   </table></div>`;
   // Restore search focus after innerHTML re-render
-  if(_restoreFocus) {
+  if(_srchActive) {
     const inp = wrap.querySelector('[data-kad-input]');
-    if(inp) { inp.focus(); try{inp.setSelectionRange(_restorePos,_restorePos);}catch(e){} }
+    if(inp) { inp.focus(); try{inp.setSelectionRange(_srchPos,_srchPos);}catch(e){} }
   }
 }
 
