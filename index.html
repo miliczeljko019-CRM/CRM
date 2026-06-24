@@ -1029,6 +1029,7 @@ async function loadFromDrive() {
     if(data.ciljevi) localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(data.ciljevi));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
     renderDash(); renderPodsetnici();
+    if(document.getElementById('page-kadrovska')?.classList.contains('active')) renderKadrovska();
     setTimeout(prikaziObavestenjaAkoIma, 300);
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
@@ -3036,7 +3037,7 @@ function renderKadrovska() {
   const za30 = new Date(danas); za30.setDate(za30.getDate()+30);
   let sviRadnici = [];
   clients.forEach(c => {
-    if(!c.radnici || !Array.isArray(c.workers) || c.workers.length===0) return;
+    if(!c.radnici || !c.workers || !c.workers.length) return;
     c.workers.forEach(w => {
       const doDate = w.do_ ? new Date(w.do_) : null;
       let status = 'ok';
