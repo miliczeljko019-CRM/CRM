@@ -1143,9 +1143,11 @@ function drawTabOverlay() {
 }
 
 function showTab(t) {
-  const names=['form','dash','pregled','obaveze','kadrovska','cene','ciljevi'];
-  document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
-  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
+  document.querySelectorAll('.nav-tab').forEach(b=>{
+    const m=b.getAttribute('onclick')||'';
+    b.classList.toggle('active',m.includes("'"+t+"'"));
+  });
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+t));
   if(t==='dash'){renderDash();renderPodsetnici();azurirajBell();}
   if(t==='pregled') renderPregled();
   if(t==='obaveze') renderObaveze();
