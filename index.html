@@ -473,6 +473,7 @@ select{cursor:pointer}
       <button class="nav-tab" onclick="showTab('dash')"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
       <button class="nav-tab" onclick="showTab('pregled')"><i class="ti ti-table"></i> Pregled obaveza</button>
       <button class="nav-tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
+      <button class="nav-tab" onclick="showTab('kadrovska')"><i class="ti ti-id-badge-2"></i> Kadrovska</button>
       <button class="nav-tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene</button>
       <button class="nav-tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
     </div>
@@ -507,6 +508,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('dash')"></button>
   <button class="tab" onclick="showTab('pregled')"></button>
   <button class="tab" onclick="showTab('obaveze')"></button>
+  <button class="tab" onclick="showTab('kadrovska')"></button>
   <button class="tab" onclick="showTab('cene')"></button>
   <button class="tab" onclick="showTab('ciljevi')"></button>
 </div>
@@ -662,6 +664,9 @@ select{cursor:pointer}
   </div>
   <div id="obavezeContent"></div>
 </div>
+
+<!-- ═══ KADROVSKA ═══ -->
+<div class="page" id="page-kadrovska"><div style="max-width:100%;margin:0 auto"><div id="kadrovskaContent"></div></div></div>
 
 <!-- ═══ CENE ═══ -->
 <div class="page" id="page-cene"><div>
@@ -1138,12 +1143,13 @@ function drawTabOverlay() {
 }
 
 function showTab(t) {
-  const names=['form','dash','pregled','obaveze','cene','ciljevi'];
+  const names=['form','dash','pregled','obaveze','kadrovska','cene','ciljevi'];
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',names[i]===t));
   document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',names[i]===t));
   if(t==='dash'){renderDash();renderPodsetnici();azurirajBell();}
   if(t==='pregled') renderPregled();
   if(t==='obaveze') renderObaveze();
+  if(t==='kadrovska') renderKadrovska();
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
   setTimeout(drawTabOverlay, 10);
@@ -3019,6 +3025,88 @@ function renderRashodiSummary() {
     pVal.textContent = (profit >= 0 ? '+' : '') + eur(profit);
     pVal.style.color = profit >= 0 ? '#1E8C50' : '#D32F2F';
   }
+}
+
+function renderKadrovska() {
+  const wrap = document.getElementById('kadrovskaContent');
+  if(!wrap) return;
+  const danas = new Date(); danas.setHours(0,0,0,0);
+  const za30 = new Date(danas); za30.setDate(za30.getDate()+30);
+  let sviRadnici = [];
+  clients.forEach(c => {
+    if(!c.radnici || !Array.isArray(c.radnici)) return;
+    c.radnici.forEach(w => {
+      const doDate = w.do_ ? new Date(w.do_) : null;
+      let status = 'ok';
+      if(!w.neodredjeno && doDate) {
+        if(doDate < danas) status = 'isteklo';
+        else if(doDate <= za30) status = 'istice';
+      }
+      sviRadnici.push({...w, firma: c.naziv, clientId: c.id, status});
+    });
+  });
+  const ukupno = sviRadnici.length;
+  const neodr = sviRadnici.filter(w=>w.neodredjeno).length;
+  const odr = sviRadnici.filter(w=>!w.neodredjeno).length;
+  const istice = sviRadnici.filter(w=>w.status==='istice'||w.status==='isteklo').length;
+  const activeFilter = (wrap.dataset && wrap.dataset.kadFilter) || 'svi';
+  const srch = (wrap.dataset && wrap.dataset.kadSearch) || '';
+  let filtered = sviRadnici;
+  if(activeFilter==='neodr') filtered = filtered.filter(w=>w.neodredjeno);
+  else if(activeFilter==='odr') filtered = filtered.filter(w=>!w.neodredjeno);
+  else if(activeFilter==='istice') filtered = filtered.filter(w=>w.status==='istice'||w.status==='isteklo');
+  if(srch) filtered = filtered.filter(w=>
+    (w.ime||''). toLowerCase().includes(srch)||
+    (w.firma||''). toLowerCase().includes(srch)||
+    (w.jmbg||''). includes(srch));
+  function fmtD(d){if(!d)return '—';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+  const rows = filtered.map(w=>{
+    const ugovorBadge = w.neodredjeno
+      ? '<span class="badge b-neodr">Neodređeno</span>'
+      : '<span class="badge b-odr">Određeno</span>';
+    const doCls = w.status==='isteklo' ? 'style="color:#A32D2D;font-weight:500"'
+                : w.status==='istice'  ? 'style="color:#854F0B;font-weight:500"' : '';
+    const doPrikaz = w.neodredjeno ? '—' : fmtD(w.do_);
+    const rowStyle = w.status==='istice'||w.status==='isteklo' ? 'style="background:#fffbe6"' : '';
+    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td><button class="action-btn" onclick="openEdit('${w.clientId}')"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
+  }).join('');
+  const chips = [
+    {k:'svi', lbl:'Svi ('+ukupno+')'},
+    {k:'neodr', lbl:'Na neodređeno ('+neodr+')'},
+    {k:'odr', lbl:'Na određeno ('+odr+')'},
+    {k:'istice', lbl:'Čeka uskoro / isteklo ('+istice+')', warn:true}
+  ].map(c=>{
+    const wCls = c.warn ? ' filter-chip-odjava' : '';
+    const aCls = activeFilter===c.k ? ' active' : '';
+    return `<button class="filter-chip${wCls}${aCls}" onclick="setKadFilter('${c.k}')">${c.lbl}</button>`;
+  }).join('');
+  wrap.innerHTML = `
+  <div class="dash-stats" style="margin-bottom:1.25rem">
+    <div class="stat-card"><div class="stat-label">Ukupno radnika</div><div class="stat-val">${ukupno}</div></div>
+    <div class="stat-card"><div class="stat-label">Na neodređeno</div><div class="stat-val">${neodr}</div></div>
+    <div class="stat-card"><div class="stat-label">Na određeno</div><div class="stat-val">${odr}</div></div>
+    <div class="stat-card"><div class="stat-label">Ištiče u 30 dana</div><div class="stat-val" ${istice>0?'style="color:#c05f00"':''}>${istice}</div></div>
+  </div>
+  <div class="filter-bar">${chips}
+    <div style="margin-left:auto">
+      <input type="text" placeholder="Pretraži ime, firmu, JMBG…" value="${srch}" oninput="document.getElementById('kadrovskaContent').dataset.kadSearch=this.value;renderKadrovska()" style="padding:5px 10px;font-size:13px;border:0.5px solid var(--brd2);border-radius:var(--rad);background:var(--bg);color:var(--txt);width:220px">
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="font-size:14px;font-weight:500">${filtered.length} radnika</span>
+    <span style="font-size:11px;color:var(--txt2)">Žuti red = ističe / isteklo</span>
+  </div>
+  <div class="table-wrap">
+  <table class="client-table">
+    <thead><tr><th>Firma</th><th>Radnik</th><th>Ugovor</th><th>Datum od</th><th>Datum do</th><th>JMBG</th><th>Akcija</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
+  </table></div>`;
+}
+
+function setKadFilter(f) {
+  const wrap = document.getElementById('kadrovskaContent');
+  if(wrap) wrap.dataset.kadFilter = f;
+  renderKadrovska();
 }
 
 function renderCene() {
