@@ -3036,8 +3036,8 @@ function renderKadrovska() {
   const za30 = new Date(danas); za30.setDate(za30.getDate()+30);
   let sviRadnici = [];
   clients.forEach(c => {
-    if(!c.radnici || !Array.isArray(c.radnici)) return;
-    c.radnici.forEach(w => {
+    if(!c.radnici || !Array.isArray(c.workers) || c.workers.length===0) return;
+    c.workers.forEach(w => {
       const doDate = w.do_ ? new Date(w.do_) : null;
       let status = 'ok';
       if(!w.neodredjeno && doDate) {
