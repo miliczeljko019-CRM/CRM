@@ -3234,9 +3234,15 @@ function openBolovanjeModal(tipB, id) {
           <button onclick="bolDodajNapomenu()" style="padding:8px 14px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:18px;cursor:pointer;line-height:1;font-weight:300">+</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;padding:10px;background:${tipB==='bolovanje30'?'#f0f7ff':'#f5f0ff'};border-radius:var(--rad)">
-        <input type="checkbox" id="bolZatvoreno" ${existing&&existing.zatvoreno?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:${boja}">
-        <label for="bolZatvoreno" style="font-size:13px;font-weight:600;cursor:pointer;color:${boja}">Zatvoreno bolovanje</label>
+      <div style="padding:10px;background:${tipB==='bolovanje30'?'#f0f7ff':'#f5f0ff'};border-radius:var(--rad)">
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="bolZatvoreno" ${existing&&existing.zatvoreno?'checked':''} onchange="bolToggleZatvoreno()" style="width:16px;height:16px;cursor:pointer;accent-color:${boja}">
+          <label for="bolZatvoreno" style="font-size:13px;font-weight:600;cursor:pointer;color:${boja}">Zatvoreno bolovanje</label>
+        </div>
+        <div id="bolZatvorenoDatumWrap" style="margin-top:8px;display:${existing&&existing.zatvoreno?'flex':'none'};align-items:center;gap:8px">
+          <label style="font-size:12px;color:var(--txt2);white-space:nowrap">Datum zatvaranja:</label>
+          <input type="date" id="bolZatvorenoDatum" value="${existing&&existing.zatvorenoDatum?existing.zatvorenoDatum:''}" style="padding:6px 10px;border:1px solid var(--brd2);border-radius:var(--rad);font-size:13px;background:var(--bg);color:var(--txt)">
+        </div>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:20px">
@@ -3295,20 +3301,28 @@ function closeBolModal() {
   if(el) el.remove();
 }
 
+function bolToggleZatvoreno() {
+  const checked = document.getElementById('bolZatvoreno')?.checked;
+  const wrap = document.getElementById('bolZatvorenoDatumWrap');
+  if(wrap) wrap.style.display = checked ? 'flex' : 'none';
+  if(checked) document.getElementById('bolZatvorenoDatum')?.focus();
+}
+
 function saveBolovanje(tipB, editId) {
   const cid = +document.getElementById('bolKlijent')?.value;
   const wid = document.getElementById('bolRadnik')?.value;
   const od = document.getElementById('bolOd')?.value;
   const zatvoreno = document.getElementById('bolZatvoreno')?.checked;
+  const zatvorenoDatum = zatvoreno ? (document.getElementById('bolZatvorenoDatum')?.value||'') : '';
   if(!cid || !wid || !od) { alert('Popunite klijenta, radnika i datum.'); return; }
   const client = clients.find(c=>c.id==cid);
   const worker = client?.workers?.find(w=>w.id==wid);
   const napomene = [..._bolNapomene];
   if(editId != null && editId !== 'null') {
     const idx = bolovanjaSvi.findIndex(b=>b.id==editId);
-    if(idx>=0) bolovanjaSvi[idx] = {...bolovanjaSvi[idx], clientId:cid, workerId:wid, od, napomene, zatvoreno, clientNaziv:client?.naziv||'', workerIme:worker?.ime||''};
+    if(idx>=0) bolovanjaSvi[idx] = {...bolovanjaSvi[idx], clientId:cid, workerId:wid, od, napomene, zatvoreno, zatvorenoDatum, clientNaziv:client?.naziv||'', workerIme:worker?.ime||''};
   } else {
-    bolovanjaSvi.push({id:Date.now(), tip:tipB, clientId:cid, workerId:wid, od, napomene, zatvoreno, clientNaziv:client?.naziv||'', workerIme:worker?.ime||''});
+    bolovanjaSvi.push({id:Date.now(), tip:tipB, clientId:cid, workerId:wid, od, napomene, zatvoreno, zatvorenoDatum, clientNaziv:client?.naziv||'', workerIme:worker?.ime||''});
   }
   save();
   closeBolModal();
@@ -3340,7 +3354,7 @@ function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
       <td style="font-weight:500">${b.clientNaziv||'&mdash;'}</td>
       <td>${b.workerIme||'&mdash;'}</td>
       <td style="font-size:12px;white-space:nowrap">${fmtD(b.od)}</td>
-      <td>${zatvBadge}</td>
+      <td>${zatvBadge}${b.zatvorenoDatum?`<div style="font-size:10px;color:var(--txt2);margin-top:2px">${fmtD(b.zatvorenoDatum)}</div>`:''}</td>
       <td style="max-width:260px">${napHtml}</td>
       <td><button class="action-btn" onclick="openBolovanjeModal('${tip}',${b.id})" style="color:${boja}"><i class="ti ti-edit"></i> Izmeni</button></td>
     </tr>`;
