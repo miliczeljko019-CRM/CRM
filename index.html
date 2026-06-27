@@ -3337,7 +3337,14 @@ function deleteBolovanje(id) {
   renderKadrovska();
 }
 
+function bolSekcijToggle(tip) {
+  if(!window._bolCollapsed) window._bolCollapsed = {};
+  window._bolCollapsed[tip] = !window._bolCollapsed[tip];
+  renderKadrovska();
+}
+
 function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
+  const collapsed = window._bolCollapsed && window._bolCollapsed[tip];
   const lista = bolovanjaSvi.filter(b=>b.tip===tip);
   const otvoreni = lista.filter(b=>!b.zatvoreno);
   const zatvoreni = lista.filter(b=>b.zatvoreno);
@@ -3364,26 +3371,30 @@ function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
   const divider = zatvoreni.length && rowsOtv
     ? `<tr><td colspan="6" style="font-size:11px;font-weight:600;color:var(--txt2);padding:5px 12px;background:var(--bg2);letter-spacing:.5px">ZATVORENA</td></tr>`
     : '';
+  const chevron = collapsed
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
   return `
   <div style="margin-top:24px;border-radius:10px;overflow:hidden;border:1.5px solid ${boja}33;background:var(--bg)">
-    <div style="background:${bgCard};padding:12px 18px;display:flex;align-items:center;justify-content:space-between">
+    <div onclick="bolSekcijToggle('${tip}')" style="background:${bgCard};padding:12px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:5px;height:26px;background:${boja};border-radius:3px"></div>
         <div>
           <div style="font-size:15px;font-weight:700;color:${boja}">${naslov}</div>
           <div style="font-size:11px;color:var(--txt2)">${otvoreni.length} aktivnih &middot; ${zatvoreni.length} zatvorenih</div>
         </div>
+        <span style="color:${boja};opacity:0.7;margin-left:2px">${chevron}</span>
       </div>
-      <button onclick="openBolovanjeModal('${tip}',null)" style="padding:6px 14px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+      <button onclick="event.stopPropagation();openBolovanjeModal('${tip}',null)" style="padding:6px 14px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
         <i class="ti ti-plus"></i> Dodaj
       </button>
     </div>
-    ${lista.length===0?`<div style="padding:20px;text-align:center;color:var(--txt2);font-size:13px">Nema unosa.</div>`:`
+    ${collapsed ? '' : (lista.length===0?`<div style="padding:20px;text-align:center;color:var(--txt2);font-size:13px">Nema unosa.</div>`:`
     <div style="overflow-x:auto">
     <table class="client-table" style="margin:0">
       <thead><tr><th>Firma</th><th>Radnik</th><th>Datum od</th><th>Status</th><th>Napomene</th><th>Akcija</th></tr></thead>
       <tbody>${rowsOtv}${divider}${rowsZat}</tbody>
-    </table></div>`}
+    </table></div>`)}
   </div>`;
 }
 
