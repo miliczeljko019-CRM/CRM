@@ -3184,6 +3184,10 @@ function setKadFilter(f) {
 }
 
 // ====== BOLOVANJE & PORODILJSKO ======
+
+// In-memory napomene buffer for current modal
+let _bolNapomene = [];
+
 function openBolovanjeModal(tipB, id) {
   const isEdit = id != null && id !== 'null';
   const existing = isEdit ? bolovanjaSvi.find(b=>b.id==id) : null;
@@ -3193,8 +3197,10 @@ function openBolovanjeModal(tipB, id) {
   const klijentOpts = clients.map(c=>`<option value="${c.id}" ${existing&&existing.clientId==c.id?'selected':''}>${c.naziv}</option>`).join('');
   const initWorkers = initClientId ? (clients.find(c=>c.id==initClientId)?.workers||[]) : [];
   const radnikOpts = initWorkers.map(w=>`<option value="${w.id}" ${existing&&existing.workerId==w.id?'selected':''}>${w.ime||w.id}</option>`).join('');
-  const html = `<div id="bolModalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center">
-  <div style="background:var(--bg);border-radius:12px;padding:28px 32px;min-width:420px;max-width:520px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.22);position:relative">
+  // Init napomene buffer from existing or empty
+  _bolNapomene = existing && Array.isArray(existing.napomene) ? [...existing.napomene] : (existing&&existing.napomene ? [existing.napomene] : []);
+  const html = `<div id="bolModalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)closeBolModal()">
+  <div style="background:var(--bg);border-radius:12px;padding:28px 32px;min-width:440px;max-width:540px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,0.22);max-height:90vh;overflow-y:auto">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
       <div style="width:6px;height:36px;background:${boja};border-radius:3px"></div>
       <div>
@@ -3222,7 +3228,11 @@ function openBolovanjeModal(tipB, id) {
       </div>
       <div>
         <label style="font-size:12px;font-weight:600;color:var(--txt2);display:block;margin-bottom:4px">Napomene</label>
-        <textarea id="bolNapomene" rows="4" placeholder="Upi&#353;i &#353;ta je ura&#273;eno, status, dokumentacija..." style="width:100%;padding:8px 10px;border:1px solid var(--brd2);border-radius:var(--rad);font-size:13px;background:var(--bg);color:var(--txt);resize:vertical;font-family:inherit">${existing?existing.napomene:''}</textarea>
+        <div id="bolNapomeneList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="bolNapomenaInput" placeholder="Nova napomena..." onkeydown="if(event.key==='Enter'){event.preventDefault();bolDodajNapomenu();}" style="flex:1;padding:8px 10px;border:1px solid var(--brd2);border-radius:var(--rad);font-size:13px;background:var(--bg);color:var(--txt)">
+          <button onclick="bolDodajNapomenu()" style="padding:8px 14px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:18px;cursor:pointer;line-height:1;font-weight:300">+</button>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;padding:10px;background:${tipB==='bolovanje30'?'#f0f7ff':'#f5f0ff'};border-radius:var(--rad)">
         <input type="checkbox" id="bolZatvoreno" ${existing&&existing.zatvoreno?'checked':''} style="width:16px;height:16px;cursor:pointer;accent-color:${boja}">
@@ -3240,6 +3250,33 @@ function openBolovanjeModal(tipB, id) {
   const div = document.createElement('div');
   div.innerHTML = html;
   document.body.appendChild(div.firstElementChild);
+  renderBolNapomeneList();
+  document.getElementById('bolNapomenaInput')?.focus();
+}
+
+function renderBolNapomeneList() {
+  const wrap = document.getElementById('bolNapomeneList');
+  if(!wrap) return;
+  if(!_bolNapomene.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--txt2);padding:4px 0">Nema napomena.</div>';
+    return;
+  }
+  wrap.innerHTML = _bolNapomene.map((n,i)=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg2);border-radius:var(--rad);border-left:3px solid var(--brd2)">
+      <span style="font-size:12px;font-weight:700;color:var(--txt2);min-width:18px;margin-top:1px">${i+1}.</span>
+      <span style="font-size:13px;flex:1;line-height:1.4">${n}</span>
+      <button onclick="_bolNapomene.splice(${i},1);renderBolNapomeneList()" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:15px;padding:0;line-height:1;flex-shrink:0">&times;</button>
+    </div>`).join('');
+}
+
+function bolDodajNapomenu() {
+  const inp = document.getElementById('bolNapomenaInput');
+  const val = inp?.value.trim();
+  if(!val) return;
+  _bolNapomene.push(val);
+  inp.value = '';
+  renderBolNapomeneList();
+  inp.focus();
 }
 
 function bolovanjeRefreshRadnici() {
@@ -3262,11 +3299,11 @@ function saveBolovanje(tipB, editId) {
   const cid = +document.getElementById('bolKlijent')?.value;
   const wid = document.getElementById('bolRadnik')?.value;
   const od = document.getElementById('bolOd')?.value;
-  const napomene = document.getElementById('bolNapomene')?.value.trim();
   const zatvoreno = document.getElementById('bolZatvoreno')?.checked;
   if(!cid || !wid || !od) { alert('Popunite klijenta, radnika i datum.'); return; }
   const client = clients.find(c=>c.id==cid);
   const worker = client?.workers?.find(w=>w.id==wid);
+  const napomene = [..._bolNapomene];
   if(editId != null && editId !== 'null') {
     const idx = bolovanjaSvi.findIndex(b=>b.id==editId);
     if(idx>=0) bolovanjaSvi[idx] = {...bolovanjaSvi[idx], clientId:cid, workerId:wid, od, napomene, zatvoreno, clientNaziv:client?.naziv||'', workerIme:worker?.ime||''};
@@ -3279,7 +3316,7 @@ function saveBolovanje(tipB, editId) {
 }
 
 function deleteBolovanje(id) {
-  if(!confirm('Obri&#353;ite ovaj unos?')) return;
+  if(!confirm('Obri\u0161ite ovaj unos?')) return;
   bolovanjaSvi = bolovanjaSvi.filter(b=>b.id!=id);
   save();
   closeBolModal();
@@ -3292,6 +3329,10 @@ function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
   const zatvoreni = lista.filter(b=>b.zatvoreno);
   function fmtD(d){if(!d)return '';const p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
   function makeRow(b) {
+    const niz = Array.isArray(b.napomene) ? b.napomene : (b.napomene ? [b.napomene] : []);
+    const napHtml = niz.length
+      ? niz.map((n,i)=>`<div style="display:flex;gap:5px;margin-bottom:2px"><span style="font-size:10px;font-weight:700;color:var(--txt2);flex-shrink:0">${i+1}.</span><span style="font-size:11px;color:var(--txt2);line-height:1.35">${n}</span></div>`).join('')
+      : '<span style="font-size:11px;color:var(--brd2)">—</span>';
     const zatvBadge = b.zatvoreno
       ? `<span style="font-size:10px;padding:2px 7px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-weight:600">Zatvoreno</span>`
       : `<span style="font-size:10px;padding:2px 7px;background:${tip==='bolovanje30'?'#e3f0fb':'#f0ebfb'};color:${boja};border-radius:10px;font-weight:600">Aktivno</span>`;
@@ -3300,7 +3341,7 @@ function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
       <td>${b.workerIme||'&mdash;'}</td>
       <td style="font-size:12px;white-space:nowrap">${fmtD(b.od)}</td>
       <td>${zatvBadge}</td>
-      <td style="font-size:11px;color:var(--txt2);max-width:220px;white-space:pre-wrap;word-break:break-word">${b.napomene||''}</td>
+      <td style="max-width:260px">${napHtml}</td>
       <td><button class="action-btn" onclick="openBolovanjeModal('${tip}',${b.id})" style="color:${boja}"><i class="ti ti-edit"></i> Izmeni</button></td>
     </tr>`;
   }
@@ -3331,6 +3372,7 @@ function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
     </table></div>`}
   </div>`;
 }
+
 
 function renderCene() {
   const ukupno=clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
