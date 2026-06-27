@@ -3143,6 +3143,9 @@ function renderKadrovska() {
     <div class="stat-card"><div class="stat-label">Na određeno</div><div class="stat-val">${odr}</div></div>
     <div class="stat-card"><div class="stat-label">Ištiče u 30 dana</div><div class="stat-val" ${istice>0?'style="color:#c05f00"':''}>${istice}</div></div>
   </div>
+  ${renderBolovanjeSekcija('bolovanje30', 'Bolovanje 30', '#1a4e7f', '#eef4fb')}
+  ${renderBolovanjeSekcija('porodiljsko', 'Porodiljsko', '#6b3fa0', '#f3eefb')}
+  <div style="margin-top:24px"></div>
   <div class="filter-bar">${chips}
     <div style="margin-left:auto">
       <input type="text" placeholder="Pretraži ime, firmu, JMBG…" value="${srch}" data-kad-input="1" oninput="document.getElementById('kadrovskaContent').dataset.kadSearch=this.value;renderKadrovska()" style="padding:5px 10px;font-size:13px;border:0.5px solid var(--brd2);border-radius:var(--rad);background:var(--bg);color:var(--txt);width:220px">
@@ -3166,8 +3169,6 @@ function renderKadrovska() {
     </tr></thead>
     <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
   </table></div>
-  ${renderBolovanjeSekcija('bolovanje30', 'Bolovanje 30', '#1a4e7f', '#eef4fb')}
-  ${renderBolovanjeSekcija('porodiljsko', 'Porodiljsko', '#6b3fa0', '#f3eefb')}
   `;
   // Restore search focus after innerHTML re-render
   if(_srchActive) {
