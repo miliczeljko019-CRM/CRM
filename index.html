@@ -4452,6 +4452,10 @@ function mesecNaziv(m) {
   const n = ['januar','februar','mart','april','maj','jun','jul','avgust','septembar','oktobar','novembar','decembar'];
   return n[m];
 }
+function mesecNazivLokativ(m) {
+  const n = ['januaru','februaru','martu','aprilu','maju','junu','julu','avgustu','septembru','oktobru','novembru','decembru'];
+  return n[m];
+}
 
 function zaradeKljuc() {
   const danas = new Date();
@@ -4480,7 +4484,7 @@ function prikaziZaradePopupAkoTreba() {
   let html = '';
   if (prijavljeni.length > 0) {
     html += '<div style="margin-bottom:14px">';
-    html += '<div style="font-size:12px;font-weight:700;color:#1a6e1a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">&#x2705; Prijavljeni u mesecu ' + mesIme + '</div>';
+    html += '<div style="font-size:12px;font-weight:700;color:#1a6e1a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">&#x2705; Prijavljeni u ' + mesecNazivLokativ(prevMes) + '</div>';
     grupisuPoFirmi(prijavljeni).forEach(g => {
       html += '<div style="background:#f0fff0;border-radius:8px;border-left:3px solid #2e7d32;padding:8px 12px;margin-bottom:6px">';
       html += '<div style="font-size:13px;font-weight:600;color:#1a1a18">' + g.firma + (g.operater ? ' <span style="font-weight:400;color:#666;font-size:11px">&#xB7; ' + g.operater + '</span>' : '') + '</div>';
@@ -4491,7 +4495,7 @@ function prikaziZaradePopupAkoTreba() {
   }
   if (odjavljeni.length > 0) {
     html += '<div style="margin-bottom:14px">';
-    html += '<div style="font-size:12px;font-weight:700;color:#b71c1c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">&#x274C; Odjavljeni u mesecu ' + mesIme + '</div>';
+    html += '<div style="font-size:12px;font-weight:700;color:#b71c1c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">&#x274C; Odjavljeni u ' + mesecNazivLokativ(prevMes) + '</div>';
     grupisuPoFirmi(odjavljeni).forEach(g => {
       html += '<div style="background:#fff5f5;border-radius:8px;border-left:3px solid #c62828;padding:8px 12px;margin-bottom:6px">';
       html += '<div style="font-size:13px;font-weight:600;color:#1a1a18">' + g.firma + (g.operater ? ' <span style="font-weight:400;color:#666;font-size:11px">&#xB7; ' + g.operater + '</span>' : '') + '</div>';
