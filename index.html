@@ -221,8 +221,8 @@ select{cursor:pointer}
 .client-table td:first-child{text-align:left}
 .client-table tr:last-child td{border-bottom:0.5px solid var(--brd3)}
 .client-table tr:hover td{background:#f8fafc}
-.client-table td:first-child{max-width:200px;white-space:normal;word-break:break-word;line-height:1.4}
-.client-table th:first-child{max-width:200px}
+.client-table td:first-child{min-width:220px;max-width:320px;white-space:normal;word-break:break-word;line-height:1.4}
+.client-table th:first-child{min-width:220px;max-width:320px}
 .table-wrap{overflow-x:auto;width:100%}
 
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:500;white-space:nowrap}
@@ -380,9 +380,9 @@ select{cursor:pointer}
 .pregled-info-bar i{font-size:16px;color:var(--txt2)}
 .pregled-info-bar strong{color:#D32F2F}
 .pregled-table{width:100%;border-collapse:collapse;font-size:12px;border:1px solid var(--brd3)}
-.pregled-table th{text-align:center;padding:8px 6px;color:#64748b;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border:none;border-bottom:1px solid #e6eaf0;white-space:nowrap;background:#fbfcfd}.pregled-table th.sortable{cursor:pointer;user-select:none}.pregled-table th.sortable:hover{background:#d6e8f8;color:var(--blue-dark)}.sort-arrow{font-style:normal;font-size:10px;margin-left:3px;opacity:0.4}.sortable.sort-active .sort-arrow{opacity:1;color:var(--blue-dark)}
-.pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2}
-.pregled-table th.col-tip{min-width:56px}
+.pregled-table th{text-align:center;padding:8px 6px;color:#64748b;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border:none;border-bottom:1px solid #e6eaf0;white-space:normal;word-break:break-word;max-width:70px;line-height:1.25;background:#fbfcfd}.pregled-table th.sortable{cursor:pointer;user-select:none}.pregled-table th.sortable:hover{background:#d6e8f8;color:var(--blue-dark)}.sort-arrow{font-style:normal;font-size:10px;margin-left:3px;opacity:0.4}.sortable.sort-active .sort-arrow{opacity:1;color:var(--blue-dark)}
+.pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2;white-space:nowrap;max-width:none}
+.pregled-table th.col-tip{min-width:56px;white-space:nowrap;max-width:none}
 .pregled-table td{padding:9px 6px;border:0.5px solid var(--brd3);text-align:center;vertical-align:middle}
 .pregled-table td.col-klijent{text-align:left;padding-left:12px;font-size:13px;font-weight:600;white-space:normal;word-break:break-word;max-width:220px;line-height:1.35;position:sticky;left:0;background:#ffffff;z-index:1}
 .pregled-table tr:hover td{background:#f8fafc;transition:background .1s}.pregled-table tr:hover td.col-klijent{background:#f8fafc}
@@ -4018,7 +4018,7 @@ function renderPregled() {
   // Kolone: Zakup | Periodični | Porez na dobit (P+Pl) | PDV | Paušal (P+Pl) | Plata | PPP-PD | OD-O (P+Pl)
   const cols = [
     {id:'zakup',    label:'Zakup',            dual:false},
-    {id:'fisk',     label:'Periodični Izveštaj', dual:false},
+    {id:'fisk',     label:'Periodični<br>Izveštaj', dual:false},
     {id:'pdobit',   label:'Porez na Dobit',   dual:true,  lblA:'Posl.',lblB:'Plać.'},
     {id:'pdv',      label:'PDV',              dual:false},
     {id:'pausal',   label:'Paušal',           dual:true,  lblA:'Posl.',lblB:'Plać.'},
