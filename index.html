@@ -4109,7 +4109,7 @@ function renderPregled() {
         else if(colId==='fisk'){applicable=!!c.fiskalna;done=!!ob['f_'+c.id+'_'+pregledGodina+'_'+pregledMesec];}
         else if(colId==='pdobit'){applicable=pArr.includes('Porez na dobit');done=!!ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['pd_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
         else if(colId==='pdv'){applicable=!!c.pdv;done=!!ob['pdv_'+c.id+'_'+pregledGodina+'_'+pregledMesec];}
-        else if(colId==='pausal'){applicable=c.pravnaForma==='Pašal';done=!!ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
+        else if(colId==='pausal'){applicable=c.pravnaForma==='Paušal';done=!!ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['pau_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
         else if(colId==='plata'){applicable=!!(c.radnici&&c.workers&&c.workers.length>0);done=!!ob['pl_'+c.id+'_'+pregledGodina+'_'+pregledMesec];}
         else if(colId==='pppPd'){applicable=!!(c.radnici&&c.workers&&c.workers.filter(w=>w.pppPd!==false).length>0);done=applicable&&c.workers.filter(w=>w.pppPd!==false).every((w,wi)=>!!ob['ppp_'+c.id+'_w'+wi+'_'+pregledGodina+'_'+pregledMesec]);}
         else if(colId==='odo'){applicable=pArr.includes('OD-O');done=!!ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_poslat']&&!!ob['od_'+c.id+'_'+pregledGodina+'_'+pregledMesec+'_placen'];}
@@ -4285,7 +4285,7 @@ function countUradjenoPregled(ob, god, mes) {
       if(ob['pd_'+c.id+'_'+god+'_'+mes+'_placen']) u++;
     }
     if(c.pdv && ob['pdv_'+c.id+'_'+god+'_'+mes]) u++;
-    if(c.pravnaForma==='Pašal') {
+    if(c.pravnaForma==='Paušal') {
       if(ob['pau_'+c.id+'_'+god+'_'+mes+'_poslat']) u++;
       if(ob['pau_'+c.id+'_'+god+'_'+mes+'_placen']) u++;
     }
