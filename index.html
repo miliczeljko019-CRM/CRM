@@ -804,7 +804,7 @@ select{cursor:pointer}
   <div class="modal-footer">
     <button class="btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy"></i> Sačuvaj izmene</button>
     <button class="btn-secondary" onclick="closeModal()"><i class="ti ti-x"></i> Odustani</button>
-    <button class="btn-danger" style="margin-left:auto" onclick="deleteFromModal()"><i class="ti ti-trash"></i> Obriši klijenta</button>
+    <button id="editModalDelBtn" class="btn-danger" style="margin-left:auto" onclick="deleteFromModal()"><i class="ti ti-trash"></i> Obriši klijenta</button>
   </div>
 </div>
 </div>
@@ -1502,7 +1502,7 @@ function resetForm() {
 }
 
 // ── Modal izmena ──
-function openEdit(id) {
+function openEdit(id, fromKadrovska) {
   const c=clients.find(x=>x.id==id);
   if(!c) { showToast('Klijent nije pronađen (id='+id+')'); return; }
   editingId=id;
@@ -1565,6 +1565,8 @@ function openEdit(id) {
   if(ePoWrap) ePoWrap.style.display = c.privremenaOdjava ? 'flex' : 'none';
   if(ePoDW) ePoDW.innerHTML = dateInputHtml('e_privremenaOdjavaDatum', c.privremenaOdjavaDatum||'', false);
 
+  const delBtn = document.getElementById('editModalDelBtn');
+  if(delBtn) delBtn.style.display = fromKadrovska ? 'none' : '';
   document.getElementById('editModal').classList.remove('hidden');
   document.body.style.overflow='hidden';
 }
@@ -3137,7 +3139,7 @@ function renderKadrovska() {
                 : w.status==='istice'  ? 'style="color:#854F0B;font-weight:500"' : '';
     const doPrikaz = w.neodredjeno ? '—' : fmtD(w.do_);
     const rowStyle = w.status==='istice'||w.status==='isteklo' ? 'style="background:#fffbe6"' : '';
-    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td style="font-size:11px;white-space:nowrap" ${zkCls(w)}>${zkTxt(w)}</td><td><button class="action-btn" onclick="openEdit(${w.clientId})"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
+    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td style="font-size:11px;white-space:nowrap" ${zkCls(w)}>${zkTxt(w)}</td><td><button class="action-btn" onclick="openEdit(${w.clientId}, true)"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
   }).join('');
   const chips = [
     {k:'svi', lbl:'Svi ('+ukupno+')'},
