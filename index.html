@@ -2927,8 +2927,8 @@ function renderDash() {
     const pb = porezArr.includes('Porez na dobit') ? 'b-dobit' : porezArr.includes('Paušalno oporezivanje') ? 'b-ppausl' : porezArr.includes('Porez na dobit - ne plaća') ? 'b-no' : porezArr.includes('OD-O') ? 'b-doo' : 'b-no';
     const porezLabel = porezArr.length > 0 ? porezArr.map(p=>p==='Porez na dobit'?'Na dobit':p==='Paušalno oporezivanje'?'Paušal':p==='Porez na dobit - ne plaća'?'Ne plaća':p).join(' + ') : '—';
     const wh=c.radnici&&c.workers.length>0
-      ?c.workers.map(w=>`<span class="worker-tag">${w.ime}${w.neodredjeno?' · <span style="color:#888;font-style:italic">neodređeno</span>':w.do_?' · do '+fmt(w.do_):''}</span>`).join('')
-      :(c.radnici?'<span class="badge b-yes">Da</span>':'<span class="badge b-no">Ne</span>');
+      ?`<span class="badge b-yes"><i class="ti ti-users" style="font-size:10px;margin-right:3px"></i>${c.workers.length} radnik${c.workers.length===1?'':'a'}</span>`
+      :(c.radnici?'<span class="badge b-yes"><i class="ti ti-users" style="font-size:10px;margin-right:3px"></i>Da</span>':'<span class="badge b-no">Ne</span>');
     const ch=c.cenaMesecna?`<span class="price-tag">${eur(c.cenaMesecna)}</span>`:'<span style="color:var(--txt2);font-size:12px">—</span>';
     const fisk=c.fiskalna?'<span class="badge b-fisk"><i class="ti ti-device-desktop-analytics" style="font-size:10px;margin-right:3px"></i>Da</span>':'<span class="badge b-nofisk">Ne</span>';
     const zakupIkona={'Zakup lokala':'ti-building-store','Zakup vozila':'ti-car','Lokal u vlasništvu':'ti-home-check'};
