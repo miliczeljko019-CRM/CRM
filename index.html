@@ -1716,7 +1716,7 @@ function renderPodsetnici() {
   });
   const grupeU=[
     {tip:'istekao',naslov:'Istekli ugovori radnika',ikona:'ti-alert-circle',items:sviU.filter(x=>x.status.tip==='istekao')},
-    {tip:'uskoro',naslov:'Ugovori ističu u 5 dana',ikona:'ti-clock-exclamation',items:sviU.filter(x=>x.status.tip==='uskoro')},
+    {tip:'uskoro',naslov:'Ugovori ističu u narednih 5 dana',ikona:'ti-clock-exclamation',items:sviU.filter(x=>x.status.tip==='uskoro')},
   ].filter(g=>g.items.length>0);
 
   // --- Rođendani (samo oni u 30 dana) ---
