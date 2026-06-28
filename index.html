@@ -2542,10 +2542,8 @@ function renderPPPPD() {
       </div></td>`;
     });
 
-    const pct = Math.round(uradjeno/12*100);
-    html += `<td style="min-width:70px">
+    html += `<td id="ppp_uk_${s.workerId}" style="min-width:70px">
       <div style="font-size:12px;font-weight:600;color:${uradjeno===12?'#1E8C50':'var(--txt)'}">${uradjeno}/12</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
     </td></tr>`;
   });
 
@@ -2568,7 +2566,15 @@ function toggleObaveza_ppp(key) {
     const god = parseInt(parts[parts.length-2]);
     cell.className = 'mes-cell' + (ob[key] ? ' mes-done' : getCellClass(god, m));
   }
-  updatePPPPDSummary(obavezeGodina, getObaveze(), getPPPPDStavke());
+  // update per-row ukupno
+  const parts2 = key.split('_');
+  const wid = parts2.slice(1, parts2.length-2).join('_');
+  const obNow = getObaveze();
+  let rowCount = 0;
+  for(let m2=0;m2<12;m2++){if(obNow['ppp_'+wid+'_'+obavezeGodina+'_'+m2])rowCount++;}
+  const ukEl = document.getElementById('ppp_uk_'+wid);
+  if(ukEl) ukEl.innerHTML = `<div style="font-size:12px;font-weight:600;color:${rowCount===12?'#1E8C50':'var(--txt)'}">${rowCount}/12</div>`;
+  updatePPPPDSummary(obavezeGodina, obNow, getPPPPDStavke());
 }
 
 function getPPPPDStavke() {
