@@ -3382,7 +3382,9 @@ function bolSekcijToggle(tip) {
 }
 
 function renderBolovanjeSekcija(tip, naslov, boja, bgCard) {
-  const collapsed = window._bolCollapsed && window._bolCollapsed[tip];
+  if(!window._bolCollapsed) window._bolCollapsed = {};
+  if(window._bolCollapsed[tip] === undefined) window._bolCollapsed[tip] = true;
+  const collapsed = window._bolCollapsed[tip];
   const lista = bolovanjaSvi.filter(b=>b.tip===tip);
   const otvoreni = lista.filter(b=>!b.zatvoreno);
   const zatvoreni = lista.filter(b=>b.zatvoreno);
