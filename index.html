@@ -1920,7 +1920,7 @@ function updateObavezeSummary(godina) {
     }
     const elP=document.getElementById('obavezeSummary');
     if(elP) elP.innerHTML=`
-      <div class="obs-card"><div class="obs-label">Paušalista</div><div class="obs-val">${klijenti.length}</div></div>
+      <div class="obs-card"><div class="obs-label">Ukupno Paušalaca</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
         
