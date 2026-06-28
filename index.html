@@ -272,9 +272,9 @@ select{cursor:pointer}
 .s-istekao .podsetnik-row{border-top-color:rgba(211,47,47,.15)}
 
 /* Uskoro — narandžasta */
-.s-uskoro{background:#FFF8EC;border:1px solid #F5C842;border-left:4px solid #E07B00}
-.s-uskoro .podsetnik-header{background:#FFEFC8;color:#6B3A00}
-.s-uskoro .podsetnik-row{border-top-color:rgba(224,123,0,.15)}
+.s-uskoro{background:#FCEBEB;border:1px solid #F7C1C1;border-left:4px solid #A32D2D}
+.s-uskoro .podsetnik-header{background:#F7C1C1;color:#791F1F}
+.s-uskoro .podsetnik-row{border-top-color:rgba(163,45,45,.15)}
 
 /* Aktivan — zelena */
 .s-aktivan{background:#F0FBF4;border:1px solid #7DD4A0;border-left:4px solid #1E8C50}
@@ -292,14 +292,14 @@ select{cursor:pointer}
 .s-rodjendan .podsetnik-row{border-top-color:rgba(192,24,106,.15)}
 
 .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.dot-istekao{background:#D32F2F}.dot-uskoro{background:#E07B00}.dot-aktivan{background:#1E8C50}.dot-bezroka{background:#888}.dot-rodjendan{background:#C0186A}
+.dot-istekao{background:#D32F2F}.dot-uskoro{background:#A32D2D}.dot-aktivan{background:#1E8C50}.dot-bezroka{background:#888}.dot-rodjendan{background:#C0186A}
 
 .p-ime{font-size:13px;font-weight:600;min-width:140px;color:#1a1a18}
 .p-firma{font-size:11px;padding:2px 9px;border-radius:100px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.12);white-space:nowrap;font-weight:500;color:#1a1a18}
 .p-datum{font-size:12px;font-weight:500;margin-left:auto;white-space:nowrap;color:#555}
 .p-status{font-size:11px;font-weight:700;white-space:nowrap;padding:3px 10px;border-radius:100px;letter-spacing:.01em}
 .us-istekao{background:#D32F2F;color:#fff}
-.us-uskoro{background:#E07B00;color:#fff}
+.us-uskoro{background:#A32D2D;color:#fff}
 .us-aktivan{background:#1E8C50;color:#fff}
 .us-bezroka{background:#888;color:#fff}
 .us-rodjendan{background:#C0186A;color:#fff}
@@ -4373,7 +4373,7 @@ function renderObavestenjaBody(items) {
   if(!items.length) return '<div style="text-align:center;padding:2rem;color:#888;font-size:13px">Nema obaveštenja 🎉</div>';
   let html = '';
   items.forEach(it => {
-    const boja = it.tip === 'rodjendan' ? '#C0186A' : it.tip === 'istekao' ? '#D32F2F' : it.tip === 'zk_istekla' ? '#A32D2D' : it.tip === 'zk_danas' ? '#0077AA' : '#E07B00';
+    const boja = it.tip === 'rodjendan' ? '#C0186A' : it.tip === 'istekao' ? '#D32F2F' : it.tip === 'zk_istekla' ? '#A32D2D' : it.tip === 'zk_danas' ? '#0077AA' : '#A32D2D';
     const bgBoja = it.tip === 'rodjendan' ? '#FFF0FA' : it.tip === 'istekao' ? '#FFF5F5' : it.tip === 'zk_istekla' ? '#FFF0F0' : it.tip === 'zk_danas' ? '#F0F7FF' : '#FFFBF0';
     html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:8px;background:'+bgBoja+';border-radius:8px;border-left:3px solid '+boja+'">';
     html += '<span style="font-size:18px;line-height:1.4">'+it.ikona+'</span>';
