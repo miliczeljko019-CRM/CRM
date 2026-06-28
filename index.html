@@ -1920,7 +1920,7 @@ function updateObavezeSummary(godina) {
     }
     const elP=document.getElementById('obavezeSummary');
     if(elP) elP.innerHTML=`
-      <div class="obs-card"><div class="obs-label">Ukupno Paušalaca</div><div class="obs-val">${klijenti.length}</div></div>
+      <div class="obs-card"><div class="obs-label">Paušalista</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
         
@@ -2418,7 +2418,7 @@ function renderPausal() {
             onchange="togglePorez('${kPlacen}')">
         </div></td>`;
     });
-    html += `<td style="min-width:80px;font-size:11px">
+    html += `<td style="min-width:80px;font-size:11px" id="ukupno_pau_${c.id}_${obavezeGodina}">
       <div style="color:#0C447C;font-weight:500">P: ${poslatoUk}/12</div>
       <div style="color:#27500A;font-weight:500">Pl: ${placenoUk}/12</div>
     </td></tr>`;
@@ -2713,7 +2713,7 @@ function renderODO() {
             onchange="togglePorez('${kPlacen}')">
         </div></td>`;
     });
-    html += `<td style="min-width:80px;font-size:11px">
+    html += `<td style="min-width:80px;font-size:11px" id="ukupno_od_${c.id}_${obavezeGodina}">
       <div style="color:#0C447C;font-weight:500">P: ${poslatoUk}/12</div>
       <div style="color:#27500A;font-weight:500">Pl: ${placenoUk}/12</div>
     </td></tr>`;
@@ -2837,7 +2837,7 @@ function renderPorezNaDobit() {
         </div></td>`;
     });
 
-    html += `<td style="min-width:80px;font-size:11px">
+    html += `<td style="min-width:80px;font-size:11px" id="ukupno_pd_${c.id}_${obavezeGodina}">
       <div style="color:#0C447C;font-weight:500">P: ${poslatoUkupno}/12</div>
       <div style="color:#27500A;font-weight:500">Pl: ${placenoUkupno}/12</div>
     </td></tr>`;
@@ -2867,6 +2867,29 @@ function togglePorez(key) {
     }
   }
   updateObavezeSummary(obavezeGodina);
+  // Osvezi UKUPNO td za pau_/od_/pd_ (dual checkboxes)
+  if(key.startsWith('pau_') || key.startsWith('od_') || key.startsWith('pd_')) {
+    const ob2 = getObaveze();
+    const pfx = key.startsWith('pau_') ? 'pau_' : key.startsWith('od_') ? 'od_' : 'pd_';
+    // key format: pfx + clientId + _ + godina + _ + mes + _ + poslat/placen
+    const inner = key.slice(pfx.length);
+    // Izvuci godinu: pretposlednji segment pre _poslat/_placen
+    const segs = inner.split('_');
+    // segs[-1] = poslat/placen, segs[-2] = mes, segs[-3] = godina, ostatak = clientId
+    if(segs.length >= 4) {
+      const godina2 = parseInt(segs[segs.length - 3]);
+      const clientId2 = segs.slice(0, segs.length - 3).join('_');
+      const tdEl = document.getElementById('ukupno_' + pfx + clientId2 + '_' + godina2);
+      if(tdEl) {
+        let posl = 0, plac = 0;
+        for(let m = 0; m < 12; m++) {
+          if(ob2[pfx + clientId2 + '_' + godina2 + '_' + m + '_poslat']) posl++;
+          if(ob2[pfx + clientId2 + '_' + godina2 + '_' + m + '_placen']) plac++;
+        }
+        tdEl.innerHTML = `<div style="color:#0C447C;font-weight:500">P: ${posl}/12</div><div style="color:#27500A;font-weight:500">Pl: ${plac}/12</div>`;
+      }
+    }
+  }
 }
 
 // ── Dashboard ──
