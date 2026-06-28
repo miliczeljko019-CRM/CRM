@@ -1824,6 +1824,15 @@ function toggleObaveza(clientId, godina, mesec, prefix) {
     cell.className = 'mes-cell' + (ob[key] ? ' mes-done' : getCellClass(godina, mesec));
   }
   updateObavezeSummary(godina);
+  // Osvezi ukupno po redu
+  const tdUk = document.getElementById('ukupno_' + (prefix||'') + clientId);
+  if(tdUk) {
+    const ob2 = getObaveze();
+    let uk2 = 0;
+    for(let m=0;m<12;m++) { if(ob2[(prefix||'')+clientId+'_'+godina+'_'+m]) uk2++; }
+    const pct2 = Math.round(uk2/12*100);
+    tdUk.innerHTML = `<div style="font-size:12px;font-weight:600;color:${uk2===12?'#1E8C50':'var(--txt)'}">${uk2}/12</div>`;
+  }
 }
 
 function getCellClass(godina, mesec) {
@@ -1856,11 +1865,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">Klijenata sa zakupom</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Uradjeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${uradjenoTek===ukupnoTek&&ukupnoTek>0?'#1E8C50':'var(--txt)'}">${uradjenoTek} / ${ukupnoTek}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${ukupnoTek>0?Math.round(uradjenoTek/ukupnoTek*100):0}%"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Ukupno ${godina}.</div>
         <div class="obs-val">${uradjenoGod} / ${ukupnoGod}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        
       </div>`;
   } else if(obavezeAktivniTab === 'porez') {
     const klijenti = clients.filter(c=>{const arr=Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);return arr.includes('Porez na dobit');});
@@ -1876,11 +1885,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">Klijenata — porez na dobit</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
+        
       </div>`;
   } else if(obavezeAktivniTab === 'pdv') {
     const klijenti = clients.filter(c=>c.pdv);
@@ -1894,11 +1903,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">PDV obveznika</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Urađeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${uradjenoTek===ukupnoTek&&ukupnoTek>0?'#1E8C50':'var(--txt)'}">${uradjenoTek} / ${ukupnoTek}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${ukupnoTek>0?Math.round(uradjenoTek/ukupnoTek*100):0}%"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Ukupno ${godina}.</div>
         <div class="obs-val">${uradjenoGod} / ${ukupnoGod}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        
       </div>`;
   } else if(obavezeAktivniTab === 'pausal') {
     const klijenti = clients.filter(c=>c.pravnaForma==='Paušal'||c.pravnaForma==='Pausal');
@@ -1914,11 +1923,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">Paušalista</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+        
       </div>`;
   } else if(obavezeAktivniTab === 'odo') {
     const klijenti = clients.filter(c=>{const arr=Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);return arr.includes('OD-O');});
@@ -1934,11 +1943,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">Klijenata — OD-O</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+        
       </div>`;
   } else if(obavezeAktivniTab === 'plata') {
     const klijenti = clients.filter(c=>c.radnici&&c.workers&&c.workers.length>0);
@@ -1952,11 +1961,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">Klijenata sa platama</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Urađeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${uradjenoTek===ukupnoTek&&ukupnoTek>0?'#1E8C50':'var(--txt)'}">${uradjenoTek} / ${ukupnoTek}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${ukupnoTek>0?Math.round(uradjenoTek/ukupnoTek*100):0}%"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Ukupno ${godina}.</div>
         <div class="obs-val">${uradjenoGodMes} / ${ukupnoGodMes}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct2}%"></div></div>
+        
       </div>`;
   } else {
     const klijenti = clients.filter(c=>c.fiskalna);
@@ -1970,11 +1979,11 @@ function updateObavezeSummary(godina) {
       <div class="obs-card"><div class="obs-label">Klijenata sa fiskalnom</div><div class="obs-val">${klijenti.length}</div></div>
       <div class="obs-card"><div class="obs-label">Složeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
         <div class="obs-val" style="color:${uradjenoTek===ukupnoTek&&ukupnoTek>0?'#1E8C50':'var(--txt)'}">${uradjenoTek} / ${ukupnoTek}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${ukupnoTek>0?Math.round(uradjenoTek/ukupnoTek*100):0}%"></div></div>
+        
       </div>
       <div class="obs-card"><div class="obs-label">Ukupno ${godina}.</div>
         <div class="obs-val">${uradjenoGod} / ${ukupnoGod}</div>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        
       </div>`;
   }
 }
@@ -2094,9 +2103,9 @@ function buildObavezeTable(klijenti, prefix, naslov, ikona, prazanTekst, tagFn) 
       </div></td>`;
     });
     const pct = Math.round(uradjeno/12*100);
-    html += `<td style="min-width:70px">
+    html += `<td id="ukupno_${(prefix||'')}${c.id}" style="min-width:70px">
       <div style="font-size:12px;font-weight:600;color:${uradjeno===12?'#1E8C50':'var(--txt)'}">${uradjeno}/12</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      
     </td></tr>`;
   });
 
@@ -2436,11 +2445,11 @@ function updatePausalSummary(godina, ob, klijenti) {
     <div class="obs-card" style="border-top-color:#0A4A6E"><div class="obs-label">Paušalaca</div><div class="obs-val">${uk}</div></div>
     <div class="obs-card" style="border-top-color:#0A4A6E"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+      
     </div>
     <div class="obs-card" style="border-top-color:#0A4A6E"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%;background:#0A4A6E"></div></div>
+      
     </div>`;
 }
 
@@ -2611,11 +2620,11 @@ function updatePPPPDSummary(godina, ob, stavke) {
     <div class="obs-card"><div class="obs-label">Radnika sa PPP-PD</div><div class="obs-val">${uk}</div></div>
     <div class="obs-card"><div class="obs-label">Uradjeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${uradjenoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${uradjenoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(uradjenoTek/uk*100):0}%"></div></div>
+      
     </div>
     <div class="obs-card"><div class="obs-label">Ukupno ${godina}.</div>
       <div class="obs-val">${uradjenoGod} / ${ukGod}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      
     </div>`;
 }
 
@@ -2731,11 +2740,11 @@ function updateODOSummary(godina, ob, klijenti) {
     <div class="obs-card"><div class="obs-label">Klijenata — OD-O</div><div class="obs-val">${uk}</div></div>
     <div class="obs-card"><div class="obs-label">Poslato — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${poslatoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${poslatoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(poslatoTek/uk*100):0}%"></div></div>
+      
     </div>
     <div class="obs-card"><div class="obs-label">Plaćeno — ${MESECI_PUNI[tekMes]} ${tekGod}</div>
       <div class="obs-val" style="color:${placanoTek===uk&&uk>0?'#1E8C50':'var(--txt)'}">${placanoTek} / ${uk}</div>
-      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${uk>0?Math.round(placanoTek/uk*100):0}%"></div></div>
+      
     </div>`;
 }
 
