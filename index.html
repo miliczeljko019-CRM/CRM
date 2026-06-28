@@ -2411,11 +2411,11 @@ function renderPausal() {
       html += `
         <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
           <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
-            onchange="togglePorez('${kPoslat}')">
+            onchange="togglePorezDual('${kPoslat}','pau_',${c.id},${obavezeGodina})">
         </div></td>
         <td><div class="mes-cell${placen?' mes-done':cellBase}" id="cell_${kPlacen}">
           <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
-            onchange="togglePorez('${kPlacen}')">
+            onchange="togglePorezDual('${kPlacen}','pau_',${c.id},${obavezeGodina})">
         </div></td>`;
     });
     html += `<td style="min-width:80px;font-size:11px" id="ukupno_pau_${c.id}_${obavezeGodina}">
@@ -2706,11 +2706,11 @@ function renderODO() {
       html += `
         <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
           <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
-            onchange="togglePorez('${kPoslat}')">
+            onchange="togglePorezDual('${kPoslat}','od_',${c.id},${obavezeGodina})">
         </div></td>
         <td><div class="mes-cell${placen?' mes-done':cellBase}" id="cell_${kPlacen}">
           <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
-            onchange="togglePorez('${kPlacen}')">
+            onchange="togglePorezDual('${kPlacen}','od_',${c.id},${obavezeGodina})">
         </div></td>`;
     });
     html += `<td style="min-width:80px;font-size:11px" id="ukupno_od_${c.id}_${obavezeGodina}">
@@ -2829,11 +2829,11 @@ function renderPorezNaDobit() {
       html += `
         <td><div class="mes-cell${poslat?' mes-done-blue':cellBase}" id="cell_${kPoslat}">
           <input type="checkbox" class="mes-cb cb-blue" id="ob_${kPoslat}" ${poslat?'checked':''}
-            onchange="togglePorez('${kPoslat}')">
+            onchange="togglePorezDual('${kPoslat}','pd_',${c.id},${obavezeGodina})">
         </div></td>
         <td><div class="mes-cell${placen?' mes-done':cellBase}" id="cell_${kPlacen}">
           <input type="checkbox" class="mes-cb" id="ob_${kPlacen}" ${placen?'checked':''}
-            onchange="togglePorez('${kPlacen}')">
+            onchange="togglePorezDual('${kPlacen}','pd_',${c.id},${obavezeGodina})">
         </div></td>`;
     });
 
@@ -2867,25 +2867,33 @@ function togglePorez(key) {
     }
   }
   updateObavezeSummary(obavezeGodina);
-  // Osvezi UKUPNO td za dual-tip (pau_/od_/pd_)
-  if(key.startsWith('pau_')||key.startsWith('od_')||key.startsWith('pd_')){
-    const ob2=getObaveze();
-    const pfx=key.startsWith('pau_')?'pau_':key.startsWith('od_')?'od_':'pd_';
-    const segs=key.slice(pfx.length).split('_');
-    // format: clientId_godina_mes_poslat/placen => segs[-1]=tip, segs[-2]=mes, segs[-3]=godina
-    if(segs.length>=4){
-      const godina2=parseInt(segs[segs.length-3]);
-      const clientId2=segs.slice(0,segs.length-3).join('_');
-      const tdEl=document.getElementById('ukupno_'+pfx+clientId2+'_'+godina2);
-      if(tdEl){
-        let posl=0,plac=0;
-        for(let m=0;m<12;m++){
-          if(ob2[pfx+clientId2+'_'+godina2+'_'+m+'_poslat'])posl++;
-          if(ob2[pfx+clientId2+'_'+godina2+'_'+m+'_placen'])plac++;
-        }
-        tdEl.innerHTML=`<div style="color:#0C447C;font-weight:500">P: ${posl}/12</div><div style="color:#27500A;font-weight:500">Pl: ${plac}/12</div>`;
-      }
+}
+
+function togglePorezDual(key, pfx, clientId, godina) {
+  const ob = getObaveze();
+  ob[key] = !ob[key];
+  saveObaveze(ob);
+  const cb = document.getElementById('ob_'+key);
+  const cell = document.getElementById('cell_'+key);
+  if(cb) cb.checked = !!ob[key];
+  if(cell) {
+    const isPlacen = key.endsWith('_placen');
+    if(ob[key]) cell.className = 'mes-cell ' + (isPlacen ? 'mes-done' : 'mes-done-blue');
+    else {
+      const parts = key.split('_'); const mes = parseInt(parts[parts.length-2]); const god = parseInt(parts[parts.length-3]);
+      cell.className = 'mes-cell' + getCellClass(god, mes);
     }
+  }
+  updateObavezeSummary(obavezeGodina);
+  // Osvezi UKUPNO td u redu
+  const tdEl = document.getElementById('ukupno_' + pfx + clientId + '_' + godina);
+  if(tdEl) {
+    let posl = 0, plac = 0;
+    for(let m = 0; m < 12; m++) {
+      if(ob[pfx + clientId + '_' + godina + '_' + m + '_poslat']) posl++;
+      if(ob[pfx + clientId + '_' + godina + '_' + m + '_placen']) plac++;
+    }
+    tdEl.innerHTML = '<div style="color:#0C447C;font-weight:500">P: ' + posl + '/12</div><div style="color:#27500A;font-weight:500">Pl: ' + plac + '/12</div>';
   }
 }
 
