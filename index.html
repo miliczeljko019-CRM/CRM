@@ -825,7 +825,7 @@ select{cursor:pointer}
 <!-- OBAVESTENJA POPUP -->
 <div id="obavestenjaOverlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(10,22,40,.5);align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto">
   <div style="background:#fff;border-radius:14px;width:100%;max-width:520px;box-shadow:0 12px 48px rgba(0,0,0,.22);position:relative;animation:popupSlideIn .25s ease">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #e8ecf0;background:#f8fafd;border-radius:14px 14px 0 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #dce8f5;background:#f0f6fd;border-radius:14px 14px 0 0">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:20px">&#x1F514;</span>
         <span style="font-size:15px;font-weight:700;color:#0d1e35">Obaveštenja</span>
@@ -837,7 +837,7 @@ select{cursor:pointer}
     </div>
     <div id="obavestenjaBody" style="padding:1rem 1.25rem;max-height:70vh;overflow-y:auto"></div>
     <div style="padding:.75rem 1.25rem;border-top:1px solid #e8ecf0;display:flex;justify-content:flex-end">
-      <button onclick="zatvoriObavestenjaPopup()" style="background:#0A4A6E;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">Zatvori</button>
+      <button onclick="zatvoriObavestenjaPopup()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer">Zatvori</button>
     </div>
   </div>
 </div>
@@ -4373,13 +4373,14 @@ function renderObavestenjaBody(items) {
   if(!items.length) return '<div style="text-align:center;padding:2rem;color:#888;font-size:13px">Nema obaveštenja 🎉</div>';
   let html = '';
   items.forEach(it => {
-    const boja = it.tip === 'rodjendan' ? '#C0186A' : it.tip === 'istekao' ? '#D32F2F' : it.tip === 'zk_istekla' ? '#A32D2D' : it.tip === 'zk_danas' ? '#0077AA' : '#A32D2D';
-    const bgBoja = it.tip === 'rodjendan' ? '#FFF0FA' : it.tip === 'istekao' ? '#FFF5F5' : it.tip === 'zk_istekla' ? '#FFF0F0' : it.tip === 'zk_danas' ? '#F0F7FF' : '#FFFBF0';
+    const jeUgovorCrv = it.tip === 'istekao' || it.tip === 'uskoro';
+    const boja = jeUgovorCrv ? '#A32D2D' : '#2563eb';
+    const bgBoja = jeUgovorCrv ? '#FCEBEB' : '#eef4fd';
     html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:8px;background:'+bgBoja+';border-radius:8px;border-left:3px solid '+boja+'">';
     html += '<span style="font-size:18px;line-height:1.4">'+it.ikona+'</span>';
     html += '<div style="flex:1;min-width:0">';
     html += '<div style="font-size:13px;font-weight:600;color:#1a1a18">'+(it.radnik ? it.radnik+' · ' : '')+it.firma+'</div>';
-    html += '<div style="font-size:12px;color:#555;margin-top:2px">'+it.tekst+'</div>';
+    html += '<div style="font-size:12px;color:#374151;margin-top:2px">'+it.tekst+'</div>';
     html += '</div></div>';
   });
   return html;
