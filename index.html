@@ -1330,6 +1330,15 @@ function addWorker(data) {
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
         <input type="checkbox" id="wpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:var(--blue-600,#1d4ed8);font-weight:600">PPP-PD</span>
       </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="wdopunski-${wc}" ${data?.dopunski?'checked':''}> <span style="color:var(--txt);font-weight:500">Dopunski</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="wpp-${wc}" ${data?.pp?'checked':''}> <span style="color:var(--txt);font-weight:500">PP</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="wugovorDelo-${wc}" ${data?.ugovorDelo?'checked':''}> <span style="color:var(--txt);font-weight:500">Ugovor o delu</span>
+      </label>
       <button onclick="this.closest('.worker-card').nextElementSibling?.remove();this.closest('.worker-card').remove();setTimeout(updateCenaPreview,50)" class="remove-small" style="margin-left:auto"><i class="ti ti-trash"></i> Ukloni</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;padding-top:8px;border-top:0.5px solid var(--brd2);margin-top:4px">
@@ -1424,6 +1433,9 @@ function collectWorkers(prefix, listId) {
     const name=document.getElementById(prefix+'wname-'+id)?.value.trim();
     const neodredjeno=document.getElementById(prefix+'wneodredjeno-'+id)?.checked||false;
     const pppPd=document.getElementById(prefix+'wpppPd-'+id)?.checked !== false;
+    const dopunski=document.getElementById(prefix+'wdopunski-'+id)?.checked||false;
+    const pp=document.getElementById(prefix+'wpp-'+id)?.checked||false;
+    const ugovorDelo=document.getElementById(prefix+'wugovorDelo-'+id)?.checked||false;
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById(prefix+'wjmbg-'+id)?.value.trim()||'',
@@ -1431,6 +1443,9 @@ function collectWorkers(prefix, listId) {
       do_:neodredjeno?'':getDateVal(prefix+'wdo-'+id),
       neodredjeno,
       pppPd,
+      dopunski,
+      pp,
+      ugovorDelo,
       zdravstvenaKnjizica:getDateVal(prefix+'wzk-'+id)
     });
   });
@@ -1607,6 +1622,15 @@ function addEditWorker(data) {
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
         <input type="checkbox" id="ewpppPd-${wc}" ${pppPd?'checked':''}> <span style="color:var(--blue-600,#1d4ed8);font-weight:600">PPP-PD</span>
       </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ewdopunski-${wc}" ${data?.dopunski?'checked':''}> <span style="color:var(--txt);font-weight:500">Dopunski</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ewpp-${wc}" ${data?.pp?'checked':''}> <span style="color:var(--txt);font-weight:500">PP</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="ewugovorDelo-${wc}" ${data?.ugovorDelo?'checked':''}> <span style="color:var(--txt);font-weight:500">Ugovor o delu</span>
+      </label>
       <button onclick="this.closest('.worker-card').nextElementSibling?.remove();this.closest('.worker-card').remove()" class="remove-small" style="margin-left:auto"><i class="ti ti-trash"></i> Ukloni</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;padding-top:8px;border-top:0.5px solid var(--brd2);margin-top:4px">
@@ -1626,6 +1650,9 @@ function saveEdit() {
     const name=document.getElementById('ewname-'+id)?.value.trim();
     const neodredjeno=document.getElementById('ewneodredjeno-'+id)?.checked||false;
     const pppPd=document.getElementById('ewpppPd-'+id)?.checked !== false;
+    const dopunski=document.getElementById('ewdopunski-'+id)?.checked||false;
+    const pp=document.getElementById('ewpp-'+id)?.checked||false;
+    const ugovorDelo=document.getElementById('ewugovorDelo-'+id)?.checked||false;
     if(name) workers.push({
       ime:name,
       jmbg:document.getElementById('ewjmbg-'+id)?.value.trim()||'',
@@ -1633,6 +1660,9 @@ function saveEdit() {
       do_:neodredjeno?'':getDateVal('ewdo-'+id),
       neodredjeno,
       pppPd,
+      dopunski,
+      pp,
+      ugovorDelo,
       zdravstvenaKnjizica:getDateVal('ewzk-'+id)
     });
   });
@@ -3181,7 +3211,7 @@ function renderKadrovska() {
                 : w.status==='istice'  ? 'style="color:#854F0B;font-weight:500"' : '';
     const doPrikaz = w.neodredjeno ? '—' : fmtD(w.do_);
     const rowStyle = w.status==='istice'||w.status==='isteklo' ? 'style="background:#fffbe6"' : '';
-    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td style="font-size:11px;white-space:nowrap" ${zkCls(w)}>${zkTxt(w)}</td><td><button class="action-btn" onclick="openEdit(${w.clientId}, true)"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
+    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td style="font-size:11px;white-space:nowrap" ${zkCls(w)}>${zkTxt(w)}</td><td style="font-size:11px;white-space:nowrap">${[w.pppPd!==false?'<span style="background:#EEF4FF;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600;margin-right:2px">PPP-PD</span>':'',(w.dopunski?'<span style="background:#F0FFF4;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600;margin-right:2px">Dopunski</span>':''),(w.pp?'<span style="background:#FFF7ED;color:#9a3412;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600;margin-right:2px">PP</span>':''),(w.ugovorDelo?'<span style="background:#FAF5FF;color:#6b21a8;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">Ugov.delu</span>':'')'].filter(Boolean).join('')|| '<span style="color:var(--txt2)">\xe2\x80\x94</span>'}</td><td><button class="action-btn" onclick="openEdit(${w.clientId}, true)"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
   }).join('');
   const chips = [
     {k:'svi', lbl:'Svi ('+ukupno+')'},
@@ -3222,9 +3252,10 @@ function renderKadrovska() {
       <th class="sortable${kadSortCol==='do_'?' sort-active':''}" onclick="kadSort('do_')">Datum do <i class="sort-arrow">${kadSortCol==='do_'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
       <th class="sortable${kadSortCol==='jmbg'?' sort-active':''}" onclick="kadSort('jmbg')">JMBG <i class="sort-arrow">${kadSortCol==='jmbg'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
       <th class="sortable${kadSortCol==='zk'?' sort-active':''}" onclick="kadSort('zk')">Zdr. knjižičica <i class="sort-arrow">${kadSortCol==='zk'?(kadSortAsc?'&#9650;':'&#9660;'):'&#8597;'}</i></th>
+      <th>Tip ang.</th>
       <th>Akcija</th>
     </tr></thead>
-    <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
+    <tbody>${rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--txt2)">Nema radnika za izabrani filter</td></tr>'}</tbody>
   </table></div>
   `;
   // Restore search focus after innerHTML re-render
