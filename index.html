@@ -3149,6 +3149,15 @@ function zkTxt(w) {
   if(diff === 0) return prikazD+' <span style="font-size:10px;background:#FFF8E0;color:#A06000;border-radius:3px;padding:1px 5px">Danas ističe!</span>';
   return prikazD;
 }
+
+function tipAngBadges(w) {
+  var b = [];
+  if(w.pppPd !== false) b.push('<span style="background:#EEF4FF;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">PPP-PD</span>');
+  if(w.dopunski) b.push('<span style="background:#F0FFF4;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">Dopunski</span>');
+  if(w.pp) b.push('<span style="background:#FFF7ED;color:#9a3412;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">PP</span>');
+  if(w.ugovorDelo) b.push('<span style="background:#FAF5FF;color:#6b21a8;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">Ugov.delu</span>');
+  return b.join(" ") || '<span style="color:var(--txt2)">—</span>';
+}
 function renderKadrovska() {
   const wrap = document.getElementById('kadrovskaContent');
   if(!wrap) return;
@@ -3211,7 +3220,7 @@ function renderKadrovska() {
                 : w.status==='istice'  ? 'style="color:#854F0B;font-weight:500"' : '';
     const doPrikaz = w.neodredjeno ? '—' : fmtD(w.do_);
     const rowStyle = w.status==='istice'||w.status==='isteklo' ? 'style="background:#fffbe6"' : '';
-    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td style="font-size:11px;white-space:nowrap" ${zkCls(w)}>${zkTxt(w)}</td><td style="font-size:11px">${[w.pppPd!==false?'<span style="background:#EEF4FF;color:#1d4ed8;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">PPP-PD</span>':'',(w.dopunski?'<span style="background:#F0FFF4;color:#166534;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">Dopunski</span>':''),(w.pp?'<span style="background:#FFF7ED;color:#9a3412;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">PP</span>':''),(w.ugovorDelo?'<span style="background:#FAF5FF;color:#6b21a8;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:600">Ugov.delu</span>':'')'].filter(Boolean).join(' ')||'<span style="color:var(--txt2)">—</span>'}</td><td><button class="action-btn" onclick="openEdit(${w.clientId}, true)"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
+    return `<tr ${rowStyle}><td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.firma}</td><td>${w.ime||''}</td><td>${ugovorBadge}</td><td style="font-size:11px;color:var(--txt2);white-space:nowrap">${fmtD(w.od)}</td><td style="font-size:11px;white-space:nowrap" ${doCls}>${doPrikaz}</td><td style="font-family:monospace;font-size:11px;color:var(--txt2)">${w.jmbg||''}</td><td style="font-size:11px;white-space:nowrap" ${zkCls(w)}>${zkTxt(w)}</td><td style="font-size:11px">${tipAngBadges(w)}</td><td><button class="action-btn" onclick="openEdit(${w.clientId}, true)"><i class="ti ti-edit"></i> Izmeni</button></td></tr>`;
   }).join('');
   const chips = [
     {k:'svi', lbl:'Svi ('+ukupno+')'},
