@@ -436,6 +436,16 @@ select{cursor:pointer}
 .mes-filter-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}</style>
 </head>
 <body>
+<!-- IMPORT LOADER OVERLAY -->
+<div id="importLoader">
+  <div class="import-loader-box">
+    <div class="import-loader-spinner"></div>
+    <div class="import-loader-title" id="importLoaderTitle">Uvoz u toku...</div>
+    <div class="import-loader-sub" id="importLoaderSub">Molimo sačekajte</div>
+    <div class="import-loader-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
 <!-- ═══ LOGIN EKRAN ═══ -->
 <div id="loginScreen">
   <div class="login-box">
@@ -845,6 +855,66 @@ select{cursor:pointer}
 </div>
 <style>
 @keyframes popupSlideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ IMPORT LOADER OVERLAY ═══ */
+#importLoader {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.55);
+  backdrop-filter: blur(3px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+#importLoader.active { display: flex; }
+.import-loader-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  min-width: 240px;
+}
+.import-loader-spinner {
+  width: 52px; height: 52px;
+  border: 5px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: importSpin .8s linear infinite;
+}
+@keyframes importSpin { to { transform: rotate(360deg); } }
+.import-loader-dots {
+  display: flex; gap: 6px;
+}
+.import-loader-dots span {
+  width: 8px; height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: importDot 1.2s ease-in-out infinite;
+}
+.import-loader-dots span:nth-child(2) { animation-delay: .2s; }
+.import-loader-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes importDot {
+  0%, 80%, 100% { transform: scale(.6); opacity: .4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.import-loader-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e3a5f;
+  letter-spacing: .01em;
+}
+.import-loader-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: -10px;
+}
 </style>
 
 <script>
@@ -3183,20 +3253,12 @@ function renderKadrovska() {
   const neodr = sviRadnici.filter(w=>w.neodredjeno).length;
   const odr = sviRadnici.filter(w=>!w.neodredjeno).length;
   const istice = sviRadnici.filter(w=>w.status==='istice'||w.status==='isteklo').length;
-  const cntPppPd = sviRadnici.filter(w=>w.pppPd !== false).length;
-  const cntDopunski = sviRadnici.filter(w=>w.dopunski).length;
-  const cntPp = sviRadnici.filter(w=>w.pp).length;
-  const cntUgovorDelo = sviRadnici.filter(w=>w.ugovorDelo).length;
   const activeFilter = (wrap.dataset && wrap.dataset.kadFilter) || 'svi';
   const srch = (wrap.dataset && wrap.dataset.kadSearch) || '';
   let filtered = sviRadnici;
   if(activeFilter==='neodr') filtered = filtered.filter(w=>w.neodredjeno);
   else if(activeFilter==='odr') filtered = filtered.filter(w=>!w.neodredjeno);
   else if(activeFilter==='istice') filtered = filtered.filter(w=>w.status==='istice'||w.status==='isteklo');
-  else if(activeFilter==='pppPd') filtered = filtered.filter(w=>w.pppPd !== false);
-  else if(activeFilter==='dopunski') filtered = filtered.filter(w=>w.dopunski);
-  else if(activeFilter==='pp') filtered = filtered.filter(w=>w.pp);
-  else if(activeFilter==='ugovorDelo') filtered = filtered.filter(w=>w.ugovorDelo);
   if(srch) filtered = filtered.filter(w=>
     (w.ime||''). toLowerCase().includes(srch)||
     (w.firma||''). toLowerCase().includes(srch)||
@@ -3234,28 +3296,11 @@ function renderKadrovska() {
     {k:'svi', lbl:'Svi ('+ukupno+')'},
     {k:'neodr', lbl:'Na neodređeno ('+neodr+')'},
     {k:'odr', lbl:'Na određeno ('+odr+')'},
-    {k:'istice', lbl:'Čeka uskoro / isteklo ('+istice+')', warn:true},
-    {k:'pppPd', lbl:'PPP-PD ('+cntPppPd+')', tipCls:'pppPd'},
-    {k:'dopunski', lbl:'Dopunski ('+cntDopunski+')', tipCls:'dopunski'},
-    {k:'pp', lbl:'PP ('+cntPp+')', tipCls:'pp'},
-    {k:'ugovorDelo', lbl:'Ugov. o delu ('+cntUgovorDelo+')', tipCls:'ugovorDelo'}
+    {k:'istice', lbl:'Čeka uskoro / isteklo ('+istice+')', warn:true}
   ].map(c=>{
     const wCls = c.warn ? ' filter-chip-odjava' : '';
     const aCls = activeFilter===c.k ? ' active' : '';
-    const tipStyles = c.tipCls ? {
-      pppPd:    'border-color:#1d4ed8;color:#1d4ed8',
-      dopunski: 'border-color:#166534;color:#166534',
-      pp:       'border-color:#9a3412;color:#9a3412',
-      ugovorDelo:'border-color:#6b21a8;color:#6b21a8'
-    }[c.tipCls] || '' : '';
-    const tipActiveStyles = c.tipCls && activeFilter===c.k ? {
-      pppPd:    'background:#1d4ed8;color:#fff;border-color:#1d4ed8',
-      dopunski: 'background:#166534;color:#fff;border-color:#166534',
-      pp:       'background:#9a3412;color:#fff;border-color:#9a3412',
-      ugovorDelo:'background:#6b21a8;color:#fff;border-color:#6b21a8'
-    }[c.tipCls] || '' : '';
-    const inlineStyle = tipActiveStyles ? `style="${tipActiveStyles}"` : (tipStyles && !aCls ? `style="${tipStyles}"` : '');
-    return `<button class="filter-chip${wCls}${aCls}" ${inlineStyle} onclick="setKadFilter('${c.k}')">${c.lbl}</button>`;
+    return `<button class="filter-chip${wCls}${aCls}" onclick="setKadFilter('${c.k}')">${c.lbl}</button>`;
   }).join('');
   wrap.innerHTML = `
   <div class="dash-stats" style="margin-bottom:1.25rem">
@@ -3587,6 +3632,7 @@ function importKlijente(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
+  showImportLoader('Uvoz klijenata...', 'Čita se Excel fajl');
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -3667,6 +3713,7 @@ function importKlijente(input) {
         });
         dodat++;
       });
+      hideImportLoader();
       save();
       renderDash();
       let msg = dodat + ' klijent(a) uveženo!';
@@ -3690,6 +3737,7 @@ function importRadnike(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
+  showImportLoader('Uvoz radnika...', 'Čita se Excel fajl');
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -3766,6 +3814,7 @@ function importRadnike(input) {
         dodatRadnika++;
       });
 
+      hideImportLoader();
       save();
       renderDash();
       let msg = dodatRadnika + ' radnik(a) uvezeno kod ' + dotaknuteFirme.size + ' klijenata!';
@@ -4448,6 +4497,19 @@ function countNeuradjenoPregled(ob, god, mes) {
   return n;
 }
 
+
+function showImportLoader(title, sub) {
+  var el = document.getElementById('importLoader');
+  var t = document.getElementById('importLoaderTitle');
+  var s = document.getElementById('importLoaderSub');
+  if(t) t.textContent = title || 'Uvoz u toku...';
+  if(s) s.textContent = sub || 'Molimo sačekajte';
+  if(el) el.classList.add('active');
+}
+function hideImportLoader() {
+  var el = document.getElementById('importLoader');
+  if(el) el.classList.remove('active');
+}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 
