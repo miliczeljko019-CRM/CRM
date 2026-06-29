@@ -1182,6 +1182,8 @@ let editWorkerCount = 0;
 let currentFilter = 'all';
 let collapsedGroups = {};
 let editingId = null;
+let kadActiveFilters = ['svi'];
+let kadSearchVal = '';
 
 function eur(v) { return '€' + parseFloat(v||0).toLocaleString('de-DE',{minimumFractionDigits:0,maximumFractionDigits:2}); }
 function fmtDate(iso) {
@@ -3257,23 +3259,20 @@ function renderKadrovska() {
   const cntDopunski = sviRadnici.filter(w=>w.dopunski).length;
   const cntPp = sviRadnici.filter(w=>w.pp).length;
   const cntUgovorDelo = sviRadnici.filter(w=>w.ugovorDelo).length;
-  const _kadFiltersRaw = (wrap.dataset && wrap.dataset.kadFilters) || '';
-  const activeFilters = _kadFiltersRaw ? _kadFiltersRaw.split(',') : ['svi'];
-  const srch = (wrap.dataset && wrap.dataset.kadSearch) || '';
+  const activeFilters = kadActiveFilters;
+  const srch = kadSearchVal;
   let filtered = sviRadnici;
   if(!activeFilters.includes('svi')) {
-    filtered = filtered.filter(w => {
-      return activeFilters.every(f => {
-        if(f==='neodr') return w.neodredjeno;
-        if(f==='odr') return !w.neodredjeno;
-        if(f==='istice') return w.status==='istice'||w.status==='isteklo';
-        if(f==='pppPd') return w.pppPd !== false;
-        if(f==='dopunski') return w.dopunski;
-        if(f==='pp') return w.pp;
-        if(f==='ugovorDelo') return w.ugovorDelo;
-        return true;
-      });
-    });
+    filtered = filtered.filter(w => activeFilters.every(f => {
+      if(f==='neodr') return w.neodredjeno;
+      if(f==='odr') return !w.neodredjeno;
+      if(f==='istice') return w.status==='istice'||w.status==='isteklo';
+      if(f==='pppPd') return w.pppPd !== false;
+      if(f==='dopunski') return w.dopunski;
+      if(f==='pp') return w.pp;
+      if(f==='ugovorDelo') return w.ugovorDelo;
+      return true;
+    }));
   }
   if(srch) filtered = filtered.filter(w=>
     (w.ime||''). toLowerCase().includes(srch)||
@@ -3338,7 +3337,7 @@ function renderKadrovska() {
   <div style="margin-top:24px"></div>
   <div class="filter-bar">${chips}
     <div style="margin-left:auto">
-      <input type="text" placeholder="Pretraži ime, firmu, JMBG…" value="${srch}" data-kad-input="1" oninput="document.getElementById('kadrovskaContent').dataset.kadSearch=this.value;renderKadrovska()" style="padding:5px 10px;font-size:13px;border:0.5px solid var(--brd2);border-radius:var(--rad);background:var(--bg);color:var(--txt);width:220px">
+      <input type="text" placeholder="Pretraži ime, firmu, JMBG…" value="${srch}" data-kad-input="1" oninput="document.getElementById('kadrovskaContent').value;kadSearchVal=this.value;renderKadrovska()" style="padding:5px 10px;font-size:13px;border:0.5px solid var(--brd2);border-radius:var(--rad);background:var(--bg);color:var(--txt);width:220px">
     </div>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -3369,22 +3368,17 @@ function renderKadrovska() {
 }
 
 function toggleKadFilter(f) {
-  const wrap = document.getElementById('kadrovskaContent');
-  if(!wrap) return;
-  const raw = wrap.dataset.kadFilters || '';
-  let active = raw ? raw.split(',') : ['svi'];
   if(f === 'svi') {
-    active = ['svi'];
+    kadActiveFilters = ['svi'];
   } else {
-    active = active.filter(x => x !== 'svi');
-    if(active.includes(f)) {
-      active = active.filter(x => x !== f);
-      if(active.length === 0) active = ['svi'];
+    kadActiveFilters = kadActiveFilters.filter(x => x !== 'svi');
+    if(kadActiveFilters.includes(f)) {
+      kadActiveFilters = kadActiveFilters.filter(x => x !== f);
+      if(kadActiveFilters.length === 0) kadActiveFilters = ['svi'];
     } else {
-      active.push(f);
+      kadActiveFilters.push(f);
     }
   }
-  wrap.dataset.kadFilters = active.join(',');
   renderKadrovska();
 }
 function setKadFilter(f) { toggleKadFilter(f); }
