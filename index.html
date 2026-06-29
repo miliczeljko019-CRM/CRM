@@ -929,6 +929,8 @@ let accessToken  = null;
 let driveFileId  = null;
 let saveTimer    = null;
 let userInfo     = {};
+let tokenClient  = null;
+let refreshTimer = null;
 
 // ── Client ID ──
 function getClientId() {
@@ -942,6 +944,38 @@ function getClientId() {
 }
 
 // ── OAuth login (GIS popup) ──
+// ── Token refresh helpers ──
+function onTokenReceived(resp, isRefresh) {
+  if(resp.error) {
+    if(!isRefresh) alert('Greška pri prijavi: ' + resp.error);
+    return;
+  }
+  accessToken = resp.access_token;
+  const expiresIn = (resp.expires_in || 3600);
+  const exp = Date.now() + expiresIn * 1000 - 60000;
+  localStorage.setItem('knjg_access_token', accessToken);
+  localStorage.setItem('knjg_token_expires', exp);
+  // Schedule next silent refresh 5 minutes before expiry
+  clearTimeout(refreshTimer);
+  const refreshIn = Math.max((expiresIn - 300) * 1000, 60000);
+  refreshTimer = setTimeout(silentRefresh, refreshIn);
+  if(!isRefresh) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').style.display = 'block';
+    getUserInfo().then(info => {
+      if(info && info.email) localStorage.setItem('knjg_login_hint', info.email);
+      sessionStorage.removeItem('knjg_popup_skriveno');
+      loadFromDrive();
+    });
+  }
+}
+
+function silentRefresh() {
+  if(!tokenClient) return;
+  tokenClient.callback = (resp) => onTokenReceived(resp, true);
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
 function startLogin() {
   const cid = getClientId();
   if(!cid || !cid.includes('.apps.googleusercontent.com')) {
@@ -949,26 +983,13 @@ function startLogin() {
     return;
   }
   const hint = localStorage.getItem('knjg_login_hint') || '';
-  const client = google.accounts.oauth2.initTokenClient({
+  tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: cid,
     scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     hint: hint,
-    callback: (resp) => {
-      if(resp.error) { alert('Greška pri prijavi: ' + resp.error); return; }
-      accessToken = resp.access_token;
-      const exp = Date.now() + (resp.expires_in || 3600)*1000 - 60000;
-      localStorage.setItem('knjg_access_token', accessToken);
-      localStorage.setItem('knjg_token_expires', exp);
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('mainApp').style.display = 'block';
-      getUserInfo().then(info => {
-        if(info && info.email) localStorage.setItem('knjg_login_hint', info.email);
-        sessionStorage.removeItem('knjg_popup_skriveno');
-        loadFromDrive();
-      });
-    }
+    callback: (resp) => onTokenReceived(resp, false)
   });
-  client.requestAccessToken({ prompt: hint ? '' : 'select_account' });
+  tokenClient.requestAccessToken({ prompt: hint ? '' : 'select_account' });
 }
 
 function signOut() {
@@ -1004,12 +1025,26 @@ function loadStoredToken() {
 }
 
 // ── Drive API helpers ──
-async function driveRequest(url, options={}) {
+async function driveRequest(url, options={}, _retry=false) {
   const r = await fetch(url, {
     ...options,
     headers: { 'Authorization': 'Bearer ' + accessToken, ...(options.headers||{}) }
   });
-  if(r.status === 401) { signOut(); throw new Error('Token istekao'); }
+  if(r.status === 401) {
+    if(_retry || !tokenClient) { signOut(); throw new Error('Token istekao'); }
+    // Try silent refresh then retry the request once
+    await new Promise((resolve, reject) => {
+      const prev = tokenClient.callback;
+      tokenClient.callback = (resp) => {
+        tokenClient.callback = prev;
+        if(resp.error) { reject(new Error(resp.error)); return; }
+        onTokenReceived(resp, true);
+        resolve();
+      };
+      tokenClient.requestAccessToken({ prompt: '' });
+    });
+    return driveRequest(url, options, true);
+  }
   return r;
 }
 
@@ -1149,6 +1184,23 @@ function saveObaveze(ob) {
 // ── Init: check token → load data → show app ──
 async function initApp() {
   const hasToken = loadStoredToken();
+  // Init tokenClient so silent refresh works after F5 reload
+  const cid = localStorage.getItem('knjg_oauth_client_id') || '';
+  if(cid && cid.includes('.apps.googleusercontent.com') && typeof google !== 'undefined') {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid,
+      scope: SCOPES + ' https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+      hint: localStorage.getItem('knjg_login_hint') || '',
+      callback: (resp) => onTokenReceived(resp, true)
+    });
+    // Schedule refresh based on remaining token life
+    const exp = parseInt(localStorage.getItem('knjg_token_expires') || '0');
+    const remaining = exp - Date.now();
+    if(remaining > 0) {
+      const refreshIn = Math.max(remaining - 300000, 60000);
+      refreshTimer = setTimeout(silentRefresh, refreshIn);
+    }
+  }
   if(!hasToken) {
     const stored = localStorage.getItem('knjg_oauth_client_id');
     if(stored) document.getElementById('clientIdInput').value = stored;
