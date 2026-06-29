@@ -3257,16 +3257,24 @@ function renderKadrovska() {
   const cntDopunski = sviRadnici.filter(w=>w.dopunski).length;
   const cntPp = sviRadnici.filter(w=>w.pp).length;
   const cntUgovorDelo = sviRadnici.filter(w=>w.ugovorDelo).length;
-  const activeFilter = (wrap.dataset && wrap.dataset.kadFilter) || 'svi';
+  const _kadFiltersRaw = (wrap.dataset && wrap.dataset.kadFilters) || '';
+  const activeFilters = _kadFiltersRaw ? _kadFiltersRaw.split(',') : ['svi'];
   const srch = (wrap.dataset && wrap.dataset.kadSearch) || '';
   let filtered = sviRadnici;
-  if(activeFilter==='neodr') filtered = filtered.filter(w=>w.neodredjeno);
-  else if(activeFilter==='odr') filtered = filtered.filter(w=>!w.neodredjeno);
-  else if(activeFilter==='istice') filtered = filtered.filter(w=>w.status==='istice'||w.status==='isteklo');
-  else if(activeFilter==='pppPd') filtered = filtered.filter(w=>w.pppPd !== false);
-  else if(activeFilter==='dopunski') filtered = filtered.filter(w=>w.dopunski);
-  else if(activeFilter==='pp') filtered = filtered.filter(w=>w.pp);
-  else if(activeFilter==='ugovorDelo') filtered = filtered.filter(w=>w.ugovorDelo);
+  if(!activeFilters.includes('svi')) {
+    filtered = filtered.filter(w => {
+      return activeFilters.every(f => {
+        if(f==='neodr') return w.neodredjeno;
+        if(f==='odr') return !w.neodredjeno;
+        if(f==='istice') return w.status==='istice'||w.status==='isteklo';
+        if(f==='pppPd') return w.pppPd !== false;
+        if(f==='dopunski') return w.dopunski;
+        if(f==='pp') return w.pp;
+        if(f==='ugovorDelo') return w.ugovorDelo;
+        return true;
+      });
+    });
+  }
   if(srch) filtered = filtered.filter(w=>
     (w.ime||''). toLowerCase().includes(srch)||
     (w.firma||''). toLowerCase().includes(srch)||
@@ -3311,11 +3319,12 @@ function renderKadrovska() {
     {k:'ugovorDelo', lbl:'Ugov. o delu ('+cntUgovorDelo+')', tipCls:'ugovorDelo'}
   ].map(c=>{
     const wCls = c.warn ? ' filter-chip-odjava' : '';
-    const aCls = activeFilter===c.k ? ' active' : '';
+    const _isActive = activeFilters.includes(c.k);
+    const aCls = _isActive ? ' active' : '';
     const _tipColors = {pppPd:'#1d4ed8',dopunski:'#166534',pp:'#9a3412',ugovorDelo:'#6b21a8'};
     const _tc = c.tipCls ? _tipColors[c.tipCls] : null;
-    const inlineStyle = _tc ? (activeFilter===c.k ? `style="background:${_tc};color:#fff;border-color:${_tc}"` : `style="border-color:${_tc};color:${_tc}"`) : '';
-    return `<button class="filter-chip${wCls}${aCls}" ${inlineStyle} onclick="setKadFilter('${c.k}')">${c.lbl}</button>`;
+    const inlineStyle = _tc ? (_isActive ? `style="background:${_tc};color:#fff;border-color:${_tc}"` : `style="border-color:${_tc};color:${_tc}"`) : '';
+    return `<button class="filter-chip${wCls}${aCls}" ${inlineStyle} onclick="toggleKadFilter('${c.k}')">${c.lbl}</button>`;
   }).join('');
   wrap.innerHTML = `
   <div class="dash-stats" style="margin-bottom:1.25rem">
@@ -3359,11 +3368,26 @@ function renderKadrovska() {
   }
 }
 
-function setKadFilter(f) {
+function toggleKadFilter(f) {
   const wrap = document.getElementById('kadrovskaContent');
-  if(wrap) wrap.dataset.kadFilter = f;
+  if(!wrap) return;
+  const raw = wrap.dataset.kadFilters || '';
+  let active = raw ? raw.split(',') : ['svi'];
+  if(f === 'svi') {
+    active = ['svi'];
+  } else {
+    active = active.filter(x => x !== 'svi');
+    if(active.includes(f)) {
+      active = active.filter(x => x !== f);
+      if(active.length === 0) active = ['svi'];
+    } else {
+      active.push(f);
+    }
+  }
+  wrap.dataset.kadFilters = active.join(',');
   renderKadrovska();
 }
+function setKadFilter(f) { toggleKadFilter(f); }
 
 // ====== BOLOVANJE & PORODILJSKO ======
 
