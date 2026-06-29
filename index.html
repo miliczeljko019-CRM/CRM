@@ -3253,12 +3253,20 @@ function renderKadrovska() {
   const neodr = sviRadnici.filter(w=>w.neodredjeno).length;
   const odr = sviRadnici.filter(w=>!w.neodredjeno).length;
   const istice = sviRadnici.filter(w=>w.status==='istice'||w.status==='isteklo').length;
+  const cntPppPd = sviRadnici.filter(w=>w.pppPd !== false).length;
+  const cntDopunski = sviRadnici.filter(w=>w.dopunski).length;
+  const cntPp = sviRadnici.filter(w=>w.pp).length;
+  const cntUgovorDelo = sviRadnici.filter(w=>w.ugovorDelo).length;
   const activeFilter = (wrap.dataset && wrap.dataset.kadFilter) || 'svi';
   const srch = (wrap.dataset && wrap.dataset.kadSearch) || '';
   let filtered = sviRadnici;
   if(activeFilter==='neodr') filtered = filtered.filter(w=>w.neodredjeno);
   else if(activeFilter==='odr') filtered = filtered.filter(w=>!w.neodredjeno);
   else if(activeFilter==='istice') filtered = filtered.filter(w=>w.status==='istice'||w.status==='isteklo');
+  else if(activeFilter==='pppPd') filtered = filtered.filter(w=>w.pppPd !== false);
+  else if(activeFilter==='dopunski') filtered = filtered.filter(w=>w.dopunski);
+  else if(activeFilter==='pp') filtered = filtered.filter(w=>w.pp);
+  else if(activeFilter==='ugovorDelo') filtered = filtered.filter(w=>w.ugovorDelo);
   if(srch) filtered = filtered.filter(w=>
     (w.ime||''). toLowerCase().includes(srch)||
     (w.firma||''). toLowerCase().includes(srch)||
@@ -3296,11 +3304,18 @@ function renderKadrovska() {
     {k:'svi', lbl:'Svi ('+ukupno+')'},
     {k:'neodr', lbl:'Na neodređeno ('+neodr+')'},
     {k:'odr', lbl:'Na određeno ('+odr+')'},
-    {k:'istice', lbl:'Čeka uskoro / isteklo ('+istice+')', warn:true}
+    {k:'istice', lbl:'Čeka uskoro / isteklo ('+istice+')', warn:true},
+    {k:'pppPd', lbl:'PPP-PD ('+cntPppPd+')', tipCls:'pppPd'},
+    {k:'dopunski', lbl:'Dopunski ('+cntDopunski+')', tipCls:'dopunski'},
+    {k:'pp', lbl:'PP ('+cntPp+')', tipCls:'pp'},
+    {k:'ugovorDelo', lbl:'Ugov. o delu ('+cntUgovorDelo+')', tipCls:'ugovorDelo'}
   ].map(c=>{
     const wCls = c.warn ? ' filter-chip-odjava' : '';
     const aCls = activeFilter===c.k ? ' active' : '';
-    return `<button class="filter-chip${wCls}${aCls}" onclick="setKadFilter('${c.k}')">${c.lbl}</button>`;
+    const _tipColors = {pppPd:'#1d4ed8',dopunski:'#166534',pp:'#9a3412',ugovorDelo:'#6b21a8'};
+    const _tc = c.tipCls ? _tipColors[c.tipCls] : null;
+    const inlineStyle = _tc ? (activeFilter===c.k ? `style="background:${_tc};color:#fff;border-color:${_tc}"` : `style="border-color:${_tc};color:${_tc}"`) : '';
+    return `<button class="filter-chip${wCls}${aCls}" ${inlineStyle} onclick="setKadFilter('${c.k}')">${c.lbl}</button>`;
   }).join('');
   wrap.innerHTML = `
   <div class="dash-stats" style="margin-bottom:1.25rem">
