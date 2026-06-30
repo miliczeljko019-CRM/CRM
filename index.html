@@ -49,7 +49,7 @@
 .sync-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);padding:6px 10px;background:var(--bg2);border-radius:var(--rad);margin-bottom:1rem}
 .sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .sync-dot.ok{background:#1E8C50}
-.sync-dot.saving{background:#E07B00;animation:pulse .8s infinite}
+.sync-dot.saving{background:#D32F2F;animation:pulse .8s infinite}
 .sync-dot.error{background:#D32F2F}
 .sync-dot.offline{background:#AAA}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -353,7 +353,7 @@ select{cursor:pointer}
 .mes-done,.mes-done-blue{border-radius:3px}
 .cb-blue{}
 .mes-future{opacity:.35}
-.mes-current{background:#FFF8EC;border-radius:3px;outline:1.5px solid #E07B00;outline-offset:-1px}
+.mes-current{background:#FDECEC;border-radius:3px;outline:1.5px solid #D32F2F;outline-offset:-1px}
 .obaveze-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
 .obs-card{background:#fff;border-radius:var(--rad-lg);padding:12px 14px;border:2px solid var(--blue-light);box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .obs-label{font-size:11px;color:var(--txt2);margin-bottom:3px}
@@ -2152,7 +2152,7 @@ function getMesFilterBarHtml(showPoslatPlacen) {
   html += `<button class="mes-filter-chip${obavezeFilter==='sve'?' active':''}" onclick="toggleMesFilter('sve')">
     Svi meseci</button>`;
   html += `<button class="mes-filter-chip${obavezeFilter==='tekuci'?' active':''}" onclick="toggleMesFilter('tekuci')">
-    <span class="mes-filter-dot" style="background:#FFF8EC;outline:1.5px solid #E07B00;outline-offset:-1px"></span>
+    <span class="mes-filter-dot" style="background:#FFF8EC;outline:1.5px solid #D32F2F;outline-offset:-1px"></span>
     Tekući (${mesIme})</button>`;
   if(showPoslatPlacen) {
     html += `<button class="mes-filter-chip${obavezeFilter==='poslato'?' active':''}" onclick="toggleMesFilter('poslato')">
@@ -2235,7 +2235,7 @@ function buildObavezeTable(klijenti, prefix, naslov, ikona, prazanTekst, tagFn) 
   html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
   visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+    html += `<th class="mes-label-header" style="${isTek?'color:#D32F2F;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr></thead><tbody>';
 
@@ -2532,7 +2532,7 @@ function renderPausal() {
   html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
   visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#D32F2F;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr>';
   html += '<tr><th class="col-naziv"></th>';
@@ -2671,7 +2671,7 @@ function renderPPPPD() {
   html += '<th style="min-width:140px;text-align:left;padding:8px 10px;font-size:11px;color:var(--txt2);font-weight:500;text-transform:uppercase;letter-spacing:.05em">Radnik</th>';
   visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+    html += `<th class="mes-label-header" style="${isTek?'color:#D32F2F;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr></thead><tbody>';
 
@@ -2826,7 +2826,7 @@ function renderODO() {
   html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
   visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#D32F2F;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr>';
   html += '<tr><th class="col-naziv"></th>';
@@ -2950,7 +2950,7 @@ function renderPorezNaDobit() {
   html += '<div class="table-wrap"><table class="obaveze-table"><thead><tr><th class="col-naziv">Klijent</th>';
   visibleMonths.forEach(i => {
     const isTek = obavezeGodina===tekGod && i===tekMes;
-    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#E07B00;font-weight:700':''}">${MESECI[i]}</th>`;
+    html += `<th colspan="2" class="mes-label-header" style="${isTek?'color:#D32F2F;font-weight:700':''}">${MESECI[i]}</th>`;
   });
   html += '<th>Ukupno</th></tr>';
   html += '<tr><th class="col-naziv"></th>';
@@ -3260,7 +3260,7 @@ function zkCls(w) {
   const d = new Date(w.zdravstvenaKnjizica); d.setHours(0,0,0,0);
   const diff = Math.round((d - danas) / 86400000);
   if(diff < 0) return 'style="color:#A32D2D;font-weight:500"';
-  if(diff === 0) return 'style="color:#E07B00;font-weight:700"';
+  if(diff === 0) return 'style="color:#D32F2F;font-weight:700"';
   return '';
 }
 function zkTxt(w) {
@@ -3981,7 +3981,7 @@ function renderCiljevi() {
   const godisnji = mesecni * 12;
 
   function pct(val, cilj) { return cilj>0 ? Math.min(Math.round(val/cilj*100),100) : 0; }
-  function barClr(p) { return p>=100?'#1E8C50':p>=60?'#E07B00':'#D32F2F'; }
+  function barClr(p) { return p>=100?'#1E8C50':p>=60?'#D32F2F':'#D32F2F'; }
 
   function ciljRow(label, val, valFmt, key, placeholder, unit, badge) {
     const c = parseFloat(ciljevi[key])||0;
