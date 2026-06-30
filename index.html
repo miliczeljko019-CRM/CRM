@@ -345,13 +345,13 @@ select{cursor:pointer}
 .obaveze-table tr:last-child td{border-bottom:none}
 
 .obaveze-table tr.odjava-row td{background:rgba(192,57,43,0.07)}
-.obaveze-table tr.odjava-row:hover td{background:rgba(192,57,43,0.13)!important}.mes-cell{width:36px;height:30px;display:flex;align-items:center;justify-content:center;margin:0 auto}
-.mes-cb{width:16px;height:16px;cursor:pointer;accent-color:#1E8C50}
-.mes-done{background:#E8F8E8;border-radius:3px}
-.mes-done-blue{background:#DCEEFF;border-radius:3px}
-.mes-done .mes-cb{accent-color:#1E8C50}
-.mes-done-blue .mes-cb{accent-color:#0C447C}
-.cb-blue{accent-color:#0C447C}
+.obaveze-table tr.odjava-row:hover td{background:rgba(192,57,43,0.13)!important}.mes-cell{width:36px;height:36px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.mes-cb{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:24px;height:24px;border-radius:7px;background:#eef1f5;border:none;cursor:pointer;position:relative;display:inline-block;transition:background .15s,box-shadow .15s;outline:none}
+.mes-cb:hover{background:#e2e7ee}
+.mes-cb:checked{background:#3b82f6;box-shadow:0 1px 3px rgba(59,130,246,.4)}
+.mes-cb:checked::after{content:'';position:absolute;left:50%;top:46%;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:translate(-50%,-50%) rotate(45deg)}
+.mes-done,.mes-done-blue{border-radius:3px}
+.cb-blue{}
 .mes-future{opacity:.35}
 .mes-current{background:#FFF8EC;border-radius:3px;outline:1.5px solid #E07B00;outline-offset:-1px}
 .obaveze-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
@@ -402,15 +402,21 @@ select{cursor:pointer}
 .st-icon{font-size:15px;font-weight:700;line-height:1}
 .st-lbl{font-size:9px;font-weight:600;letter-spacing:.02em;line-height:1.2;text-align:center}
 
+/* Plavi "stiklirano" kvadratić (checkbox stil) za sve urađene/stiklirane stavke */
+.st-done .st-icon{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:7px;background:#3b82f6;color:#fff!important;font-size:12px;font-weight:800;line-height:1;box-shadow:0 1px 3px rgba(59,130,246,.4)}
+.st-todo .st-icon{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:7px;background:var(--bg2,#eef1f5);color:transparent!important;font-size:0;line-height:1}
+
 /* Dual cell (Poslat + Plaćen) */
 .dual-cell{display:inline-flex;flex-direction:column;align-items:center;gap:3px;cursor:default;min-width:60px}
 .dual-row{display:flex;align-items:center;gap:4px;cursor:pointer;border-radius:4px;padding:2px 5px;transition:background .12s}
 .dual-row:hover{background:rgba(0,0,0,.06)}
 .dual-icon{font-size:13px;font-weight:700;line-height:1}
 .dual-lbl{font-size:9px;font-weight:600;letter-spacing:.01em}
-.dual-done-blue .dual-icon,.dual-done-blue .dual-lbl{color:#0C447C}
-.dual-done-green .dual-icon,.dual-done-green .dual-lbl{color:#1E8C50}
+.dual-done-blue .dual-lbl{color:#0C447C}
+.dual-done-green .dual-lbl{color:#1E8C50}
 .dual-todo .dual-icon,.dual-todo .dual-lbl{color:#D32F2F}
+.dual-todo .dual-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:6px;background:var(--bg2,#eef1f5);color:transparent!important;font-size:0;line-height:1}
+.dual-done-blue .dual-icon,.dual-done-green .dual-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:6px;background:#3b82f6;color:#fff!important;font-size:11px;font-weight:800;line-height:1;box-shadow:0 1px 2px rgba(59,130,246,.4)}
 
 /* Ograniči širinu sadržaja stranica na max-width kao app */
 .page-inner{max-width:980px;margin:0 auto;width:100%}
@@ -4484,7 +4490,7 @@ function stCellPPP(radnici, ob, clientId, god, mes) {
     const cls  = done ? 'st-done' : 'st-todo';
     const name = w.ime ? w.ime.split(' ')[0] : 'Radnik';
     inner += `<span class="${cls} dual-row" onclick="togglePregledSimple('${realKey}')" style="min-width:64px;justify-content:flex-start;gap:5px">
-      <span style="font-size:12px;font-weight:700">${icon}</span>
+      <span class="st-icon" style="font-size:12px;font-weight:700">${icon}</span>
       <span style="font-size:10px;font-weight:600">${name}</span>
     </span>`;
   });
