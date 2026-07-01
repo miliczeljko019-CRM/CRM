@@ -352,7 +352,7 @@ select{cursor:pointer}
 .mes-cb:checked::after{content:'';position:absolute;left:50%;top:50%;width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:translate(-50%,-58%) rotate(45deg)}
 .mes-done,.mes-done-blue{border-radius:3px}
 .cb-blue{}
-.mes-future{opacity:1}
+.mes-future{opacity:.35}
 .mes-current{background:#FDECEC;border-radius:3px;outline:1.5px solid #D32F2F;outline-offset:-1px}
 .obaveze-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
 .obs-card{background:#fff;border-radius:var(--rad-lg);padding:12px 14px;border:2px solid var(--blue-light);box-shadow:0 1px 2px rgba(15,23,42,.04)}
@@ -535,6 +535,11 @@ select{cursor:pointer}
   <div class="form-row">
     <div class="form-group"><label>Telefon</label><input type="text" id="telefon" placeholder="+381 ..."></div>
     <div class="form-group"><label>PIN lična karta</label><input type="text" id="pinLicnaKarta" placeholder="Broj lične karte" maxlength="9"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label>Lična karta (PDF)</label>
+      <div id="licnaKartaWrap"></div>
+    </div>
   </div>
   <div class="form-row">
     <div class="form-group"><label>Datum rođendana vlasnika</label><div id="rodjendan-wrap"></div></div>
@@ -739,6 +744,11 @@ select{cursor:pointer}
     <div class="form-row">
       <div class="form-group"><label>Telefon</label><input type="text" id="e_telefon"></div>
       <div class="form-group"><label>PIN lična karta</label><input type="text" id="e_pinLicnaKarta" placeholder="Broj lične karte" maxlength="9"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Lična karta (PDF)</label>
+        <div id="e_licnaKartaWrap"></div>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Datum rođendana vlasnika</label><div id="e_rodjendan-wrap"></div></div>
@@ -4786,6 +4796,125 @@ function odgovoriZarade(odgovor) {
 function zatvoriZaradePopup() {
   document.getElementById('zaradeOverlay').style.display = 'none';
 }
+
+// == Lična karta PDF (dodatak, aditivno) ==
+var _novaLicnaKarta = null;
+function lkEsc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;"); }
+function lkRender(prefix){
+  var wrap = document.getElementById(prefix+"licnaKartaWrap");
+  if(!wrap) return;
+  var fileId="", naziv="";
+  if(prefix==="e_"){ var c=clients.find(function(x){return x.id==editingId;}); if(c){ fileId=c.licnaKartaFileId||""; naziv=c.licnaKartaNaziv||""; } }
+  else { if(_novaLicnaKarta){ fileId=_novaLicnaKarta.fileId; naziv=_novaLicnaKarta.naziv; } }
+  if(fileId){
+    wrap.innerHTML =
+      '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:0.5px solid var(--blue-pale);background:var(--blue-ghost);border-radius:var(--rad)">'+
+      '<i class="ti ti-file-text" style="font-size:18px;color:var(--blue-dark)"></i>'+
+      '<span style="flex:1;font-size:13px;color:var(--blue-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+lkEsc(naziv)+'">'+lkEsc(naziv)+'</span>'+
+      '<button type="button" title="Pogledaj" onclick="lkOpen(\''+prefix+'\')" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;border:0.5px solid var(--brd);background:#fff;border-radius:var(--rad);cursor:pointer;color:var(--txt)"><i class="ti ti-eye" style="font-size:16px"></i></button>'+
+      '<button type="button" title="Obriši" onclick="lkDelete(\''+prefix+'\')" style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;border:0.5px solid var(--brd-danger);background:var(--bg-danger);border-radius:var(--rad);cursor:pointer;color:var(--danger)"><i class="ti ti-trash" style="font-size:16px"></i></button>'+
+      '</div>';
+  } else {
+    wrap.innerHTML =
+      '<input type="file" accept="application/pdf,.pdf" id="'+prefix+'licnaKartaFile" style="display:none" onchange="lkUpload(\''+prefix+'\',this)">'+
+      '<button type="button" onclick="document.getElementById(\''+prefix+'licnaKartaFile\').click()" style="width:100%;padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:8px;border:0.5px solid var(--brd);background:#fff;border-radius:var(--rad);cursor:pointer;font-size:13px;color:var(--txt2)"><i class="ti ti-upload" style="font-size:16px"></i> Otpremi PDF</button>';
+  }
+}
+async function lkUploadToDrive(file){
+  var folderId = await findOrCreateFolder();
+  var metadata = { name: file.name, parents: [folderId], mimeType: "application/pdf" };
+  var b64 = await new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(String(r.result).split(",")[1]); }; r.onerror=function(){ rej(new Error("read")); }; r.readAsDataURL(file); });
+  var boundary = "lk"+Date.now();
+  var body = "--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+JSON.stringify(metadata)+
+             "\r\n--"+boundary+"\r\nContent-Type: application/pdf\r\nContent-Transfer-Encoding: base64\r\n\r\n"+b64+
+             "\r\n--"+boundary+"--";
+  var r = await driveRequest("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name",
+    { method:"POST", headers:{"Content-Type":"multipart/related; boundary="+boundary}, body: body });
+  var d = await r.json();
+  if(!d.id) throw new Error(d.error && d.error.message ? d.error.message : "upload nije uspeo");
+  return d;
+}
+async function lkUpload(prefix, input){
+  var file = input.files && input.files[0];
+  if(!file) return;
+  input.value="";
+  if(file.type && file.type!=="application/pdf" && !/\.pdf$/i.test(file.name)){ showToast("Dozvoljen je samo PDF fajl."); return; }
+  var wrap = document.getElementById(prefix+"licnaKartaWrap");
+  if(wrap) wrap.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:13px;color:var(--txt2)"><i class="ti ti-loader-2" style="font-size:16px"></i> Otpremam...</div>';
+  try{
+    var d = await lkUploadToDrive(file);
+    if(prefix==="e_"){
+      var c = clients.find(function(x){return x.id==editingId;});
+      if(c){
+        if(c.licnaKartaFileId){ try{ await driveRequest("https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(c.licnaKartaFileId), {method:"DELETE"}); }catch(e){} }
+        c.licnaKartaFileId = d.id; c.licnaKartaNaziv = d.name || file.name;
+        save();
+      }
+    } else {
+      if(_novaLicnaKarta && _novaLicnaKarta.fileId){ try{ await driveRequest("https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(_novaLicnaKarta.fileId), {method:"DELETE"}); }catch(e){} }
+      _novaLicnaKarta = { fileId: d.id, naziv: d.name || file.name };
+    }
+    lkRender(prefix);
+    showToast("PDF otpremljen.");
+  }catch(e){
+    lkRender(prefix);
+    showToast("Greška pri otpremanju: "+(e.message||e));
+  }
+}
+async function lkOpen(prefix){
+  var fileId="";
+  if(prefix==="e_"){ var c=clients.find(function(x){return x.id==editingId;}); if(c) fileId=c.licnaKartaFileId||""; }
+  else if(_novaLicnaKarta) fileId=_novaLicnaKarta.fileId;
+  if(!fileId){ showToast("Nema fajla."); return; }
+  var w = window.open("", "_blank");
+  try{
+    var r = await driveRequest("https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(fileId)+"?alt=media");
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    var blob = await r.blob();
+    var pdfBlob = (blob.type==="application/pdf") ? blob : new Blob([blob], {type:"application/pdf"});
+    var url = URL.createObjectURL(pdfBlob);
+    if(w) w.location.href = url; else window.open(url,"_blank");
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+  }catch(e){ if(w) w.close(); showToast("Greška pri otvaranju: "+(e.message||e)); }
+}
+async function lkDelete(prefix){
+  if(!confirm("Obrisati PDF lične karte?")) return;
+  var fileId="";
+  if(prefix==="e_"){ var c=clients.find(function(x){return x.id==editingId;}); if(c) fileId=c.licnaKartaFileId||""; }
+  else if(_novaLicnaKarta) fileId=_novaLicnaKarta.fileId;
+  if(fileId){ try{ await driveRequest("https://www.googleapis.com/drive/v3/files/"+encodeURIComponent(fileId), {method:"DELETE"}); }catch(e){} }
+  if(prefix==="e_"){ var c2=clients.find(function(x){return x.id==editingId;}); if(c2){ c2.licnaKartaFileId=""; c2.licnaKartaNaziv=""; save(); } }
+  else { _novaLicnaKarta=null; }
+  lkRender(prefix);
+  showToast("PDF obrisan.");
+}
+(function(){
+  if(typeof saveClient==="function"){
+    var _origSaveClient = saveClient;
+    saveClient = function(){
+      var before = clients.length;
+      var pending = _novaLicnaKarta;
+      var ret = _origSaveClient.apply(this, arguments);
+      if(clients.length > before){
+        if(pending && pending.fileId){
+          var c = clients[clients.length-1];
+          if(c){ c.licnaKartaFileId = pending.fileId; c.licnaKartaNaziv = pending.naziv; save(); }
+        }
+        _novaLicnaKarta = null;
+      }
+      return ret;
+    };
+  }
+  if(typeof resetForm==="function"){
+    var _origResetForm = resetForm;
+    resetForm = function(){ var ret=_origResetForm.apply(this,arguments); _novaLicnaKarta=null; try{ lkRender(""); }catch(e){} return ret; };
+  }
+  if(typeof openEdit==="function"){
+    var _origOpenEdit = openEdit;
+    openEdit = function(id, fromKadrovska){ var ret=_origOpenEdit.apply(this,arguments); try{ lkRender("e_"); }catch(e){} return ret; };
+  }
+})();
+setTimeout(function(){ try{ lkRender(""); }catch(e){} }, 400);
 
 initApp();
 setTimeout(drawTabOverlay, 700);
