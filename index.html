@@ -1175,7 +1175,7 @@ function showTab(t) {
   if(t==='pregled') renderPregled();
   if(t==='obaveze') renderObaveze();
   if(t==='kadrovska') renderKadrovska();
-  if(t==='osnivanje') renderOsnivanje();
+  if(t==='osnivanje'){ window._osnCol = {DOO:true, PR:true}; renderOsnivanje(); }
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
   /* sidebar: no tab overlay needed */
@@ -3563,7 +3563,38 @@ const OSN_TPL = {
     "Staviti labelu i kontakte, upisati rođendan",
     "Dodati u uiVision, u CSV fajl PIB"
   ],
-  DOO: []
+  DOO: [
+    { h: "APR" },
+    "Osnivački akt",
+    "Registraciona prijava online",
+    "Rešenje APR",
+    "Stvarni vlasnik",
+    "Upis uplaćenog kapitala",
+    "Ugovor knjigovodstvo",
+    { h: "ePorezi" },
+    "Ovlašćenje",
+    "PDF",
+    "Ako imaju kasu – PGJO, BE, adresa, kvadratura",
+    { h: "CROSO" },
+    "Ovlašćenje",
+    "Prijava ako treba",
+    "Zdravstvene knjižice članovi porodice",
+    { h: "eUprava" },
+    "Nalog, Moje organizacije",
+    { h: "eFakture" },
+    "Ovlašćenje",
+    { h: "Gmail" },
+    "Lična karta i labela",
+    "Upiši rođendan i kontakte",
+    { h: "Biznisoft" },
+    "Otvaranje, povezivanje eFakture",
+    "Virman za porez na dobit i zakazivanje na Mailboss",
+    "Dodaj u uiVision, u CSV fajl PIB",
+    { h: "LPA" },
+    "Eko taksa",
+    { h: "Inspekcija rada" },
+    "Prijava početka rada inspekciji rada"
+  ]
 };
 
 function osnNaziv(e) {
@@ -3576,6 +3607,7 @@ function osnPct(e) {
   const removed = e.removed || {};
   let total = 0, d = 0;
   for (let i = 0; i < tpl.length; i++) {
+    if (typeof tpl[i] !== 'string') continue;
     if (removed[i]) continue;
     total++;
     if (done[i]) d++;
@@ -3587,15 +3619,19 @@ function osnDoneCount(e) {
   const done = e.done || {};
   const removed = e.removed || {};
   let d = 0;
-  for (let i = 0; i < tpl.length; i++) if (done[i] && !removed[i]) d++;
+  for (let i = 0; i < tpl.length; i++) if (typeof tpl[i] === 'string' && done[i] && !removed[i]) d++;
   return d;
 }
 function osnTotal(e) {
   const tpl = OSN_TPL[e.tip] || [];
   const removed = e.removed || {};
   let t = 0;
-  for (let i = 0; i < tpl.length; i++) if (!removed[i]) t++;
+  for (let i = 0; i < tpl.length; i++) if (typeof tpl[i] === 'string' && !removed[i]) t++;
   return t;
+}
+function osnBrojStavki(tip) {
+  const tpl = OSN_TPL[tip] || [];
+  return tpl.filter(x => typeof x === 'string').length;
 }
 
 function osnSekcijToggle(tip) {
@@ -3627,7 +3663,7 @@ function osnItemRemove(id, idx) {
 
 function osnRenderSekcija(tip, naslov, boja, bgCard) {
   if (!window._osnCol) window._osnCol = {};
-  if (window._osnCol[tip] === undefined) window._osnCol[tip] = (tip !== 'PR');
+  if (window._osnCol[tip] === undefined) window._osnCol[tip] = true;
   if (!window._osnOpen) window._osnOpen = {};
   const collapsed = window._osnCol[tip];
   const tpl = OSN_TPL[tip] || [];
@@ -3651,6 +3687,9 @@ function osnRenderSekcija(tip, naslov, boja, bgCard) {
     const removed = e.removed || {};
     const items = !open ? '' : `<div style="padding:4px 18px 14px 46px;display:flex;flex-direction:column;gap:2px">${
       tpl.map((t, i) => {
+        if (typeof t !== 'string') {
+          return `<div style="font-size:11px;font-weight:700;color:${boja};letter-spacing:.4px;text-transform:uppercase;margin:11px 0 3px;padding-left:2px;opacity:.85">${t.h}</div>`;
+        }
         if (removed[i]) return '';
         const chk = !!done[i];
         return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;line-height:1.4">
@@ -3677,7 +3716,7 @@ function osnRenderSekcija(tip, naslov, boja, bgCard) {
     ? `<div style="padding:20px;text-align:center;color:var(--txt2);font-size:13px">Nema osnivanja. Klikni „Dodaj”.</div>`
     : lista.map(entryHtml).join(''));
 
-  const addBtn = tpl.length
+  const addBtn = osnBrojStavki(tip)
     ? `<button onclick="event.stopPropagation();osnOpenModal('${tip}')" style="padding:6px 14px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-plus"></i> Dodaj</button>`
     : `<span style="font-size:11px;color:var(--txt2);font-style:italic">stavke se dodaju kasnije</span>`;
 
@@ -3709,14 +3748,14 @@ function renderOsnivanje() {
 function osnOpenModal(tip) {
   const boja = tip === 'PR' ? '#15803d' : '#1a4e7f';
   const bgCard = tip === 'PR' ? '#eaf6ee' : '#eef4fb';
-  const tpl = OSN_TPL[tip] || [];
+  const broj = osnBrojStavki(tip);
   const opts = clients.length
     ? clients.map(c => `<option value="${c.id}">${c.naziv}</option>`).join('')
     : '';
   const inner = clients.length
     ? `<label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:5px">Izaberi klijenta</label>
        <select id="osnKlijent" style="width:100%;padding:8px 10px;border:1px solid var(--brd2);border-radius:var(--rad);font-size:13px;background:var(--bg);color:var(--txt);margin-bottom:8px">${opts}</select>
-       <p style="font-size:11.5px;color:var(--txt2);margin:0 0 18px">Dodaje se lista od ${tpl.length} stavki koje se &#353;tikliraju kako se koja uradi.</p>
+       <p style="font-size:11.5px;color:var(--txt2);margin:0 0 18px">Dodaje se lista od ${broj} stavki koje se &#353;tikliraju kako se koja uradi.</p>
        <div style="display:flex;gap:8px">
          <button onclick="osnCreate('${tip}')" style="flex:1;padding:9px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:600;cursor:pointer">Dodaj</button>
          <button onclick="osnCloseModal()" style="padding:9px 16px;background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);font-size:13px;cursor:pointer">Otka&#382;i</button>
