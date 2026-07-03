@@ -3572,18 +3572,30 @@ function osnNaziv(e) {
 }
 function osnPct(e) {
   const tpl = OSN_TPL[e.tip] || [];
-  if (!tpl.length) return 0;
   const done = e.done || {};
-  let d = 0;
-  for (let i = 0; i < tpl.length; i++) if (done[i]) d++;
-  return Math.round(d / tpl.length * 100);
+  const removed = e.removed || {};
+  let total = 0, d = 0;
+  for (let i = 0; i < tpl.length; i++) {
+    if (removed[i]) continue;
+    total++;
+    if (done[i]) d++;
+  }
+  return total ? Math.round(d / total * 100) : 0;
 }
 function osnDoneCount(e) {
   const tpl = OSN_TPL[e.tip] || [];
   const done = e.done || {};
+  const removed = e.removed || {};
   let d = 0;
-  for (let i = 0; i < tpl.length; i++) if (done[i]) d++;
+  for (let i = 0; i < tpl.length; i++) if (done[i] && !removed[i]) d++;
   return d;
+}
+function osnTotal(e) {
+  const tpl = OSN_TPL[e.tip] || [];
+  const removed = e.removed || {};
+  let t = 0;
+  for (let i = 0; i < tpl.length; i++) if (!removed[i]) t++;
+  return t;
 }
 
 function osnSekcijToggle(tip) {
@@ -3601,6 +3613,14 @@ function osnItemToggle(id, idx) {
   if (!e) return;
   if (!e.done) e.done = {};
   e.done[idx] = !e.done[idx];
+  save();
+  renderOsnivanje();
+}
+function osnItemRemove(id, idx) {
+  const e = osnivanja.find(x => x.id == id);
+  if (!e) return;
+  if (!e.removed) e.removed = {};
+  e.removed[idx] = true;
   save();
   renderOsnivanje();
 }
@@ -3628,12 +3648,17 @@ function osnRenderSekcija(tip, naslov, boja, bgCard) {
       : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${boja}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
     const barColor = pct === 100 ? '#15803d' : boja;
     const done = e.done || {};
+    const removed = e.removed || {};
     const items = !open ? '' : `<div style="padding:4px 18px 14px 46px;display:flex;flex-direction:column;gap:2px">${
       tpl.map((t, i) => {
+        if (removed[i]) return '';
         const chk = !!done[i];
-        return `<div onclick="osnItemToggle(${e.id},${i})" style="display:flex;align-items:flex-start;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12.5px;line-height:1.4" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
-          <span style="width:16px;height:16px;border:1.5px solid ${chk ? '#15803d' : 'var(--brd3)'};background:${chk ? '#15803d' : 'transparent'};color:#fff;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center">${chk ? '<i class="ti ti-check" style="font-size:12px"></i>' : ''}</span>
-          <span style="color:${chk ? 'var(--txt2)' : 'var(--txt)'};${chk ? 'text-decoration:line-through' : ''}">${t}</span>
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;line-height:1.4">
+          <div onclick="osnItemToggle(${e.id},${i})" style="display:flex;align-items:flex-start;gap:9px;flex:1;min-width:0;cursor:pointer;border-radius:6px;padding:1px 2px" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
+            <span style="width:16px;height:16px;border:1.5px solid ${chk ? '#15803d' : 'var(--brd3)'};background:${chk ? '#15803d' : 'transparent'};color:#fff;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center">${chk ? '<i class="ti ti-check" style="font-size:12px"></i>' : ''}</span>
+            <span style="color:${chk ? 'var(--txt2)' : 'var(--txt)'};${chk ? 'text-decoration:line-through' : ''}">${t}</span>
+          </div>
+          <button onclick="event.stopPropagation();osnItemRemove(${e.id},${i})" title="Obriši ovaj red (samo za ovog klijenta)" style="flex-shrink:0;width:22px;height:22px;border:1px solid var(--brd3);background:var(--bg);color:var(--danger);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;line-height:1;padding:0" onmouseover="this.style.background='var(--bg-danger)';this.style.borderColor='var(--brd-danger)'" onmouseout="this.style.background='var(--bg)';this.style.borderColor='var(--brd3)'">&minus;</button>
         </div>`;
       }).join('')
     }</div>`;
@@ -3642,7 +3667,7 @@ function osnRenderSekcija(tip, naslov, boja, bgCard) {
         ${echev}
         <span style="font-weight:500;min-width:150px">${osnNaziv(e)}</span>
         <div style="flex:1;height:7px;background:var(--bg2);border-radius:5px;overflow:hidden;max-width:220px"><div style="height:100%;border-radius:5px;width:${pct}%;background:${barColor}"></div></div>
-        <span style="font-size:12px;color:var(--txt2);min-width:88px">${dc}/${tpl.length} &middot; ${pct}%</span>
+        <span style="font-size:12px;color:var(--txt2);min-width:88px">${dc}/${osnTotal(e)} &middot; ${pct}%</span>
         <button class="action-btn" onclick="event.stopPropagation();osnDelete(${e.id})" style="color:var(--danger);margin-left:auto"><i class="ti ti-trash"></i></button>
       </div>${items}
     </div>`;
@@ -3727,7 +3752,8 @@ function osnCreate(tip) {
     tip: tip,
     clientId: cid,
     clientNaziv: c ? c.naziv : '',
-    done: {}
+    done: {},
+    removed: {}
   });
   if (!window._osnCol) window._osnCol = {};
   window._osnCol[tip] = false;
