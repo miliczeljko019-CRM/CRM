@@ -3668,7 +3668,7 @@ function osnRenderSekcija(tip, naslov, boja, bgCard) {
         <span style="font-weight:500;min-width:150px">${osnNaziv(e)}</span>
         <div style="flex:1;height:7px;background:var(--bg2);border-radius:5px;overflow:hidden;max-width:220px"><div style="height:100%;border-radius:5px;width:${pct}%;background:${barColor}"></div></div>
         <span style="font-size:12px;color:var(--txt2);min-width:88px">${dc}/${osnTotal(e)} &middot; ${pct}%</span>
-        <button class="action-btn" onclick="event.stopPropagation();osnDelete(${e.id})" style="color:var(--danger);margin-left:auto"><i class="ti ti-trash"></i></button>
+        <button onclick="event.stopPropagation();osnDelete(${e.id})" title="Obriši celo osnivanje" style="flex-shrink:0;margin-left:auto;width:24px;height:24px;border:1px solid var(--brd3);background:var(--bg);color:var(--danger);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;line-height:1;padding:0" onmouseover="this.style.background='var(--bg-danger)';this.style.borderColor='var(--brd-danger)'" onmouseout="this.style.background='var(--bg)';this.style.borderColor='var(--brd3)'">&minus;</button>
       </div>${items}
     </div>`;
   }
