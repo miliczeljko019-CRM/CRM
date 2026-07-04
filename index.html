@@ -662,6 +662,14 @@ select{cursor:pointer}
       <input type="file" id="importRadniciInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importRadnike(this)">
     </div>
   </div>
+  <div class="dash-search-bar" style="margin:14px 0 4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="position:relative;flex:1;min-width:240px">
+      <i class="ti ti-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--txt2);font-size:17px"></i>
+      <input id="dashSearchInput" type="text" autocomplete="off" placeholder="Pretraži klijente po nazivu, PIB-u ili MB-u..." oninput="crmDashSearch(this.value)" style="width:100%;box-sizing:border-box;padding:11px 38px 11px 40px;border:1px solid var(--brd);border-radius:12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--txt);outline:none">
+      <button id="dashSearchClear" type="button" onclick="crmDashSearchClear()" title="Obriši pretragu" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt2);cursor:pointer;font-size:16px;padding:4px"><i class="ti ti-x"></i></button>
+    </div>
+    <span id="dashSearchCount" style="font-size:12px;color:var(--txt2);white-space:nowrap"></span>
+  </div>
   <div class="table-wrap"><div id="dashContent"></div></div>
 </div>
 
@@ -3172,6 +3180,40 @@ function filtered() {
   return clients.filter(c=>c.pravnaForma===currentFilter);
 }
 
+let dashSearch='';
+function crmNormSearch(s){return (s||'').toString().toLowerCase().replace(/š/g,'s').replace(/đ/g,'dj').replace(/č/g,'c').replace(/ć/g,'c').replace(/ž/g,'z');}
+(function(){
+  var _crmOrigFiltered=filtered;
+  filtered=function(){
+    var list=_crmOrigFiltered();
+    var q=crmNormSearch(dashSearch).trim();
+    if(!q) return list;
+    return list.filter(function(c){
+      var hay=crmNormSearch([c.naziv,c.pib,c.mb,c.operater].filter(Boolean).join(' '));
+      return hay.indexOf(q)>-1;
+    });
+  };
+})();
+function crmDashSearch(v){
+  dashSearch=v;
+  var x=document.getElementById('dashSearchClear');
+  if(x) x.style.display=(v&&v.length)?'block':'none';
+  renderDash();
+}
+function crmDashSearchClear(){
+  var inp=document.getElementById('dashSearchInput');
+  if(inp) inp.value='';
+  crmDashSearch('');
+  if(inp) inp.focus();
+}
+(function(){
+  var _crmOrigRender=renderDash;
+  renderDash=function(){
+    _crmOrigRender();
+    var el=document.getElementById('dashSearchCount');
+    if(el){ el.textContent=filtered().length+' od '+clients.length+' klijenata'; }
+  };
+})();
 function renderDash() {
   const ukupno=clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
   document.getElementById('dashStats').innerHTML=`
