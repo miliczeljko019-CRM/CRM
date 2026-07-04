@@ -4360,7 +4360,7 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,ws,'Klijenti');
   const rh=['Firma','Pravna forma','Ime i prezime','JMBG','Prijavljen od','Ugovor do','Status'];
   const rr=[];
-  list.forEach(c=>{if(c.radnici&&c.workers.length>0)c.workers.forEach(w=>{const st=ugovorStatus(w.do_);rr.push([c.naziv,c.pravnaForma,w.ime,w.jmbg||'',fmt(w.od)||'',fmt(w.do_)||'',st.label]);});});
+  list.forEach(c=>{if(c.radnici&&c.workers.length>0)c.workers.forEach(w=>{const st=ugovorStatus(w.do_);rr.push([c.naziv,c.pravnaForma,w.ime,w.jmbg||'',fmt(w.od)||'',fmt(w.do_)||'',st?st.label:'Aktivan']);});});
   if(rr.length){const ws2=XLSX.utils.aoa_to_sheet([rh,...rr]);ws2['!cols']=[{wch:26},{wch:12},{wch:22},{wch:16},{wch:14},{wch:14},{wch:24}];styleHeader(ws2,{s:{r:0,c:0},e:{r:0,c:rh.length-1}},'0C447C');XLSX.utils.book_append_sheet(wb,ws2,'Radnici');}
   const d=new Date().toLocaleDateString('en-GB'),uk=clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
   const sd=[['Statistika',''],['Datum izvoza',d],[''],['Kategorija','Vrednost'],['Ukupno klijenata',clients.length],['DOO',clients.filter(c=>c.pravnaForma==='DOO').length],['PR',clients.filter(c=>c.pravnaForma==='PR').length],['Paušal',clients.filter(c=>c.pravnaForma==='Paušal').length],['PDV obveznici',clients.filter(c=>c.pdv).length],['Fiskalna kasa',clients.filter(c=>c.fiskalna).length],['Sa radnicima',clients.filter(c=>c.radnici).length],[''],['Finansije (€)',''],['Mesečni prihod',uk],['Godišnji prihod',uk*12]];
@@ -4374,7 +4374,7 @@ function exportRadniciExcel(){
   const wb=XLSX.utils.book_new();
   const h=['Firma','PIB','Pravna forma','Ime i prezime','JMBG','Prijavljen od','Ugovor do','Status'];
   const rows=[];
-  svi.forEach(c=>c.workers.forEach(w=>{const st=ugovorStatus(w.do_);rows.push([c.naziv,c.pib||'',c.pravnaForma,w.ime,w.jmbg||'',fmt(w.od)||'',fmt(w.do_)||'',st.label]);}));
+  svi.forEach(c=>c.workers.forEach(w=>{const st=ugovorStatus(w.do_);rows.push([c.naziv,c.pib||'',c.pravnaForma,w.ime,w.jmbg||'',fmt(w.od)||'',fmt(w.do_)||'',st?st.label:'Aktivan']);}));
   const ws=XLSX.utils.aoa_to_sheet([h,...rows]);
   ws['!cols']=[{wch:28},{wch:13},{wch:12},{wch:22},{wch:16},{wch:14},{wch:14},{wch:24}];
   styleHeader(ws,{s:{r:0,c:0},e:{r:0,c:h.length-1}},'0C447C');
