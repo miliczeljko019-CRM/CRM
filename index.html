@@ -555,6 +555,15 @@ select{cursor:pointer}
         <option value="Bokica">Bokica</option>
         <option value="Marica">Marica</option>
       </select>
+      <button type="button" class="add-worker-btn" id="operaterToggleBtn" onclick="toggleOperaterPanel()"><i class="ti ti-plus"></i> Novi operater</button>
+      <div id="operaterPanel" style="display:none;margin-top:8px">
+        <div style="display:flex;gap:6px">
+          <input type="text" id="noviOperaterInput" placeholder="Ime novog operatera" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();dodajOperatera();}">
+          <button type="button" class="btn-primary" onclick="dodajOperatera()">Dodaj</button>
+          <button type="button" class="btn-secondary" onclick="toggleOperaterPanel()">Otkaži</button>
+        </div>
+        <div id="operaterLista" style="margin-top:10px;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
     </div>
   </div>
 
@@ -641,11 +650,7 @@ select{cursor:pointer}
     <button class="filter-chip" onclick="setFilter('radnici',this)">Sa radnicima</button>
     <button class="filter-chip" onclick="setFilter('fiskalna',this)"><i class="ti ti-device-desktop-analytics" style="font-size:12px"></i> Fiskalna</button>
     <button class="filter-chip" onclick="setFilter('recenzija',this)"><i class="ti ti-star" style="font-size:12px;color:#fbbc05"></i> Recenzija</button>
-    <button class="filter-chip" onclick="setFilter('op_Željko',this)">Željko</button>
-    <button class="filter-chip" onclick="setFilter('op_Sandra M',this)">Sandra M</button>
-    <button class="filter-chip" onclick="setFilter('op_Sandra Ć',this)">Sandra Ć</button>
-    <button class="filter-chip" onclick="setFilter('op_Bokica',this)">Bokica</button>
-    <button class="filter-chip" onclick="setFilter('op_Marica',this)">Marica</button>
+    <span id="opFilterChips"></span>
     <button class="filter-chip filter-chip-odjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
     <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
@@ -1151,6 +1156,7 @@ async function loadFromDrive() {
     driveFileId = await findOrCreateFile(folderId);
     const data = await readFile(driveFileId);
     clients  = data.clients  || [];
+    if(Array.isArray(data.operateri) && data.operateri.length) operateri = data.operateri;
     bolovanjaSvi = data.bolovanjaSvi || [];
     osnivanja = data.osnivanja || [];
     cenovnik = data.cenovnik || {
@@ -1163,7 +1169,7 @@ async function loadFromDrive() {
     if(data.rashodi) localStorage.setItem('knjg_crm_rashodi', JSON.stringify(data.rashodi));
     if(data.ciljevi) localStorage.setItem('knjg_crm_ciljevi', JSON.stringify(data.ciljevi));
     setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
-    renderDash(); renderPodsetnici();
+    renderOperateri(); renderDash(); renderPodsetnici();
     if(document.getElementById('page-kadrovska')?.classList.contains('active')) renderKadrovska();
     if(document.getElementById('page-osnivanje')?.classList.contains('active')) renderOsnivanje();
     setTimeout(prikaziObavestenjaAkoIma, 300);
@@ -1182,7 +1188,7 @@ function save() {
       const obaveze = JSON.parse(localStorage.getItem('knjg_crm_obaveze') || '{}');
       const rashodiData = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
       const ciljeviData = JSON.parse(localStorage.getItem('knjg_crm_ciljevi') || '{}');
-      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData, bolovanjaSvi, osnivanja });
+      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData, bolovanjaSvi, osnivanja, operateri });
       setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
     } catch(e) {
       setSyncStatus('error', 'Nije sačuvano: ' + e.message);
@@ -1191,6 +1197,81 @@ function save() {
 }
 
 function saveCenovnik() { save(); }
+
+// ── Operateri (dinamička lista) ──
+function renderOperateri(){
+  ['operater','e_operater'].forEach(function(id){
+    var sel=document.getElementById(id);
+    if(!sel) return;
+    var trenutna=sel.value;
+    var html='<option value="">— Izaberi operatera —</option>';
+    operateri.forEach(function(op){
+      html+='<option value="'+op.replace(/"/g,'&quot;')+'">'+op+'</option>';
+    });
+    sel.innerHTML=html;
+    if(operateri.indexOf(trenutna)>=0) sel.value=trenutna;
+  });
+  renderOpFilterChips();
+  renderOperaterLista();
+}
+
+function renderOpFilterChips(){
+  var box=document.getElementById('opFilterChips');
+  if(!box) return;
+  var html='';
+  operateri.forEach(function(op){
+    var esc=op.replace(/'/g,"\\'");
+    var akt=(currentFilter==='op_'+op)?' active':'';
+    html+='<button class="filter-chip'+akt+'" onclick="setFilter(\'op_'+esc+'\',this)">'+op+'</button>';
+  });
+  box.innerHTML=html;
+}
+
+function renderOperaterLista(){
+  var box=document.getElementById('operaterLista');
+  if(!box) return;
+  if(!operateri.length){ box.innerHTML='<div style="font-size:12px;color:var(--txt2)">Nema operatera</div>'; return; }
+  var html='';
+  operateri.forEach(function(op,i){
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border:0.5px solid var(--brd2);border-radius:var(--rad);font-size:13px">'
+       +'<span>'+op+'</span>'
+       +'<button type="button" onclick="obrisiOperatera('+i+')" title="Obriši" style="border:none;background:none;color:#c0392b;cursor:pointer;padding:2px 6px;font-size:15px;line-height:1">&times;</button>'
+       +'</div>';
+  });
+  box.innerHTML=html;
+}
+
+function toggleOperaterPanel(){
+  var p=document.getElementById('operaterPanel');
+  if(!p) return;
+  var otvori=(p.style.display==='none'||!p.style.display);
+  p.style.display=otvori?'block':'none';
+  if(otvori){ renderOperaterLista(); var inp=document.getElementById('noviOperaterInput'); if(inp){ inp.value=''; inp.focus(); } }
+}
+
+function dodajOperatera(){
+  var inp=document.getElementById('noviOperaterInput');
+  if(!inp) return;
+  var ime=(inp.value||'').trim();
+  if(!ime) return;
+  if(operateri.indexOf(ime)>=0){ alert('Operater "'+ime+'" već postoji.'); return; }
+  operateri.push(ime);
+  save();
+  renderOperateri();
+  var sel=document.getElementById('operater'); if(sel) sel.value=ime;
+  inp.value=''; inp.focus();
+}
+
+function obrisiOperatera(i){
+  var op=operateri[i];
+  if(op===undefined) return;
+  if(!confirm('Obrisati operatera "'+op+'"?\n\nKlijenti koji su mu već dodeljeni ostaju nepromenjeni.')) return;
+  operateri.splice(i,1);
+  if(currentFilter==='op_'+op) currentFilter='all';
+  save();
+  renderOperateri();
+  renderDash();
+}
 
 function getObaveze() {
   return JSON.parse(localStorage.getItem('knjg_crm_obaveze') || '{}');
@@ -1241,6 +1322,7 @@ async function initApp() {
 
 // ── Data variables (populated by loadFromDrive) ──
 let clients  = [];
+let operateri = ['Željko','Sandra M','Sandra Ć','Bokica','Marica'];
 let bolovanjaSvi = [];
 let osnivanja = [];
 let cenovnik = {
@@ -4434,7 +4516,7 @@ function exportPregledPDF() {
   }
 
   // Group clients by operater
-  const operaterOrder = ['Željko','Sandra M','Sandra Ć','Bokica','Marica',''];
+  const operaterOrder = operateri.concat(['']);
   const byOperater = {};
   operaterOrder.forEach(op => byOperater[op] = []);
   clients.forEach(c => {
