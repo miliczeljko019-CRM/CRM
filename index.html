@@ -221,6 +221,7 @@ select{cursor:pointer}
 .filter-groups{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
 .filter-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .filter-group-label{font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;min-width:96px;flex-shrink:0}
+.filter-group-bottom{margin-top:2px;padding-top:12px;border-top:0.5px solid var(--brd);width:100%}
 .export-bar{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
 
 .client-table{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--brd3)}
@@ -648,7 +649,6 @@ select{cursor:pointer}
   <div id="podsetniciWrap"></div>
   <div class="filter-bar filter-bar-grouped">
     <div class="filter-groups">
-    <button class="filter-chip active" data-filter="all" onclick="setFilter('all',this)">Svi</button>
     <div class="filter-group">
       <span class="filter-group-label">Pravna forma</span>
       <button class="filter-chip" data-filter="DOO" onclick="setFilter('DOO',this)">DOO</button>
@@ -661,11 +661,14 @@ select{cursor:pointer}
       <button class="filter-chip" data-filter="radnici" onclick="setFilter('radnici',this)">Sa radnicima</button>
       <button class="filter-chip" data-filter="fiskalna" onclick="setFilter('fiskalna',this)"><i class="ti ti-device-desktop-analytics" style="font-size:12px"></i> Fiskalna</button>
       <button class="filter-chip" data-filter="recenzija" onclick="setFilter('recenzija',this)"><i class="ti ti-star" style="font-size:12px;color:#fbbc05"></i> Recenzija</button>
-      <button class="filter-chip filter-chip-odjava" data-filter="privOdjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
     </div>
     <div class="filter-group">
       <span class="filter-group-label">Operater</span>
       <span id="opFilterChips"></span>
+    </div>
+    <div class="filter-group filter-group-bottom">
+      <button class="filter-chip active" data-filter="all" onclick="setFilter('all',this)">Svi</button>
+      <button class="filter-chip filter-chip-odjava" data-filter="privOdjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
     </div>
     </div>
     <div class="export-bar">
