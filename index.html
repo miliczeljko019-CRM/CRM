@@ -671,15 +671,15 @@ select{cursor:pointer}
     <div class="filter-group filter-group-bottom">
       <button class="filter-chip active" data-filter="all" onclick="setFilter('all',this)">Svi</button>
       <button class="filter-chip filter-chip-odjava" data-filter="privOdjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
-    </div>
-    </div>
-    <div class="export-bar">
+      <div class="export-bar">
       <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
       <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
       <button class="btn-excel-outline" onclick="document.getElementById('importFileInput').click()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-file-upload"></i> Uvezi klijente</button>
       <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importKlijente(this)">
       <button class="btn-excel-outline" onclick="document.getElementById('importRadniciInput').click()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-user-plus"></i> Uvezi radnike</button>
       <input type="file" id="importRadniciInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importRadnike(this)">
+      </div>
+    </div>
     </div>
   </div>
   <div class="dash-search-bar" style="margin:14px 0 4px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
