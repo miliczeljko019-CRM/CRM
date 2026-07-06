@@ -672,8 +672,8 @@ select{cursor:pointer}
       <button class="filter-chip active" data-filter="all" onclick="setFilter('all',this)">Svi</button>
       <button class="filter-chip filter-chip-odjava" data-filter="privOdjava" onclick="setFilter('privOdjava',this)"><i class="ti ti-pause" style="font-size:12px"></i> Privremena odjava</button>
       <div class="export-bar">
-      <button class="btn-excel" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi Excel</button>
-      <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Radnici</button>
+      <button class="btn-excel-outline" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Izvezi klijente</button>
+      <button class="btn-excel-outline" onclick="exportRadniciExcel()"><i class="ti ti-users"></i> Izvezi radnike</button>
       <button class="btn-excel-outline" onclick="document.getElementById('importFileInput').click()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-file-upload"></i> Uvezi klijente</button>
       <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importKlijente(this)">
       <button class="btn-excel-outline" onclick="document.getElementById('importRadniciInput').click()" style="border-color:#0C447C;color:#0C447C"><i class="ti ti-user-plus"></i> Uvezi radnike</button>
