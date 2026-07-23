@@ -241,6 +241,7 @@ select{cursor:pointer}
 .b-doo{background:#CECBF6;color:#3C3489}.b-pr{background:#9FE1CB;color:#085041}.b-pausal{background:#BDE3F7;color:#0A4A6E}
 .b-yes{background:#C0DD97;color:#27500A}.b-no{background:#D3D1C7;color:#444441}
 .b-dobit{background:#B5D4F4;color:#0C447C}.b-ppausl{background:#BDE3F7;color:#0A4A6E}
+.b-udr{background:#FAC775;color:#633806}
 .b-fisk{background:#F0E6FF;color:#6B21A8}.b-nofisk{background:#E5E5E5;color:#555}
 .worker-tag{background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);padding:3px 7px;font-size:11px;display:inline-block;margin:2px 2px 0 0}
 .price-tag{font-size:12px;color:var(--blue-dark);background:var(--blue-ghost);padding:2px 8px;border-radius:100px;white-space:nowrap;font-weight:500}
@@ -580,6 +581,7 @@ select{cursor:pointer}
     <div class="radio-btn selected" data-val="DOO" onclick="pickRadio('pravnaForma',this)"><i class="ti ti-building"></i> DOO</div>
     <div class="radio-btn" data-val="PR" onclick="pickRadio('pravnaForma',this)"><i class="ti ti-user"></i> PR</div>
     <div class="radio-btn" data-val="Paušal" onclick="pickRadio('pravnaForma',this)"><i class="ti ti-receipt"></i> Paušal</div>
+    <div class="radio-btn" data-val="Udruženje" onclick="pickRadio('pravnaForma',this)"><i class="ti ti-users-group"></i> Udruženje</div>
   </div>
 
   <div class="section-title">Vrsta oporezivanja</div>
@@ -656,6 +658,7 @@ select{cursor:pointer}
       <button class="filter-chip" data-filter="DOO" onclick="setFilter('DOO',this)">DOO</button>
       <button class="filter-chip" data-filter="PR" onclick="setFilter('PR',this)">PR</button>
       <button class="filter-chip" data-filter="Paušal" onclick="setFilter('Paušal',this)">Paušal</button>
+      <button class="filter-chip" data-filter="Udruženje" onclick="setFilter('Udruženje',this)">Udruženje</button>
     </div>
     <div class="filter-group">
       <span class="filter-group-label">Atributi</span>
@@ -810,6 +813,7 @@ select{cursor:pointer}
       <div class="radio-btn selected" data-val="DOO" onclick="pickRadio('e_pravnaForma',this)"><i class="ti ti-building"></i> DOO</div>
       <div class="radio-btn" data-val="PR" onclick="pickRadio('e_pravnaForma',this)"><i class="ti ti-user"></i> PR</div>
       <div class="radio-btn" data-val="Paušal" onclick="pickRadio('e_pravnaForma',this)"><i class="ti ti-receipt"></i> Paušal</div>
+      <div class="radio-btn" data-val="Udruženje" onclick="pickRadio('e_pravnaForma',this)"><i class="ti ti-users-group"></i> Udruženje</div>
     </div>
 
     <div class="section-title">Vrsta oporezivanja</div>
@@ -1191,7 +1195,8 @@ async function loadFromDrive() {
     cenovnik = data.cenovnik || {
       DOO_bez_pdv_bez_radnika:68, DOO_pdv_bez_radnika:100, DOO_bez_pdv_radnici:92, DOO_pdv_radnici:135,
       PR_bez_pdv_bez_radnika:42, PR_pdv_bez_radnika:68, PR_bez_pdv_radnici:58, PR_pdv_radnici:92,
-      Pausal_bez_radnika:30, Pausal_radnici:46, radnik_dodatak:13
+      Udruzenje_bez_pdv_bez_radnika:68, Udruzenje_pdv_bez_radnika:100, Udruzenje_bez_pdv_radnici:92, Udruzenje_pdv_radnici:135,
+  Pausal_bez_radnika:30, Pausal_radnici:46, radnik_dodatak:13
     };
     // Store obaveze back to localStorage for speed (checkboxes)
     if(data.obaveze) localStorage.setItem('knjg_crm_obaveze', JSON.stringify(data.obaveze));
@@ -1357,6 +1362,7 @@ let osnivanja = [];
 let cenovnik = {
   DOO_bez_pdv_bez_radnika:68, DOO_pdv_bez_radnika:100, DOO_bez_pdv_radnici:92, DOO_pdv_radnici:135,
   PR_bez_pdv_bez_radnika:42, PR_pdv_bez_radnika:68, PR_bez_pdv_radnici:58, PR_pdv_radnici:92,
+  Udruzenje_bez_pdv_bez_radnika:68, Udruzenje_pdv_bez_radnika:100, Udruzenje_bez_pdv_radnici:92, Udruzenje_pdv_radnici:135,
   Pausal_bez_radnika:30, Pausal_radnici:46, radnik_dodatak:13
 };
 
@@ -1451,15 +1457,24 @@ function pickRadio(g, el) {
       const dobitBtn   = document.getElementById(prefix+'porezDobitBtn');
       const nePlakaBtn = document.getElementById(prefix+'porezNePlakaBtn');
       const odoBtn     = document.getElementById(prefix+'porezOdoBtn');
-      if(dobitBtn)   { dobitBtn.style.opacity='';   dobitBtn.style.pointerEvents=''; }
-      if(nePlakaBtn) { nePlakaBtn.style.opacity=''; nePlakaBtn.style.pointerEvents=''; }
-      if(odoBtn)     { odoBtn.style.opacity='';     odoBtn.style.pointerEvents=''; }
+      if(dobitBtn)   { dobitBtn.style.opacity='';   dobitBtn.style.pointerEvents=''; dobitBtn.title=''; }
+      if(nePlakaBtn) { nePlakaBtn.style.opacity=''; nePlakaBtn.style.pointerEvents=''; nePlakaBtn.title=''; }
+      if(odoBtn)     { odoBtn.style.opacity='';     odoBtn.style.pointerEvents=''; odoBtn.title=''; }
       // Auto Porez na dobit ako nije ništa izabrano
       const anySelected = document.querySelector('#'+prefix+'porez .selected');
       if(!anySelected) {
         const dobitBtnAlt = document.querySelector('#'+prefix+'porez [data-val="Porez na dobit"]');
         if(dobitBtnAlt) dobitBtnAlt.classList.add('selected');
       }
+    } else if(val === 'Udruženje') {
+      // Udruženje: samo "Porez na dobit - ne plaća"
+      const dobitBtn   = document.getElementById(prefix+'porezDobitBtn');
+      const nePlakaBtn = document.getElementById(prefix+'porezNePlakaBtn');
+      const odoBtn     = document.getElementById(prefix+'porezOdoBtn');
+      if(pausalBtn)  { pausalBtn.classList.remove('checked');  pausalBtn.style.opacity='0.35';  pausalBtn.style.pointerEvents='none'; pausalBtn.title='Nije dostupno za Udruženje'; }
+      if(dobitBtn)   { dobitBtn.classList.remove('checked');   dobitBtn.style.opacity='0.35';   dobitBtn.style.pointerEvents='none'; dobitBtn.title='Nije dostupno za Udruženje'; }
+      if(odoBtn)     { odoBtn.classList.remove('checked');     odoBtn.style.opacity='0.35';     odoBtn.style.pointerEvents='none'; odoBtn.title='Nije dostupno za Udruženje'; }
+      if(nePlakaBtn) { nePlakaBtn.style.opacity=''; nePlakaBtn.style.pointerEvents=''; nePlakaBtn.title=''; nePlakaBtn.classList.add('checked'); }
     } else if(val === 'Paušal') {
       // Otključaj Paušalno oporezivanje
       if(pausalBtn) {
@@ -1663,7 +1678,7 @@ function getZakup(prefix) {
 function predloziCenu(forma,pdv,radnici,brR) {
   brR=brR||0; let base=0;
   if(forma==='Paušal') base=radnici?cenovnik.Pausal_radnici:cenovnik.Pausal_bez_radnika;
-  else { const key=forma+'_'+(pdv?'pdv':'bez_pdv')+'_'+(radnici?'radnici':'bez_radnika'); base=cenovnik[key]||0; }
+  else { const fk=(forma==='Udruženje')?'Udruzenje':forma; const key=fk+'_'+(pdv?'pdv':'bez_pdv')+'_'+(radnici?'radnici':'bez_radnika'); base=cenovnik[key]||0; }
   if(radnici&&brR>1) base+=(brR-1)*cenovnik.radnik_dodatak;
   return base;
 }
@@ -1800,6 +1815,11 @@ function openEdit(id, fromKadrovska) {
     if(eDobitBtn)   { eDobitBtn.style.opacity='0.35';   eDobitBtn.style.pointerEvents='none'; }
     if(eNePlakaBtn) { eNePlakaBtn.style.opacity='0.35'; eNePlakaBtn.style.pointerEvents='none'; }
     if(eOdoBtn)     { eOdoBtn.style.opacity='0.35';     eOdoBtn.style.pointerEvents='none'; }
+  } else if(c.pravnaForma === 'Udruženje') {
+    if(ePausalBtn) { ePausalBtn.style.opacity='0.35'; ePausalBtn.style.pointerEvents='none'; ePausalBtn.title='Nije dostupno za Udruženje'; }
+    if(eDobitBtn)   { eDobitBtn.style.opacity='0.35';   eDobitBtn.style.pointerEvents='none'; }
+    if(eOdoBtn)     { eOdoBtn.style.opacity='0.35';     eOdoBtn.style.pointerEvents='none'; }
+    if(eNePlakaBtn) { eNePlakaBtn.style.opacity=''; eNePlakaBtn.style.pointerEvents=''; }
   } else {
     if(ePausalBtn) { ePausalBtn.style.opacity='0.35'; ePausalBtn.style.pointerEvents='none'; ePausalBtn.title='Nije dostupno za DOO/PR'; }
     if(eDobitBtn)   { eDobitBtn.style.opacity='';   eDobitBtn.style.pointerEvents=''; }
@@ -2051,7 +2071,7 @@ function renderPodsetnici() {
         </div>
         <div id="grupa-${g.tip}" style="display:${col?'none':'block'}">`;
       g.items.forEach(w=>{
-        const fb=w.pravnaForma==='DOO'?'b-doo':w.pravnaForma==='PR'?'b-pr':'b-pausal';
+        const fb=w.pravnaForma==='DOO'?'b-doo':w.pravnaForma==='PR'?'b-pr':w.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
         html+=`<div class="podsetnik-row">
           <span class="dot dot-${w.status.tip}" style="margin-right:4px"></span>
           <span class="p-ime">${w.ime}</span>
@@ -2808,7 +2828,7 @@ function renderPPPPD() {
   html += '<th>Ukupno</th></tr></thead><tbody>';
 
   stavke.forEach(s => {
-    const fb = s.pravnaForma==='DOO'?'b-doo':s.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const fb = s.pravnaForma==='DOO'?'b-doo':s.pravnaForma==='PR'?'b-pr':s.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
     let uradjeno = 0;
     for(let m=0;m<12;m++) { if(ob['ppp_'+s.workerId+'_'+obavezeGodina+'_'+m]) uradjeno++; }
 
@@ -2969,7 +2989,7 @@ function renderODO() {
   html += '<th></th></tr></thead><tbody>';
 
   klijenti.forEach(c => {
-    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':c.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
     let poslatoUk=0, placenoUk=0;
     for(let m=0;m<12;m++){
       if(ob['od_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUk++;
@@ -3093,7 +3113,7 @@ function renderPorezNaDobit() {
   html += '<th></th></tr></thead><tbody>';
 
   klijenti.forEach(c => {
-    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':c.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
     let poslatoUkupno=0, placenoUkupno=0;
     for(let m=0;m<12;m++) {
       if(ob['pd_'+c.id+'_'+obavezeGodina+'_'+m+'_poslat']) poslatoUkupno++;
@@ -3240,7 +3260,7 @@ function renderDash() {
     <div class="stat-card"><div class="stat-label">Ukupno klijenata</div><div class="stat-val">${clients.length}</div></div>
     <div class="stat-card"><div class="stat-label">PDV obveznici</div><div class="stat-val">${clients.filter(c=>c.pdv).length}</div></div>
     <div class="stat-card"><div class="stat-label">Sa radnicima</div><div class="stat-val">${clients.filter(c=>c.radnici).length}</div></div>
-    <div class="stat-card"><div class="stat-label">DOO / PR / Paušal</div><div class="stat-val">${clients.filter(c=>c.pravnaForma==='DOO').length} / ${clients.filter(c=>c.pravnaForma==='PR').length} / ${clients.filter(c=>c.pravnaForma==='Paušal').length}</div></div>
+    <div class="stat-card"><div class="stat-label">DOO / PR / Paušal / Udr.</div><div class="stat-val">${clients.filter(c=>c.pravnaForma==='DOO').length} / ${clients.filter(c=>c.pravnaForma==='PR').length} / ${clients.filter(c=>c.pravnaForma==='Paušal').length} / ${clients.filter(c=>c.pravnaForma==='Udruženje').length}</div></div>
     <div class="stat-card"><div class="stat-label">Fiskalna kasa</div><div class="stat-val">${clients.filter(c=>c.fiskalna).length}</div></div>
     <div class="stat-card"><div class="stat-label">Google recenzije</div><div class="stat-val" style="color:#fbbc05">${clients.filter(c=>c.recenzija).length} <span style="font-size:13px">★</span></div></div>`;
 
@@ -3289,7 +3309,7 @@ function renderDash() {
     return 0;
   });
   sortedList.forEach(c=>{
-    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':c.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
     const porezArr = Array.isArray(c.porez) ? c.porez : (c.porez ? [c.porez] : []);
     const pb = porezArr.includes('Porez na dobit') ? 'b-dobit' : porezArr.includes('Paušalno oporezivanje') ? 'b-ppausl' : porezArr.includes('Porez na dobit - ne plaća') ? 'b-no' : porezArr.includes('OD-O') ? 'b-doo' : 'b-no';
     const porezLabel = porezArr.length > 0 ? porezArr.map(p=>p==='Porez na dobit'?'Na dobit':p==='Paušalno oporezivanje'?'Paušal':p==='Porez na dobit - ne plaća'?'Ne plaća':p).join(' + ') : '—';
@@ -4133,7 +4153,7 @@ function renderCene() {
   if(!clients.length){document.getElementById('ceneKlijenti').innerHTML='<div class="empty-state"><i class="ti ti-users"></i>Nema unetih klijenata.</div>';return;}
   let tbl='<table class="client-table"><thead><tr><th>Naziv</th><th>Tip</th><th>PDV</th><th>Radnici</th><th>Mesečna cena</th><th>Godišnje</th></tr></thead><tbody>';
   clients.forEach(c=>{
-    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const fb=c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':c.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
     tbl+=`<tr>
       <td style="font-weight:500">${c.naziv}</td>
       <td><span class="badge ${fb}">${c.pravnaForma}</span></td>
@@ -4203,7 +4223,7 @@ function importKlijente(input) {
         );
         if (isDup) { preskocen++; duplikati.push(naziv); return; }
         const pravnaForma = col(row,'Pravna forma','Tip','Forma') || 'DOO';
-        const pf = pravnaForma==='Pausal'?'Paušal':(['DOO','PR','Paušal'].includes(pravnaForma)?pravnaForma:'DOO');
+        const pf = pravnaForma==='Pausal'?'Paušal':(pravnaForma==='Udruzenje'?'Udruženje':(['DOO','PR','Paušal','Udruženje'].includes(pravnaForma)?pravnaForma:'DOO'));
         const porezArr = parsePorez(col(row,'Oporezivanje','Porez','Porezi'));
         const pdv = parseBool(col(row,'PDV obveznik','PDV','Pdv'));
         const fiskalna = parseBool(col(row,'Fiskalna kasa','Fiskalna'));
@@ -4383,7 +4403,7 @@ function exportExcel(){
   list.forEach(c=>{if(c.radnici&&c.workers.length>0)c.workers.forEach(w=>{const st=ugovorStatus(w.do_);rr.push([c.naziv,c.pravnaForma,w.ime,w.jmbg||'',fmt(w.od)||'',fmt(w.do_)||'',st?st.label:'Aktivan']);});});
   if(rr.length){const ws2=XLSX.utils.aoa_to_sheet([rh,...rr]);ws2['!cols']=[{wch:26},{wch:12},{wch:22},{wch:16},{wch:14},{wch:14},{wch:24}];styleHeader(ws2,{s:{r:0,c:0},e:{r:0,c:rh.length-1}},'0C447C');XLSX.utils.book_append_sheet(wb,ws2,'Radnici');}
   const d=new Date().toLocaleDateString('en-GB'),uk=clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
-  const sd=[['Statistika',''],['Datum izvoza',d],[''],['Kategorija','Vrednost'],['Ukupno klijenata',clients.length],['DOO',clients.filter(c=>c.pravnaForma==='DOO').length],['PR',clients.filter(c=>c.pravnaForma==='PR').length],['Paušal',clients.filter(c=>c.pravnaForma==='Paušal').length],['PDV obveznici',clients.filter(c=>c.pdv).length],['Fiskalna kasa',clients.filter(c=>c.fiskalna).length],['Sa radnicima',clients.filter(c=>c.radnici).length],[''],['Finansije (€)',''],['Mesečni prihod',uk],['Godišnji prihod',uk*12]];
+  const sd=[['Statistika',''],['Datum izvoza',d],[''],['Kategorija','Vrednost'],['Ukupno klijenata',clients.length],['DOO',clients.filter(c=>c.pravnaForma==='DOO').length],['PR',clients.filter(c=>c.pravnaForma==='PR').length],['Paušal',clients.filter(c=>c.pravnaForma==='Paušal').length],['Udruženje',clients.filter(c=>c.pravnaForma==='Udruženje').length],['PDV obveznici',clients.filter(c=>c.pdv).length],['Fiskalna kasa',clients.filter(c=>c.fiskalna).length],['Sa radnicima',clients.filter(c=>c.radnici).length],[''],['Finansije (€)',''],['Mesečni prihod',uk],['Godišnji prihod',uk*12]];
   const ws3=XLSX.utils.aoa_to_sheet(sd);ws3['!cols']=[{wch:30},{wch:16}];XLSX.utils.book_append_sheet(wb,ws3,'Statistika');
   XLSX.writeFile(wb,'Klijenti_'+d.replace(/\//g,'-')+'.xlsx');showToast('Excel fajl preuzet!');
 }
@@ -4416,6 +4436,7 @@ function renderCiljevi() {
   const doo = clients.filter(c=>c.pravnaForma==='DOO').length;
   const pr  = clients.filter(c=>c.pravnaForma==='PR').length;
   const pau = clients.filter(c=>c.pravnaForma==='Paušal').length;
+  const udr = clients.filter(c=>c.pravnaForma==='Udruženje').length;
   const ukupno = clients.length;
   const mesecni  = clients.reduce((s,c)=>s+(c.cenaMesecna||0),0);
   const godisnji = mesecni * 12;
@@ -4482,6 +4503,7 @@ function renderCiljevi() {
         ${ciljRow('DOO', doo, v=>v, 'ciljDOO', 'npr. 20', 'klijenata', '<span class="badge b-doo" style="font-size:10px">DOO</span>')}
         ${ciljRow('PR', pr, v=>v, 'ciljPR', 'npr. 15', 'klijenata', '<span class="badge b-pr" style="font-size:10px">PR</span>')}
         ${ciljRow('Paušal', pau, v=>v, 'ciljPausal', 'npr. 15', 'klijenata', '<span class="badge b-pausal" style="font-size:10px">Paušal</span>')}
+        ${ciljRow('Udruženje', udr, v=>v, 'ciljUdruzenje', 'npr. 5', 'klijenata', '<span class="badge b-udr" style="font-size:10px">Udruženje</span>')}
         <tr style="background:var(--bg2)"><td colspan="5" style="padding:6px 14px;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em">Prihodi</td></tr>
         ${ciljRow('Mesečni prihod', mesecni, eur, 'ciljMesecni', 'npr. 5000', '€', '')}
         ${ciljRow('Godišnji prihod', godisnji, eur, 'ciljGodisnji', 'npr. 60000', '€', '')}
@@ -4806,7 +4828,7 @@ function renderPregled() {
     return 0;
   });
   sortedClients.forEach(c => {
-    const fb = c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':'b-pausal';
+    const fb = c.pravnaForma==='DOO'?'b-doo':c.pravnaForma==='PR'?'b-pr':c.pravnaForma==='Udruženje'?'b-udr':'b-pausal';
     const porezArr = Array.isArray(c.porez)?c.porez:(c.porez?[c.porez]:[]);
 
     // Determine applicability per column
