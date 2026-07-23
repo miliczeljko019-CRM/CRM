@@ -5375,13 +5375,14 @@ window.addEventListener('resize', drawTabOverlay);
 /* -- Multi-filter dashboard: ILI unutar grupe, I izmedju grupa (aditivno) -- */
 (function(){
   var crmDashFilters = [];
-  var FORME = ['DOO','PR','Pau\u0161al','Pausal'];
+  var FORME = ['DOO','PR','Pau\u0161al','Pausal','Udru\u017eenje','Udruzenje'];
   var FLAGS = ['PDV','radnici','fiskalna','recenzija','privOdjava'];
   function isForma(f){ return FORME.indexOf(f) > -1; }
   function isOp(f){ return typeof f==='string' && f.indexOf('op_')===0; }
   function isFlag(f){ return FLAGS.indexOf(f) > -1; }
   function formaEq(a,b){
-    var pa=(a==='Pausal')?'Pau\u0161al':a, pb=(b==='Pausal')?'Pau\u0161al':b;
+    var norm=function(x){ if(x==='Pausal') return 'Pau\u0161al'; if(x==='Udruzenje') return 'Udru\u017eenje'; return x; };
+    var pa=norm(a), pb=norm(b);
     return pa===pb;
   }
   function opsPostoje(){ return (typeof operateri!=='undefined') ? operateri : null; }
