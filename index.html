@@ -4959,7 +4959,7 @@ function pregledApplyFilterUI() {
     var ok;
     if(odjava || (brTodo === 0 && brDone === 0)) ok = false;
     else if(pregledFilterState === 'uradjeno') ok = (brTodo === 0);
-    else ok = (brTodo > 0);
+    else ok = (brTodo > 0 && brDone === 0);
     tr.style.display = ok ? '' : 'none';
     if(ok) shown++;
   }
