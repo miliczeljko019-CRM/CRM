@@ -392,6 +392,14 @@ select{cursor:pointer}
 .pregled-info-bar{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--blue-ghost);border:0.5px solid var(--blue-pale);border-radius:var(--rad);margin-bottom:1rem;font-size:13px;flex-wrap:wrap;gap:8px}
 .pregled-info-bar i{font-size:16px;color:var(--txt2)}
 .pregled-info-bar strong{color:#D32F2F}
+.pg-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;border-radius:20px;padding:4px 12px;cursor:pointer;background:transparent;line-height:1.4;transition:background .15s,color .15s,border-color .15s;font-family:inherit}
+.pg-chip-done{color:#1E8C50;border:1px solid rgba(30,140,80,.35)}
+.pg-chip-done:hover{background:rgba(30,140,80,.10)}
+.pg-chip-done.pg-active{background:#1E8C50;color:#fff;border-color:#1E8C50}
+.pg-chip-todo{color:#D32F2F;border:1px solid rgba(211,47,47,.35)}
+.pg-chip-todo:hover{background:rgba(211,47,47,.10)}
+.pg-chip-todo.pg-active{background:#D32F2F;color:#fff;border-color:#D32F2F}
+.pg-chip.pg-dim{opacity:.5}
 .pregled-table{width:100%;border-collapse:collapse;font-size:12px;border:1px solid var(--brd3)}
 .pregled-table th{text-align:center;padding:8px 6px;color:#64748b;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border:none;border-bottom:1px solid #e6eaf0;white-space:normal;word-break:break-word;max-width:70px;line-height:1.25;background:#fbfcfd}.pregled-table th.sortable{cursor:pointer;user-select:none}.pregled-table th.sortable:hover{background:#d6e8f8;color:var(--blue-dark)}.sort-arrow{font-style:normal;font-size:10px;margin-left:3px;opacity:0.4}.sortable.sort-active .sort-arrow{opacity:1;color:var(--blue-dark)}
 .pregled-table th.col-klijent{text-align:left;padding-left:12px;min-width:180px;position:sticky;left:0;background:var(--blue-ghost);z-index:2;white-space:nowrap;max-width:none}
@@ -4906,6 +4914,80 @@ function renderPregled() {
   html += '</tbody></table></div>';
   document.getElementById('pregledContent').innerHTML = html;
 }
+
+/* === DODATO: filter chips u legendi Pregleda (Urađeno / Neurađeno) === */
+var pregledFilterState = null;
+
+function pregledSetFilter(f) {
+  pregledFilterState = (pregledFilterState === f) ? null : f;
+  renderPregled();
+}
+
+function pregledApplyFilterUI() {
+  var root = document.getElementById('pregledContent');
+  if(!root) return;
+  var bar = root.querySelector('.pregled-info-bar');
+  if(bar) {
+    var legend = bar.querySelector('div[style*="margin-left:auto"]');
+    if(legend) {
+      var aU = pregledFilterState === 'uradjeno';
+      var aN = pregledFilterState === 'neuradjeno';
+      legend.innerHTML =
+        '<button type="button" class="pg-chip pg-chip-done' + (aU ? ' pg-active' : (aN ? ' pg-dim' : '')) + '" ' +
+        'title="Prikaži samo klijente kojima je sve urađeno" onclick="pregledSetFilter(\'uradjeno\')">' +
+        '<span style="font-size:13px">\u2713</span> Urađeno' + (aU ? ' <span style="margin-left:2px;font-size:12px">\u2715</span>' : '') + '</button>' +
+        '<button type="button" class="pg-chip pg-chip-todo' + (aN ? ' pg-active' : (aU ? ' pg-dim' : '')) + '" ' +
+        'title="Prikaži samo klijente kojima nešto nedostaje" onclick="pregledSetFilter(\'neuradjeno\')">' +
+        '<span style="font-size:13px;font-weight:900">\u2715</span> Neurađeno' + (aN ? ' <span style="margin-left:2px;font-size:12px">\u2715</span>' : '') + '</button>' +
+        '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2)">\u2014 Nije primenjivo</span>';
+    }
+  }
+
+  var tbody = root.querySelector('.pregled-table tbody');
+  if(!tbody) return;
+  var old = tbody.querySelector('tr[data-pgf-empty]');
+  if(old) old.remove();
+
+  var rows = tbody.querySelectorAll('tr');
+  var shown = 0;
+  for(var i = 0; i < rows.length; i++) {
+    var tr = rows[i];
+    if(!pregledFilterState) { tr.style.display = ''; shown++; continue; }
+    var odjava = !!tr.querySelector('.ti-pause');
+    var brTodo = tr.querySelectorAll('.st-todo, .dual-todo').length;
+    var brDone = tr.querySelectorAll('.st-done, .dual-done-blue, .dual-done-green').length;
+    var ok;
+    if(odjava || (brTodo === 0 && brDone === 0)) ok = false;
+    else if(pregledFilterState === 'uradjeno') ok = (brTodo === 0);
+    else ok = (brTodo > 0);
+    tr.style.display = ok ? '' : 'none';
+    if(ok) shown++;
+  }
+
+  if(pregledFilterState && shown === 0) {
+    var colspan = (root.querySelectorAll('.pregled-table thead tr')[1] || {}).children;
+    var cs = colspan ? colspan.length : 13;
+    var trE = document.createElement('tr');
+    trE.setAttribute('data-pgf-empty', '1');
+    trE.innerHTML = '<td colspan="' + cs + '" style="text-align:center;padding:18px;color:var(--txt2);font-size:13px">' +
+      'Nema klijenata u ovoj grupi.</td>';
+    tbody.appendChild(trE);
+  }
+}
+
+(function() {
+  if(typeof renderPregled !== 'function' || renderPregled.__pgfWrapped) return;
+  var _orig = renderPregled;
+  var wrapped = function() {
+    var r = _orig.apply(this, arguments);
+    try { pregledApplyFilterUI(); } catch(e) { console.error('pregled filter:', e); }
+    return r;
+  };
+  wrapped.__pgfWrapped = true;
+  renderPregled = wrapped;
+  window.renderPregled = wrapped;
+})();
+/* === KRAJ dodatka === */
 
 function stCell(applicable, done, toggleFn, key, sublabel) {
   if(!applicable) return '<td><span style="color:var(--brd3);font-size:16px">—</span></td>';
