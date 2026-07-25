@@ -500,6 +500,7 @@ select{cursor:pointer}
       <button class="nav-tab" onclick="showTab('obaveze')"><i class="ti ti-calendar-check"></i> Mesečne obaveze</button>
       <button class="nav-tab" onclick="showTab('kadrovska')"><i class="ti ti-id-badge-2"></i> Kadrovska</button>
       <button class="nav-tab" onclick="showTab('osnivanje')"><i class="ti ti-building-plus"></i> Osnivanje</button>
+      <button class="nav-tab" onclick="showTab('brisanje')"><i class="ti ti-trash-x"></i> Brisanje</button>
       <button class="nav-tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene</button>
       <button class="nav-tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
     </div>
@@ -536,6 +537,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('obaveze')"></button>
   <button class="tab" onclick="showTab('kadrovska')"></button>
   <button class="tab" onclick="showTab('osnivanje')"></button>
+  <button class="tab" onclick="showTab('brisanje')"></button>
   <button class="tab" onclick="showTab('cene')"></button>
   <button class="tab" onclick="showTab('ciljevi')"></button>
 </div>
@@ -731,6 +733,9 @@ select{cursor:pointer}
 
 <!-- OSNIVANJE -->
 <div class="page" id="page-osnivanje"><div style="max-width:100%;margin:0 auto"><div id="osnivanjeContent"></div></div></div>
+
+<!-- BRISANJE -->
+<div class="page" id="page-brisanje"><div style="max-width:100%;margin:0 auto"><div id="brisanjeContent"></div></div></div>
 
 <!-- ═══ CENE ═══ -->
 <div class="page" id="page-cene"><div>
@@ -1200,6 +1205,7 @@ async function loadFromDrive() {
     if(Array.isArray(data.operateri) && data.operateri.length) operateri = data.operateri;
     bolovanjaSvi = data.bolovanjaSvi || [];
     osnivanja = data.osnivanja || [];
+    brisanja = data.brisanja || [];
     cenovnik = data.cenovnik || {
       DOO_bez_pdv_bez_radnika:68, DOO_pdv_bez_radnika:100, DOO_bez_pdv_radnici:92, DOO_pdv_radnici:135,
       PR_bez_pdv_bez_radnika:42, PR_pdv_bez_radnika:68, PR_bez_pdv_radnici:58, PR_pdv_radnici:92,
@@ -1214,6 +1220,7 @@ async function loadFromDrive() {
     renderOperateri(); renderDash(); renderPodsetnici();
     if(document.getElementById('page-kadrovska')?.classList.contains('active')) renderKadrovska();
     if(document.getElementById('page-osnivanje')?.classList.contains('active')) renderOsnivanje();
+    if(document.getElementById('page-brisanje')?.classList.contains('active')) renderBrisanje();
     setTimeout(prikaziObavestenjaAkoIma, 300);
   } catch(e) {
     setSyncStatus('error', 'Greška pri učitavanju: ' + e.message);
@@ -1230,7 +1237,7 @@ function save() {
       const obaveze = JSON.parse(localStorage.getItem('knjg_crm_obaveze') || '{}');
       const rashodiData = JSON.parse(localStorage.getItem('knjg_crm_rashodi') || '[]');
       const ciljeviData = JSON.parse(localStorage.getItem('knjg_crm_ciljevi') || '{}');
-      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData, bolovanjaSvi, osnivanja, operateri });
+      await writeFile(driveFileId, { clients, cenovnik, obaveze, rashodi: rashodiData, ciljevi: ciljeviData, bolovanjaSvi, osnivanja, brisanja, operateri });
       setSyncStatus('ok', 'Sinhronizovano · ' + new Date().toLocaleTimeString('sr-RS'));
     } catch(e) {
       setSyncStatus('error', 'Nije sačuvano: ' + e.message);
@@ -1367,6 +1374,7 @@ let clients  = [];
 let operateri = ['Željko','Sandra M','Sandra Ć','Bokica','Marica'];
 let bolovanjaSvi = [];
 let osnivanja = [];
+let brisanja = [];
 let cenovnik = {
   DOO_bez_pdv_bez_radnika:68, DOO_pdv_bez_radnika:100, DOO_bez_pdv_radnici:92, DOO_pdv_radnici:135,
   PR_bez_pdv_bez_radnika:42, PR_pdv_bez_radnika:68, PR_bez_pdv_radnici:58, PR_pdv_radnici:92,
@@ -1437,6 +1445,7 @@ function showTab(t) {
   if(t==='obaveze') renderObaveze();
   if(t==='kadrovska') renderKadrovska();
   if(t==='osnivanje'){ window._osnCol = {DOO:true, PR:true}; renderOsnivanje(); }
+  if(t==='brisanje'){ window._briCol = {PR:true, LIK:true}; renderBrisanje(); }
   if(t==='cene') renderCene();
   if(t==='ciljevi') renderCiljevi();
   /* sidebar: no tab overlay needed */
@@ -4146,6 +4155,229 @@ function osnDelete(id) {
   osnivanja = osnivanja.filter(x => x.id != id);
   save();
   renderOsnivanje();
+}
+
+
+
+// ====== BRISANJE (Brisanje PR / Likvidacija) ======
+const BRI_TPL = {
+  PR: [
+    "Eko taksa do procenjenog dana brisanja",
+    "Uverenje Poreska i LPA na isti dan",
+    "Prijava za brisanje preduzetnika za APR u papiru",
+    "Taksa 1.600 din",
+    "Kad se dobije rešenje, ePorezi – PPDG-1S",
+    "Odradimo ličnu zaradu do dana odjave sa rešenja koju plaćaju kao fizičko lice",
+    "APR – vanredni završni"
+  ],
+  LIK: []
+};
+
+function briNaziv(e) {
+  const c = clients.find(x => x.id == e.clientId);
+  return (c && c.naziv) || e.clientNaziv || '&mdash;';
+}
+function briPct(e) {
+  const tpl = BRI_TPL[e.tip] || [];
+  const done = e.done || {}, removed = e.removed || {};
+  let total = 0, d = 0;
+  for (let i = 0; i < tpl.length; i++) {
+    if (typeof tpl[i] !== 'string') continue;
+    if (removed[i]) continue;
+    total++;
+    if (done[i]) d++;
+  }
+  return total ? Math.round(d / total * 100) : 0;
+}
+function briDoneCount(e) {
+  const tpl = BRI_TPL[e.tip] || [];
+  const done = e.done || {}, removed = e.removed || {};
+  let d = 0;
+  for (let i = 0; i < tpl.length; i++) if (typeof tpl[i] === 'string' && done[i] && !removed[i]) d++;
+  return d;
+}
+function briTotal(e) {
+  const tpl = BRI_TPL[e.tip] || [];
+  const removed = e.removed || {};
+  let t = 0;
+  for (let i = 0; i < tpl.length; i++) if (typeof tpl[i] === 'string' && !removed[i]) t++;
+  return t;
+}
+function briBrojStavki(tip) {
+  const tpl = BRI_TPL[tip] || [];
+  return tpl.filter(x => typeof x === 'string').length;
+}
+
+function briSekcijToggle(tip) {
+  if (!window._briCol) window._briCol = {};
+  window._briCol[tip] = !window._briCol[tip];
+  renderBrisanje();
+}
+function briEntryToggle(id) {
+  if (!window._briOpen) window._briOpen = {};
+  window._briOpen[id] = !window._briOpen[id];
+  renderBrisanje();
+}
+function briItemToggle(id, idx) {
+  const e = brisanja.find(x => x.id == id);
+  if (!e) return;
+  if (!e.done) e.done = {};
+  e.done[idx] = !e.done[idx];
+  save();
+  renderBrisanje();
+}
+function briItemRemove(id, idx) {
+  const e = brisanja.find(x => x.id == id);
+  if (!e) return;
+  if (!e.removed) e.removed = {};
+  e.removed[idx] = true;
+  save();
+  renderBrisanje();
+}
+
+function briRenderSekcija(tip, naslov, boja, bgCard) {
+  if (!window._briCol) window._briCol = {};
+  if (window._briCol[tip] === undefined) window._briCol[tip] = true;
+  if (!window._briOpen) window._briOpen = {};
+  const collapsed = window._briCol[tip];
+  const tpl = BRI_TPL[tip] || [];
+  const lista = brisanja.filter(o => o.tip === tip);
+  const uToku = lista.filter(e => briPct(e) < 100).length;
+  const gotovi = lista.filter(e => briPct(e) === 100).length;
+
+  const chevron = collapsed
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+
+  function entryHtml(e) {
+    const pct = briPct(e);
+    const dc = briDoneCount(e);
+    const open = !!window._briOpen[e.id];
+    const echev = open
+      ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${boja}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+      : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${boja}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    const done = e.done || {}, removed = e.removed || {};
+    const items = !open ? '' : `<div style="padding:4px 18px 14px 46px;display:flex;flex-direction:column;gap:2px">${
+      tpl.map((t, i) => {
+        if (typeof t !== 'string') {
+          return `<div style="font-size:11px;font-weight:700;color:${boja};letter-spacing:.4px;text-transform:uppercase;margin:11px 0 3px;padding-left:2px;opacity:.85">${t.h}</div>`;
+        }
+        if (removed[i]) return '';
+        const chk = !!done[i];
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 8px;border-radius:6px;font-size:12.5px;line-height:1.4">
+          <div onclick="briItemToggle(${e.id},${i})" style="display:flex;align-items:flex-start;gap:9px;flex:1;min-width:0;cursor:pointer;border-radius:6px;padding:1px 2px" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
+            <span style="width:16px;height:16px;border:1.5px solid ${chk ? '#15803d' : 'var(--brd3)'};background:${chk ? '#15803d' : 'transparent'};color:#fff;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center">${chk ? '<i class="ti ti-check" style="font-size:12px"></i>' : ''}</span>
+            <span style="color:${chk ? 'var(--txt2)' : 'var(--txt)'};${chk ? 'text-decoration:line-through' : ''}">${t}</span>
+          </div>
+          <button onclick="event.stopPropagation();briItemRemove(${e.id},${i})" title="Obriši ovaj red (samo za ovog klijenta)" style="flex-shrink:0;width:22px;height:22px;border:1px solid var(--brd3);background:var(--bg);color:var(--danger);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;line-height:1;padding:0" onmouseover="this.style.background='var(--bg-danger)';this.style.borderColor='var(--brd-danger)'" onmouseout="this.style.background='var(--bg)';this.style.borderColor='var(--brd3)'">&minus;</button>
+        </div>`;
+      }).join('')
+    }</div>`;
+    return `<div style="border-top:0.5px solid var(--brd2)">
+      <div style="padding:11px 18px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="briEntryToggle(${e.id})" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
+        ${echev}
+        <span style="font-weight:500;min-width:150px">${briNaziv(e)}</span>
+        <span style="font-size:12px;color:var(--txt2);min-width:88px">${dc}/${briTotal(e)} &middot; ${pct}%</span>
+        <button onclick="event.stopPropagation();briDelete(${e.id})" title="Obriši ceo unos" style="flex-shrink:0;margin-left:auto;width:24px;height:24px;border:1px solid var(--brd3);background:var(--bg);color:var(--danger);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;line-height:1;padding:0" onmouseover="this.style.background='var(--bg-danger)';this.style.borderColor='var(--brd-danger)'" onmouseout="this.style.background='var(--bg)';this.style.borderColor='var(--brd3)'">&minus;</button>
+      </div>${items}
+    </div>`;
+  }
+
+  const body = collapsed ? '' : (lista.length === 0
+    ? `<div style="padding:20px;text-align:center;color:var(--txt2);font-size:13px">Nema unosa. Klikni „Dodaj”.</div>`
+    : lista.map(entryHtml).join(''));
+
+  const addBtn = briBrojStavki(tip)
+    ? `<button onclick="event.stopPropagation();briOpenModal('${tip}')" style="padding:6px 14px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><i class="ti ti-plus"></i> Dodaj</button>`
+    : `<span style="font-size:11px;color:var(--txt2);font-style:italic">stavke se dodaju kasnije</span>`;
+
+  return `
+  <div style="margin-top:24px;border-radius:10px;overflow:hidden;border:1.5px solid ${boja}33;background:var(--bg)">
+    <div onclick="briSekcijToggle('${tip}')" style="background:${bgCard};padding:12px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:5px;height:26px;background:${boja};border-radius:3px"></div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:${boja}">${naslov}</div>
+          <div style="font-size:11px;color:var(--txt2)">${uToku} u toku &middot; ${gotovi} zavr&#353;eno</div>
+        </div>
+        <span style="color:${boja};opacity:0.7;margin-left:2px">${chevron}</span>
+      </div>
+      ${addBtn}
+    </div>
+    ${body}
+  </div>`;
+}
+
+function renderBrisanje() {
+  const wrap = document.getElementById('brisanjeContent');
+  if (!wrap) return;
+  wrap.innerHTML =
+    briRenderSekcija('PR', 'Brisanje PR', '#A32D2D', '#fdeeee') +
+    briRenderSekcija('LIK', 'Likvidacija', '#1a4e7f', '#eef4fb');
+}
+
+function briOpenModal(tip) {
+  const boja = tip === 'PR' ? '#A32D2D' : '#1a4e7f';
+  const naslov = tip === 'PR' ? 'Brisanje PR' : 'Likvidacija';
+  const broj = briBrojStavki(tip);
+  const opts = clients.length
+    ? clients.map(c => `<option value="${c.id}">${c.naziv}</option>`).join('')
+    : '';
+  const inner = clients.length
+    ? `<label style="font-size:12px;color:var(--txt2);display:block;margin-bottom:5px">Izaberi klijenta</label>
+       <select id="briKlijent" style="width:100%;padding:8px 10px;border:1px solid var(--brd2);border-radius:var(--rad);font-size:13px;background:var(--bg);color:var(--txt);margin-bottom:8px">${opts}</select>
+       <p style="font-size:11.5px;color:var(--txt2);margin:0 0 18px">Dodaje se lista od ${broj} stavki koje se &#353;tikliraju kako se koja uradi.</p>
+       <div style="display:flex;gap:8px">
+         <button onclick="briCreate('${tip}')" style="flex:1;padding:9px;background:${boja};color:#fff;border:none;border-radius:var(--rad);font-size:13px;font-weight:600;cursor:pointer">Dodaj</button>
+         <button onclick="briCloseModal()" style="padding:9px 16px;background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);font-size:13px;cursor:pointer">Otka&#382;i</button>
+       </div>`
+    : `<p style="font-size:13px;color:var(--txt2);margin:0 0 18px">Nema unetih klijenata. Prvo dodaj klijenta u „Novi klijent”, pa se vrati ovde.</p>
+       <button onclick="briCloseModal()" style="width:100%;padding:9px;background:var(--bg2);border:0.5px solid var(--brd2);border-radius:var(--rad);font-size:13px;cursor:pointer">U redu</button>`;
+
+  const html = `<div id="briModalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)briCloseModal()">
+    <div style="background:var(--bg);border-radius:12px;padding:24px 26px;min-width:360px;max-width:420px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,0.22)">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px">
+        <div style="width:5px;height:22px;background:${boja};border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:700;color:${boja}">Novi unos &ndash; ${naslov}</span>
+      </div>
+      ${inner}
+    </div>
+  </div>`;
+  const mount = document.createElement('div');
+  mount.id = 'briModalMount';
+  mount.innerHTML = html;
+  document.body.appendChild(mount);
+}
+function briCloseModal() {
+  const m = document.getElementById('briModalMount');
+  if (m) m.remove();
+}
+function briCreate(tip) {
+  const sel = document.getElementById('briKlijent');
+  if (!sel) return;
+  const cid = sel.value;
+  const c = clients.find(x => x.id == cid);
+  brisanja.unshift({
+    id: Date.now(),
+    tip: tip,
+    clientId: cid,
+    clientNaziv: c ? c.naziv : '',
+    done: {},
+    removed: {}
+  });
+  if (!window._briCol) window._briCol = {};
+  window._briCol[tip] = false;
+  save();
+  briCloseModal();
+  renderBrisanje();
+}
+function briDelete(id) {
+  const e = brisanja.find(x => x.id == id);
+  const ime = e ? briNaziv(e).replace(/&mdash;/g, '—') : '';
+  if (!confirm('Obrisati unos' + (ime ? ' za „' + ime + '”' : '') + '?')) return;
+  brisanja = brisanja.filter(x => x.id != id);
+  save();
+  renderBrisanje();
 }
 
 
