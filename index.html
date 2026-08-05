@@ -503,6 +503,7 @@ select{cursor:pointer}
       <button class="nav-tab" onclick="showTab('brisanje')"><i class="ti ti-trash-x"></i> Brisanje</button>
       <button class="nav-tab" onclick="showTab('cene')"><i class="ti ti-currency-euro"></i> Cene</button>
       <button class="nav-tab" onclick="showTab('ciljevi')"><i class="ti ti-target"></i> Ciljevi</button>
+      <button class="nav-tab" onclick="showTab('poreski')"><i class="ti ti-file-invoice"></i> Poreski izveštaj</button>
     </div>
     <svg id="tabOverlay" style="position:absolute;top:0;left:0;pointer-events:none;z-index:55;" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="nav-right">
@@ -540,6 +541,7 @@ select{cursor:pointer}
   <button class="tab" onclick="showTab('brisanje')"></button>
   <button class="tab" onclick="showTab('cene')"></button>
   <button class="tab" onclick="showTab('ciljevi')"></button>
+  <button class="tab" onclick="showTab('poreski')"></button>
 </div>
 
 <!-- ═══ FORMA ═══ -->
@@ -776,6 +778,76 @@ select{cursor:pointer}
 
 <!-- ═══ CILJEVI ═══ -->
 <div class="page" id="page-ciljevi"><div style="max-width:1100px;margin:0 auto"><div id="ciljeviContent"></div></div></div>
+<div class="page" id="page-poreski"><div style="max-width:1100px;margin:0 auto;padding:0 4px">
+<style>
+  #page-poreski .por-wrap{font-family:Arial,Helvetica,sans-serif;color:#222;}
+  #page-poreski .por-h1{color:#1a3c6e;font-size:1.4rem;font-weight:700;margin-bottom:.2rem;}
+  #page-poreski .por-meta{color:#5a6b82;font-size:.85rem;margin-bottom:1.2rem;}
+  #page-poreski .por-unos{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.3rem;box-shadow:0 2px 6px rgba(0,0,0,.06);margin-bottom:1.3rem;}
+  #page-poreski .por-dz{border:2px dashed #b9c7dc;border-radius:12px;padding:1.8rem;text-align:center;background:#f7f9fc;cursor:pointer;transition:all .15s;}
+  #page-poreski .por-dz:hover,#page-poreski .por-dz.drag{border-color:#1a3c6e;background:#eef3fb;}
+  #page-poreski .por-dz .ik{font-size:1.9rem;color:#8ba0bd;}
+  #page-poreski .por-dz .tx{color:#5a6b82;font-size:.95rem;margin-top:.35rem;}
+  #page-poreski .por-lista{margin-top:.9rem;display:flex;flex-direction:column;gap:.4rem;}
+  #page-poreski .por-fajl{display:flex;align-items:center;gap:.6rem;font-size:.88rem;padding:.5rem .8rem;background:#f7f9fc;border-radius:6px;}
+  #page-poreski .por-fajl .naz{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #page-poreski .por-fajl .uk{color:#c0392b;cursor:pointer;font-weight:bold;padding:0 .3rem;}
+  #page-poreski .por-btn{margin-top:.9rem;width:100%;padding:.8rem;background:#22a866;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer;transition:background .15s;}
+  #page-poreski .por-btn:hover{background:#1c8f56;}
+  #page-poreski .por-btn:disabled{background:#a8c5b6;cursor:not-allowed;}
+  #page-poreski .por-status{font-size:.85rem;color:#5a6b82;margin-top:.7rem;text-align:center;}
+  #page-poreski .por-summary{display:flex;gap:1rem;margin-bottom:1.3rem;flex-wrap:wrap;}
+  #page-poreski .por-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem 1.5rem;box-shadow:0 2px 6px rgba(0,0,0,.08);min-width:160px;}
+  #page-poreski .por-card .broj{font-size:1.8rem;font-weight:bold;color:#1a3c6e;}
+  #page-poreski .por-card .opis{font-size:.8rem;color:#777;margin-top:.2rem;}
+  #page-poreski .por-card.crvena .broj{color:#c0392b;}
+  #page-poreski .por-card.zelena .broj{color:#27ae60;}
+  #page-poreski .por-card.narandzasta .broj{color:#e67e22;}
+  #page-poreski .por-tabovi{display:flex;gap:0;flex-wrap:wrap;}
+  #page-poreski .por-tb{padding:.65rem 1.6rem;font-size:.93rem;font-weight:bold;border:none;cursor:pointer;border-radius:8px 8px 0 0;background:#c5d3e8;color:#1a3c6e;transition:background .2s;}
+  #page-poreski .por-tb:hover{background:#a8bcd8;}
+  #page-poreski .por-tb.aktivan{background:#1a3c6e;color:#fff;}
+  #page-poreski .por-sek{display:none;}
+  #page-poreski .por-sek.aktivan{display:block;}
+  #page-poreski .por-blok{background:#fff;border-radius:0 8px 8px 8px;margin-bottom:1.3rem;box-shadow:0 2px 6px rgba(0,0,0,.08);overflow:hidden;}
+  #page-poreski .por-bh{background:#1a3c6e;color:#fff;padding:.7rem 1.2rem;display:flex;justify-content:space-between;align-items:center;font-size:.9rem;flex-wrap:wrap;gap:.3rem;}
+  #page-poreski .por-bh .firma{font-weight:bold;font-size:1rem;}
+  #page-poreski .por-bh .pib{opacity:.8;font-size:.82rem;}
+  #page-poreski table.por-t{width:100%;border-collapse:collapse;}
+  #page-poreski table.por-t th{background:#e8eef6;color:#1a3c6e;padding:.6rem 1rem;text-align:left;font-size:.85rem;border-bottom:2px solid #c5d3e8;}
+  #page-poreski table.por-t td{padding:.55rem 1rem;font-size:.9rem;border-bottom:1px solid #eee;}
+  #page-poreski table.por-t tr:last-child td{border-bottom:none;}
+  #page-poreski table.por-t tr:nth-child(even){background:#f7f9fc;}
+  #page-poreski table.por-t td.iznos{text-align:right;font-weight:bold;color:#c0392b;}
+  #page-poreski table.por-t th.iznos{text-align:right;}
+  #page-poreski .por-pk-naslov{background:#fff8e1;border-left:4px solid #f0a500;padding:.6rem 1rem;font-size:.88rem;color:#555;}
+  #page-poreski .por-pk-wrap{padding:.8rem 1rem;display:flex;flex-wrap:wrap;gap:1rem;}
+  #page-poreski .por-pk-form{background:#f7f9fc;border:1px solid #d0daea;border-radius:8px;padding:1rem;min-width:340px;flex:1;}
+  #page-poreski .por-pk-h{font-weight:bold;color:#1a3c6e;margin-bottom:.7rem;font-size:.9rem;display:flex;justify-content:space-between;}
+  #page-poreski .por-pk-iznos{color:#27ae60;}
+  #page-poreski .por-pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+  #page-poreski .por-pk-f label{display:block;font-size:.75rem;color:#888;margin-bottom:.2rem;}
+  #page-poreski .por-pk-f input{width:100%;padding:.4rem .6rem;border:1px solid #c5d3e8;border-radius:4px;font-size:.85rem;background:#fff;cursor:pointer;color:#222;}
+  #page-poreski .por-pk-f input:focus{outline:2px solid #1a3c6e;border-color:#1a3c6e;}
+  #page-poreski .por-prazno{padding:1rem;color:#27ae60;font-size:.95rem;}
+  #page-poreski .por-greska{background:#fff3cd;color:#856404;padding:.7rem 1rem;font-size:.88rem;border-left:4px solid #ffc107;}
+</style>
+<div class="por-wrap">
+  <div class="por-h1">Poreski izveštaj</div>
+  <div class="por-meta">PDF poreski kartoni → dugovanja / pretplate / preknjižavanja (parsiranje u browseru)</div>
+  <div class="por-unos">
+    <div class="por-dz" id="porDropzone">
+      <div class="ik">☁</div>
+      <div class="tx">Prevuci PDF kartone ovde ili klikni da izabereš</div>
+    </div>
+    <input type="file" id="porFileInput" accept="application/pdf" multiple style="display:none">
+    <div class="por-lista" id="porLista"></div>
+    <button class="por-btn" id="porBtnGen" disabled>Generiši izveštaj</button>
+    <div class="por-status" id="porStatus"></div>
+  </div>
+  <div id="porIzvestaj" style="display:none"></div>
+</div>
+</div></div>
 
 
 </div><!-- /app -->
@@ -5807,6 +5879,278 @@ window.addEventListener('resize', drawTabOverlay);
   else { crmMFInit(); }
 })();
 
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function(){
+  if (window._porInit) return; window._porInit = true;
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  }
+
+  var SIFRA_OPSTINE = "116";
+  var KONTO_RACUN = {
+    "4":"840-4848-37","711211":"840-711211843-73","711121":"840-711121843-25",
+    "711122":"840-711122843-32","711123":"840-711123843-39","721323":"840-721323843-47",
+    "721313":"840-721313843-74","721325":"840-721325843-61","721331":"840-721331843-06",
+    "721342":"840-721342843-83","721351":"840-721351843-49","721361":"840-721361843-22",
+    "721419":"840-721419843-40"
+  };
+
+  function parsirajBroj(raw){
+    raw = raw.trim();
+    var sign = raw.charAt(0) === "-" ? -1 : 1;
+    var a = raw.replace(/^-/, "");
+    var hasC = a.indexOf(",") !== -1, hasD = a.indexOf(".") !== -1;
+    if (hasC && hasD){
+      var ci = a.lastIndexOf(","), di = a.lastIndexOf(".");
+      if (di > ci){ a = a.replace(/,/g, ""); }
+      else { a = a.replace(/\./g, "").replace(/,/g, "."); }
+    } else if (hasC){
+      var parts = a.split(",");
+      if (parts.length === 2 && parts[1].length === 3 && /^\d+$/.test(parts[1])) a = a.replace(/,/g, "");
+      else a = a.replace(/,/g, ".");
+    }
+    return sign * parseFloat(a);
+  }
+
+  function fmt(n){ return n.toLocaleString("sr-RS", {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+  async function izvuciTekst(file){
+    var buf = await file.arrayBuffer();
+    var pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    var full = "";
+    for (var p = 1; p <= pdf.numPages; p++){
+      var page = await pdf.getPage(p);
+      var tc = await page.getTextContent();
+      var linije = {};
+      tc.items.forEach(function(it){
+        if (!it.str) return;
+        var y = Math.round(it.transform[5]);
+        if (!linije[y]) linije[y] = [];
+        linije[y].push({x: it.transform[4], w: it.width || 0, s: it.str});
+      });
+      var ys = Object.keys(linije).map(Number).sort(function(a,b){ return b - a; });
+      ys.forEach(function(y){
+        var reci = linije[y].sort(function(a,b){ return a.x - b.x; });
+        var linija = "", prevEnd = null;
+        reci.forEach(function(o){
+          if (prevEnd !== null && (o.x - prevEnd) > 1.5) linija += " ";
+          linija += o.s; prevEnd = o.x + o.w;
+        });
+        full += linija + "\n";
+      });
+      full += "\n";
+    }
+    return full;
+  }
+
+  function parsirajKarton(tekst, fajl){
+    var pibM = tekst.match(/PIB:\s*(\d+)/);
+    var pib = pibM ? pibM[1] : "N/A";
+    var nazM = tekst.match(/PIB:\s*\d+\s*\n(.+)/);
+    var naziv = nazM ? nazM[1].trim() : "N/A";
+    naziv = naziv.replace(/(DOO|AD|SP|SZR|STR|OD|JP)(?=[A-ZŠĐČĆŽ])/g, "$1 ");
+    var datM = tekst.match(/(\d{2}\/\d{2}\/\d{4})/);
+    var datum = datM ? datM[1] : "N/A";
+    var re = /^(\S+)\s+(\d{19})[\s\S]*?\d{2}\/\d{2}\/\d{4}\s+[-\d,]+\.?\d*\s+[-\d,]+\.?\d*\s+[-\d,]+\.?\d*\s+([-\d,]+\.?\d*)/gm;
+    var dugovanja = [], pretplate = [], m;
+    while ((m = re.exec(tekst)) !== null){
+      var konto = m[1].trim(), poziv = m[2], racun = KONTO_RACUN[konto] || konto, dug;
+      try { dug = parsirajBroj(m[3]); } catch(e){ continue; }
+      if (isNaN(dug)) continue;
+      if (dug > 0) dugovanja.push({poziv_na_broj:poziv, ukupan_dug:dug, racun:racun});
+      else if (dug < 0) pretplate.push({poziv_na_broj:poziv, ukupan_dug:dug, racun:racun});
+    }
+    return {fajl:fajl, pib:pib, naziv:naziv, datum:datum, dugovanja:dugovanja, pretplate:pretplate};
+  }
+
+  function izracunajPreknjizavanja(rezultati){
+    var rezultat = [];
+    rezultati.forEach(function(rez){
+      if (!rez.dugovanja.length || !rez.pretplate.length) return;
+      var dugovanja = rez.dugovanja.slice().sort(function(a,b){ return b.ukupan_dug - a.ukupan_dug; });
+      var pretplateDostupne = rez.pretplate.slice().sort(function(a,b){ return Math.abs(a.ukupan_dug) - Math.abs(b.ukupan_dug); });
+      var ostatak = {};
+      pretplateDostupne.forEach(function(p){ ostatak[p.poziv_na_broj] = Math.abs(p.ukupan_dug); });
+      var parovi = [];
+      dugovanja.forEach(function(dug){
+        var preostalo = dug.ukupan_dug, pokrivanje = [];
+        for (var i = 0; i < pretplateDostupne.length; i++){
+          var p = pretplateDostupne[i], dostupno = ostatak[p.poziv_na_broj] || 0;
+          if (dostupno <= 0) continue;
+          var uzimamo = Math.min(dostupno, preostalo);
+          pokrivanje.push({poziv:p.poziv_na_broj, iznos:uzimamo, racun:p.racun});
+          preostalo -= uzimamo;
+          if (preostalo <= 0.001) break;
+        }
+        if (preostalo <= 0.001){
+          pokrivanje.forEach(function(pk){ ostatak[pk.poziv] -= pk.iznos; });
+          parovi.push({dugovanje_poziv:dug.poziv_na_broj, dugovanje_iznos:dug.ukupan_dug, dugovanje_racun:dug.racun, pretplate:pokrivanje});
+        }
+      });
+      if (parovi.length) rezultat.push({pib:rez.pib, naziv:rez.naziv, datum:rez.datum, fajl:rez.fajl, parovi:parovi});
+    });
+    return rezultat;
+  }
+
+  function blokoviTabela(rezultati, tip){
+    var html = "", ima = false;
+    var sortirani = rezultati.slice().sort(function(a,b){
+      var ea = a[tip].length === 0, eb = b[tip].length === 0;
+      if (ea !== eb) return ea ? 1 : -1;
+      return a.naziv.localeCompare(b.naziv);
+    });
+    sortirani.forEach(function(rez){
+      var redovi = rez[tip];
+      if (!redovi.length && !rez.greska) return;
+      ima = true;
+      html += '<div class="por-blok"><div class="por-bh">'
+            + '<span class="firma">' + esc(rez.naziv) + '</span>'
+            + '<span class="pib">PIB: ' + esc(rez.pib) + ' &nbsp;|&nbsp; Datum stanja: ' + esc(rez.datum) + ' &nbsp;|&nbsp; ' + esc(rez.fajl) + '</span></div>';
+      if (rez.greska){
+        html += '<div class="por-greska">⚠️ Greška pri obradi: ' + esc(rez.greska) + '</div>';
+      } else {
+        var nasl = tip === "pretplate" ? "Pretplata (RSD)" : "Ukupan dug (RSD)";
+        html += '<table class="por-t"><thead><tr><th>Račun</th><th>Poziv na broj</th><th class="iznos">' + nasl + '</th></tr></thead><tbody>';
+        redovi.forEach(function(red){
+          html += '<tr><td>' + esc(red.racun) + '</td><td>' + esc(red.poziv_na_broj) + '</td><td class="iznos">' + fmt(red.ukupan_dug) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+    });
+    if (!ima) html += '<div class="por-prazno">✅ Nema pronađenih stavki</div>';
+    return html;
+  }
+
+  function polje(label, vrednost){
+    return '<div class="por-pk-f"><label>' + label + '</label><input type="text" value="' + esc(vrednost) + '" readonly onclick="this.select()"></div>';
+  }
+
+  function blokoviPreknjizavanja(preknjizavanja){
+    if (!preknjizavanja.length) return '<div class="por-prazno">✅ Nema klijenata pogodnih za preknjižavanje</div>';
+    var html = "", rb = 1;
+    preknjizavanja.forEach(function(kl){
+      html += '<div class="por-blok"><div class="por-bh"><span class="firma">' + esc(kl.naziv) + '</span>'
+            + '<span class="pib">PIB: ' + esc(kl.pib) + ' &nbsp;|&nbsp; Datum stanja: ' + esc(kl.datum) + ' &nbsp;|&nbsp; ' + esc(kl.fajl) + '</span></div>';
+      kl.parovi.forEach(function(par){
+        html += '<div class="por-pk-naslov">Dugovanje: <strong>' + esc(par.dugovanje_poziv) + '</strong> — iznos: <strong>' + fmt(par.dugovanje_iznos) + ' RSD</strong></div><div class="por-pk-wrap">';
+        par.pretplate.forEach(function(p){
+          html += '<div class="por-pk-form"><div class="por-pk-h"><span>Preknjiženje #' + rb + '</span><span class="por-pk-iznos">' + fmt(p.iznos) + ' RSD</span></div><div class="por-pk-grid">'
+            + polje("3.1 Redni broj", rb)
+            + polje("3.2 Račun na teret", p.racun)
+            + polje("3.3 ПНБЗ na teret", p.poziv)
+            + polje("3.3 Šifra opštine na teret", SIFRA_OPSTINE)
+            + polje("3.4 Račun u korist", par.dugovanje_racun)
+            + polje("3.5 ПНБО/БОП u korist", par.dugovanje_poziv)
+            + polje("3.6 Šifra opštine u korist", SIFRA_OPSTINE)
+            + polje("3.7 Iznos", fmt(p.iznos))
+            + '</div></div>';
+          rb++;
+        });
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function render(rezultati, preknjizavanja){
+    var uk = rezultati.length;
+    var fDug = rezultati.filter(function(r){ return r.dugovanja.length; }).length;
+    var fPre = rezultati.filter(function(r){ return r.pretplate.length; }).length;
+    var fPrek = preknjizavanja.length;
+    var html = '<div class="por-summary">'
+      + '<div class="por-card"><div class="broj">' + uk + '</div><div class="opis">Obrađenih PDF-ova</div></div>'
+      + '<div class="por-card crvena"><div class="broj">' + fDug + '</div><div class="opis">Firmi sa dugovanjem</div></div>'
+      + '<div class="por-card zelena"><div class="broj">' + fPre + '</div><div class="opis">Firmi sa pretplatom</div></div>'
+      + '<div class="por-card narandzasta"><div class="broj">' + fPrek + '</div><div class="opis">Pogodnih za preknjižavanje</div></div>'
+      + '</div><div class="por-tabovi">'
+      + '<button class="por-tb aktivan" data-tab="por-dugovanja">💰 Dugovanja (' + fDug + ')</button>'
+      + '<button class="por-tb" data-tab="por-pretplate">✅ Pretplate (' + fPre + ')</button>'
+      + '<button class="por-tb" data-tab="por-preknjizavanja">🔄 Preknjižavanja (' + fPrek + ')</button>'
+      + '</div>'
+      + '<div id="por-dugovanja" class="por-sek aktivan">' + blokoviTabela(rezultati, "dugovanja") + '</div>'
+      + '<div id="por-pretplate" class="por-sek">' + blokoviTabela(rezultati, "pretplate") + '</div>'
+      + '<div id="por-preknjizavanja" class="por-sek">' + blokoviPreknjizavanja(preknjizavanja) + '</div>';
+    var box = document.getElementById("porIzvestaj");
+    box.innerHTML = html;
+    box.style.display = "block";
+    box.querySelectorAll(".por-tb").forEach(function(b){
+      b.addEventListener("click", function(){
+        box.querySelectorAll(".por-sek").forEach(function(t){ t.classList.remove("aktivan"); });
+        box.querySelectorAll(".por-tb").forEach(function(x){ x.classList.remove("aktivan"); });
+        document.getElementById(b.dataset.tab).classList.add("aktivan");
+        b.classList.add("aktivan");
+      });
+    });
+  }
+
+  function initPoreski(){
+    var dz = document.getElementById("porDropzone");
+    if (!dz || dz._bound) return;
+    dz._bound = true;
+    var fi = document.getElementById("porFileInput");
+    var lista = document.getElementById("porLista");
+    var btn = document.getElementById("porBtnGen");
+    var statusEl = document.getElementById("porStatus");
+    var fajlovi = [];
+
+    dz.addEventListener("click", function(){ fi.click(); });
+    fi.addEventListener("change", function(e){ dodaj(e.target.files); fi.value = ""; });
+    ["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add("drag"); }); });
+    ["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove("drag"); }); });
+    dz.addEventListener("drop", function(e){ dodaj(e.dataTransfer.files); });
+
+    function dodaj(fl){
+      Array.prototype.forEach.call(fl, function(f){
+        if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)){
+          if (!fajlovi.some(function(x){ return x.name === f.name && x.size === f.size; })) fajlovi.push(f);
+        }
+      });
+      osvezi();
+    }
+    function osvezi(){
+      lista.innerHTML = "";
+      fajlovi.forEach(function(f, i){
+        var d = document.createElement("div");
+        d.className = "por-fajl";
+        d.innerHTML = '<span>📄</span><span class="naz">' + esc(f.name) + '</span><span class="uk" data-i="' + i + '">✕</span>';
+        lista.appendChild(d);
+      });
+      lista.querySelectorAll(".uk").forEach(function(x){
+        x.addEventListener("click", function(){ fajlovi.splice(parseInt(x.dataset.i), 1); osvezi(); });
+      });
+      btn.disabled = fajlovi.length === 0;
+    }
+    btn.addEventListener("click", async function(){
+      if (!window.pdfjsLib){ statusEl.textContent = "PDF.js nije učitan (proveri internet)."; return; }
+      btn.disabled = true;
+      var rezultati = [];
+      for (var i = 0; i < fajlovi.length; i++){
+        var f = fajlovi[i];
+        statusEl.textContent = "Obrađujem: " + f.name + " (" + (i+1) + "/" + fajlovi.length + ")...";
+        try {
+          var tekst = await izvuciTekst(f);
+          rezultati.push(parsirajKarton(tekst, f.name));
+        } catch(e){
+          rezultati.push({fajl:f.name, pib:"N/A", naziv:"Greška", datum:"N/A", dugovanja:[], pretplate:[], greska:String(e.message || e)});
+        }
+      }
+      var preknjizavanja = izracunajPreknjizavanja(rezultati);
+      render(rezultati, preknjizavanja);
+      statusEl.textContent = "✅ Gotovo — obrađeno " + rezultati.length + " fajl(ova), " + preknjizavanja.length + " za preknjižavanje.";
+      btn.disabled = false;
+      document.getElementById("porIzvestaj").scrollIntoView({behavior:"smooth"});
+    });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initPoreski);
+  else initPoreski();
+})();
 </script>
 </body>
 </html>
