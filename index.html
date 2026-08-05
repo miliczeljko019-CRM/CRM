@@ -795,6 +795,8 @@ select{cursor:pointer}
   #page-poreski .por-btn{margin-top:.9rem;width:100%;padding:.8rem;background:#22a866;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer;transition:background .15s;}
   #page-poreski .por-btn:hover{background:#1c8f56;}
   #page-poreski .por-btn:disabled{background:#a8c5b6;cursor:not-allowed;}
+  #page-poreski .por-reset{background:#64748b;}
+  #page-poreski .por-reset:hover{background:#475569;}
   #page-poreski .por-status{font-size:.85rem;color:#5a6b82;margin-top:.7rem;text-align:center;}
   #page-poreski .por-summary{display:flex;gap:1rem;margin-bottom:1.3rem;flex-wrap:wrap;}
   #page-poreski .por-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:1rem 1.5rem;box-shadow:0 2px 6px rgba(0,0,0,.08);min-width:160px;}
@@ -843,6 +845,7 @@ select{cursor:pointer}
     <input type="file" id="porFileInput" accept="application/pdf" multiple style="display:none">
     <div class="por-lista" id="porLista"></div>
     <button class="por-btn" id="porBtnGen" disabled>Generiši izveštaj</button>
+    <button class="por-btn por-reset" id="porBtnReset">Resetuj sve</button>
     <div class="por-status" id="porStatus"></div>
   </div>
   <div id="porIzvestaj" style="display:none"></div>
@@ -6098,6 +6101,14 @@ window.addEventListener('resize', drawTabOverlay);
     var btn = document.getElementById("porBtnGen");
     var statusEl = document.getElementById("porStatus");
     var fajlovi = [];
+    var btnReset = document.getElementById("porBtnReset");
+    btnReset.addEventListener("click", function(){
+      fajlovi = [];
+      osvezi();
+      var box = document.getElementById("porIzvestaj");
+      box.innerHTML = ""; box.style.display = "none";
+      statusEl.textContent = "";
+    });
 
     dz.addEventListener("click", function(){ fi.click(); });
     fi.addEventListener("change", function(e){ dodaj(e.target.files); fi.value = ""; });
