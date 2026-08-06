@@ -450,7 +450,43 @@ select{cursor:pointer}
 .cilj-arrow{font-size:20px;color:var(--txt2);padding:0 8px;display:flex;align-items:center}
 .mes-filter-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border:0.5px solid var(--brd);border-radius:100px;font-size:12px;cursor:pointer;background:none;color:var(--txt2);transition:all .15s;user-select:none}
 .mes-filter-chip.active{border-color:var(--txt);color:var(--txt);font-weight:500;background:var(--bg2)}
-.mes-filter-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}</style>
+.mes-filter-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.mes-log-btn{display:inline-flex;align-items:center;gap:7px;background:var(--blue,#1a4e7f);color:#fff;border:none;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
+.mes-log-btn:hover{background:var(--blue-mid,#2a6aa8)}
+.mes-log-btn i{font-size:15px}
+.oblog-overlay{position:fixed;inset:0;background:rgba(20,35,55,.45);z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto}
+.oblog-modal{background:#fff;border-radius:12px;box-shadow:0 16px 50px rgba(20,40,70,.28);width:100%;max-width:760px;overflow:hidden;animation:oblogIn .16s ease}
+@keyframes oblogIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.oblog-head{background:var(--blue,#1a4e7f);color:#fff;padding:15px 20px;display:flex;align-items:center;justify-content:space-between}
+.oblog-head h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.oblog-x{cursor:pointer;opacity:.85;font-size:18px;line-height:1;padding:2px 6px}
+.oblog-x:hover{opacity:1}
+.oblog-body{padding:16px 20px;max-height:62vh;overflow:auto}
+.oblog-filt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.oblog-filt label{font-size:12px;color:var(--txt2,#6b7a8d)}
+.oblog-filt input{border:1px solid var(--brd,#dbe3ec);border-radius:8px;padding:6px 9px;font-size:13px;color:var(--txt,#1f2d3d)}
+.oblog-chip{background:#eaf1f8;color:var(--blue,#1a4e7f);border:1px solid #cfe0f0;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600}
+.oblog-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.oblog-tbl thead th{text-align:left;background:#f0f4f9;color:var(--txt2,#6b7a8d);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;border-bottom:2px solid var(--brd,#dbe3ec)}
+.oblog-tbl tbody td{padding:10px 12px;border-bottom:1px solid #eef2f6}
+.oblog-day{cursor:pointer}
+.oblog-day:hover{background:#f7fafd}
+.oblog-dan{color:var(--txt2,#6b7a8d);font-size:12px}
+.oblog-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:25px;background:#1E8C50;color:#fff;border-radius:13px;font-weight:700;font-size:13px;padding:0 8px}
+.oblog-neg{color:#c0392b;font-size:12px;font-weight:600;margin-left:4px}
+.oblog-arr{color:var(--txt2,#6b7a8d);font-size:13px}
+.oblog-detail td{background:#fafcfe;padding:0}
+.oblog-det-inner{padding:6px 12px 12px 32px}
+.oblog-det-row{display:grid;grid-template-columns:60px 1fr 130px;gap:10px;padding:6px 0;border-bottom:1px dashed #e3ebf3;font-size:13px;align-items:center}
+.oblog-det-row:last-child{border-bottom:none}
+.oblog-time{color:#2a6aa8;font-weight:600;font-variant-numeric:tabular-nums}
+.oblog-tip{display:inline-block;background:#eaf1f8;color:var(--blue,#1a4e7f);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:600}
+.oblog-empty{padding:30px;text-align:center;color:var(--txt2,#6b7a8d);font-size:14px}
+.oblog-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 20px;border-top:1px solid var(--brd,#dbe3ec);background:#fafcfe;font-size:13px;color:var(--txt2,#6b7a8d)}
+.oblog-foot b{color:var(--txt,#1f2d3d)}
+.oblog-exp{background:#fff;border:1px solid var(--brd,#dbe3ec);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--blue,#1a4e7f);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.oblog-exp:hover{background:#f0f4f9}
+</style>
 </head>
 <body>
 <!-- IMPORT LOADER OVERLAY -->
@@ -726,6 +762,7 @@ select{cursor:pointer}
       <button class="obaveze-subtab" id="stab-odo" onclick="showObavezeTab('odo')"><i class="ti ti-file-description"></i> OD-O</button>
       <button class="obaveze-subtab" id="stab-pppPd" onclick="showObavezeTab('pppPd')"><i class="ti ti-receipt"></i> PPP-PD</button>
     </div>
+    <button class="mes-log-btn" onclick="openObavezeLog()"><i class="ti ti-calendar-stats"></i> Istorija štikliranja</button>
   </div>
   <div id="obavezeContent"></div>
 </div>
@@ -5880,6 +5917,208 @@ window.addEventListener('resize', drawTabOverlay);
   function crmMFInit(){ try{ renderOpFilterChips(); syncChips(); }catch(e){} }
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', crmMFInit); }
   else { crmMFInit(); }
+})();
+
+/* ===== ISTORIJA ŠTIKLIRANJA (dodatak, aditivno) ===== */
+(function(){
+  if(window.__obLogWrapped) return; window.__obLogWrapped = true;
+  var LS_KEY = 'knjg_crm_obaveze_log';
+
+  window.getObavezeLog = function(){
+    try { var a = JSON.parse(localStorage.getItem(LS_KEY)||'[]'); return Array.isArray(a)?a:[]; }
+    catch(e){ return []; }
+  };
+  function _saveLog(a){ try{ localStorage.setItem(LS_KEY, JSON.stringify(a)); }catch(e){} }
+  function _pushLog(key, done){
+    var a = window.getObavezeLog();
+    a.push({ k:key, t:new Date().toISOString(), a: done?1:0 });
+    if(a.length > 30000) a = a.slice(a.length - 30000);
+    _saveLog(a);
+  }
+  function _mergeLogs(remote, local){
+    var seen = {}, out = [];
+    function add(arr){ if(!Array.isArray(arr)) return;
+      for(var i=0;i<arr.length;i++){ var e=arr[i]; if(!e||!e.k||!e.t) continue;
+        var id = e.k+'|'+e.t+'|'+(e.a?1:0); if(seen[id]) continue; seen[id]=1; out.push(e); } }
+    add(remote); add(local);
+    out.sort(function(x,y){ return x.t < y.t ? -1 : (x.t > y.t ? 1 : 0); });
+    return out;
+  }
+
+  /* wrap toggleObaveza (PDV, paušal, OD-O, zakup, porez, plata, fiskalna...) */
+  if(typeof toggleObaveza === 'function'){
+    var _origTO = toggleObaveza;
+    toggleObaveza = function(clientId, godina, mesec, prefix){
+      var r = _origTO.apply(this, arguments);
+      try {
+        var key = (prefix||'') + clientId + '_' + godina + '_' + mesec;
+        var ob = JSON.parse(localStorage.getItem('knjg_crm_obaveze')||'{}');
+        _pushLog(key, !!ob[key]);
+      } catch(e){}
+      return r;
+    };
+  }
+  /* wrap toggleObaveza_ppp (PPP-PD) */
+  if(typeof toggleObaveza_ppp === 'function'){
+    var _origPPP = toggleObaveza_ppp;
+    toggleObaveza_ppp = function(key){
+      var r = _origPPP.apply(this, arguments);
+      try {
+        var ob = JSON.parse(localStorage.getItem('knjg_crm_obaveze')||'{}');
+        _pushLog(key, !!ob[key]);
+      } catch(e){}
+      return r;
+    };
+  }
+  /* wrap writeFile → uvek dopiši log u Drive payload */
+  if(typeof writeFile === 'function'){
+    var _origWrite = writeFile;
+    writeFile = function(fileId, data){
+      try { if(data && typeof data==='object' && ('obaveze' in data || 'clients' in data)) data.obavezeLog = window.getObavezeLog(); } catch(e){}
+      return _origWrite.apply(this, arguments);
+    };
+  }
+  /* wrap readFile → union-merge log sa Drive-a (sabira sa svih računara) */
+  if(typeof readFile === 'function'){
+    var _origRead = readFile;
+    readFile = async function(fileId){
+      var res = await _origRead.apply(this, arguments);
+      try { if(res && typeof res==='object' && Array.isArray(res.obavezeLog)) _saveLog(_mergeLogs(res.obavezeLog, window.getObavezeLog())); } catch(e){}
+      return res;
+    };
+  }
+
+  /* ---- resolver ključa → tip / klijent ---- */
+  function _tipFromKey(k){
+    if(k.indexOf('ppp_')===0) return 'PPP-PD';
+    if(k.indexOf('pau_')===0) return 'Paušal';
+    if(k.indexOf('od_')===0)  return 'OD-O';
+    if(k.indexOf('pdv_')===0) return 'PDV';
+    if(k.indexOf('pd_')===0)  return 'Porez na dobit';
+    if(k.indexOf('pl_')===0)  return 'Plata';
+    if(k.indexOf('ps_')===0)  return 'Periodični izveštaj';
+    if(k.indexOf('f_')===0)   return 'Fiskalna';
+    return 'Zakup';
+  }
+  function _sufFromKey(k){
+    if(/_poslat$/.test(k)) return ' · poslato';
+    if(/_placen$/.test(k)) return ' · plaćeno';
+    return '';
+  }
+  function _clientFromKey(k){
+    var cid=null, mp=k.match(/^ppp_(\d+)_w/);
+    if(mp){ cid=mp[1]; }
+    else { var m=k.match(/(\d+)_(\d{4})_\d{1,2}(_poslat|_placen)?$/); if(m) cid=m[1]; }
+    if(cid){ var list=(window.clients||[]); for(var i=0;i<list.length;i++){ if(String(list[i].id)===cid) return list[i].naziv||('#'+cid); } return '#'+cid; }
+    return '';
+  }
+  function _ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  var _DANI=['nedelja','ponedeljak','utorak','sreda','četvrtak','petak','subota'];
+
+  /* ---- modal ---- */
+  function _ensureModal(){
+    if(document.getElementById('obLogModal')) return;
+    var d=document.createElement('div');
+    d.id='obLogModal'; d.className='oblog-overlay'; d.style.display='none';
+    d.innerHTML =
+      '<div class="oblog-modal">'
+      +'<div class="oblog-head"><h3><i class="ti ti-calendar-stats"></i> Izveštaj — urađene obaveze po datumu</h3>'
+      +'<span class="oblog-x" onclick="closeObavezeLog()">✕</span></div>'
+      +'<div class="oblog-body">'
+      +'<div class="oblog-filt">'
+      +'<label>Od</label><input type="date" id="obLogFrom" onchange="renderObavezeLog()">'
+      +'<label>Do</label><input type="date" id="obLogTo" onchange="renderObavezeLog()">'
+      +'<span id="obLogChip" class="oblog-chip"></span></div>'
+      +'<div id="obLogTableWrap"></div>'
+      +'</div>'
+      +'<div class="oblog-foot"><span id="obLogTotal"></span>'
+      +'<button class="oblog-exp" onclick="exportObavezeLog()"><i class="ti ti-download"></i> Izvezi u Excel</button></div>'
+      +'</div>';
+    document.body.appendChild(d);
+    d.addEventListener('click', function(e){ if(e.target===d) closeObavezeLog(); });
+  }
+
+  window.openObavezeLog = function(){
+    _ensureModal();
+    var to=new Date(), from=new Date(); from.setDate(from.getDate()-30);
+    document.getElementById('obLogFrom').value=_ymd(from);
+    document.getElementById('obLogTo').value=_ymd(to);
+    document.getElementById('obLogModal').style.display='flex';
+    renderObavezeLog();
+  };
+  window.closeObavezeLog = function(){ var m=document.getElementById('obLogModal'); if(m) m.style.display='none'; };
+
+  function _groupByDay(){
+    var from=document.getElementById('obLogFrom').value, to=document.getElementById('obLogTo').value;
+    var log=window.getObavezeLog(), days={};
+    for(var i=0;i<log.length;i++){
+      var e=log[i], dt=new Date(e.t); if(isNaN(dt)) continue;
+      var ymd=_ymd(dt);
+      if(from && ymd<from) continue;
+      if(to && ymd>to) continue;
+      if(!days[ymd]) days[ymd]={done:0,undone:0,items:[]};
+      if(e.a){ days[ymd].done++; } else { days[ymd].undone++; }
+      days[ymd].items.push({ time:String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'),
+        naziv:_clientFromKey(e.k), tip:_tipFromKey(e.k)+_sufFromKey(e.k), done:!!e.a, ord:dt.getTime() });
+    }
+    var keys=Object.keys(days).sort().reverse();
+    keys.forEach(function(k){ days[k].items.sort(function(a,b){return a.ord-b.ord;}); });
+    return { keys:keys, days:days };
+  }
+
+  window.renderObavezeLog = function(){
+    var g=_groupByDay(), wrap=document.getElementById('obLogTableWrap');
+    var totDone=0, totUndone=0;
+    g.keys.forEach(function(k){ totDone+=g.days[k].done; totUndone+=g.days[k].undone; });
+    document.getElementById('obLogChip').textContent = g.keys.length+' '+(g.keys.length===1?'dan':'dana');
+    document.getElementById('obLogTotal').innerHTML =
+      'Ukupno u periodu: <b>'+totDone+'</b> urađenih'+(totUndone?' <span style="color:#c0392b">(−'+totUndone+' odštiklirano)</span>':'')+' kroz <b>'+g.keys.length+'</b> dana';
+    if(!g.keys.length){ wrap.innerHTML='<div class="oblog-empty">Nema zabeleženih štikliranja u izabranom periodu.</div>'; return; }
+    var h='<table class="oblog-tbl"><thead><tr><th style="width:120px">Datum</th><th>Dan</th><th style="width:150px">Urađeno obaveza</th><th style="width:34px"></th></tr></thead><tbody>';
+    g.keys.forEach(function(k){
+      var d=g.days[k], parts=k.split('-'), dd=new Date(+parts[0],+parts[1]-1,+parts[2]);
+      var datum=parts[2]+'.'+parts[1]+'.'+parts[0]+'.';
+      h+='<tr class="oblog-day" onclick="obLogToggleDay(this)"><td>'+datum+'</td><td class="oblog-dan">'+_DANI[dd.getDay()]+'</td>'
+        +'<td><span class="oblog-cnt">'+d.done+'</span>'+(d.undone?' <span class="oblog-neg">−'+d.undone+'</span>':'')+'</td>'
+        +'<td class="oblog-arr">▸</td></tr>';
+      var det='<tr class="oblog-detail" style="display:none"><td colspan="4"><div class="oblog-det-inner">';
+      d.items.forEach(function(it){
+        det+='<div class="oblog-det-row"><span class="oblog-time">'+it.time+'</span>'
+          +'<span>'+(it.naziv?_esc(it.naziv):'—')+' <span class="oblog-tip">'+_esc(it.tip)+'</span></span>'
+          +'<span style="text-align:right;color:'+(it.done?'#1E8C50':'#c0392b')+'">'+(it.done?'✓ štiklirano':'✕ odštiklirano')+'</span></div>';
+      });
+      det+='</div></td></tr>';
+      h+=det;
+    });
+    h+='</tbody></table>';
+    wrap.innerHTML=h;
+  };
+  function _esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  window.obLogToggleDay = function(tr){
+    var det=tr.nextElementSibling, arr=tr.querySelector('.oblog-arr');
+    if(!det) return; var open=det.style.display!=='none';
+    det.style.display=open?'none':'table-row'; if(arr) arr.textContent=open?'▸':'▾';
+  };
+
+  window.exportObavezeLog = function(){
+    if(typeof XLSX==='undefined'){ if(window.showToast) showToast('XLSX nije učitan'); return; }
+    var g=_groupByDay(), wb=XLSX.utils.book_new();
+    var h1=['Datum','Dan','Urađeno','Odštiklirano'];
+    var r1=g.keys.map(function(k){ var p=k.split('-'), dd=new Date(+p[0],+p[1]-1,+p[2]);
+      return [p[2]+'.'+p[1]+'.'+p[0]+'.', _DANI[dd.getDay()], g.days[k].done, g.days[k].undone]; });
+    var ws1=XLSX.utils.aoa_to_sheet([h1,...r1]); ws1['!cols']=[{wch:14},{wch:12},{wch:10},{wch:14}];
+    if(typeof styleHeader==='function') styleHeader(ws1,{s:{r:0,c:0},e:{r:0,c:h1.length-1}},'1D6F42');
+    XLSX.utils.book_append_sheet(wb,ws1,'Po danu');
+    var h2=['Datum','Vreme','Klijent','Tip','Akcija'], r2=[];
+    g.keys.forEach(function(k){ var p=k.split('-'); g.days[k].items.forEach(function(it){
+      r2.push([p[2]+'.'+p[1]+'.'+p[0]+'.', it.time, it.naziv, it.tip, it.done?'štiklirano':'odštiklirano']); }); });
+    var ws2=XLSX.utils.aoa_to_sheet([h2,...r2]); ws2['!cols']=[{wch:14},{wch:8},{wch:28},{wch:20},{wch:14}];
+    if(typeof styleHeader==='function') styleHeader(ws2,{s:{r:0,c:0},e:{r:0,c:h2.length-1}},'1D6F42');
+    XLSX.utils.book_append_sheet(wb,ws2,'Detalji');
+    XLSX.writeFile(wb,'Istorija_stikliranja_'+new Date().toLocaleDateString('en-GB').replace(/\//g,'-')+'.xlsx');
+    if(window.showToast) showToast('Excel fajl preuzet!');
+  };
 })();
 
 </script>
